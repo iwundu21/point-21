@@ -11,7 +11,7 @@ import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Webcam from "react-webcam";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { detectHumanFace } from '@/ai/flows/face-detection-flow';
+import { verifyHumanFace } from '@/ai/flows/face-verification-flow';
 import { Toaster } from '@/components/ui/toaster';
 
 declare global {
@@ -103,20 +103,23 @@ export default function ProfilePage() {
             });
         }
         setIsVerifying(false);
-      }, 6000);
+      }, 1000);
   };
 
   const capture = useCallback(async () => {
     const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
+    if (imageSrc && user) {
         setCapturedImage(imageSrc);
         setIsCameraActive(false);
         setIsProcessingVerification(true);
         setAccountStatus('detecting');
 
         try {
-          const result = await detectHumanFace({ photoDataUri: imageSrc });
-          if (result.isHuman) {
+          const result = await verifyHumanFace({ 
+              photoDataUri: imageSrc,
+              userId: `tg_user_${user.id}`
+          });
+          if (result.isHuman && result.isUnique) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
             localStorage.setItem('exnus_verificationStatus', 'verified');
@@ -126,7 +129,7 @@ export default function ProfilePage() {
             });
           } else {
             setAccountStatus('failed');
-            setFailureReason(result.reason || 'No real human face detected. Please try again.');
+            setFailureReason(result.reason || 'Verification failed. Please try again.');
           }
         } catch (error) {
            console.error('Verification error:', error);
@@ -136,7 +139,7 @@ export default function ProfilePage() {
             setIsProcessingVerification(false);
         }
     }
-  }, [webcamRef, toast]);
+  }, [webcamRef, toast, user]);
   
   const handleDone = () => {
     setVerificationSuccess(false);
