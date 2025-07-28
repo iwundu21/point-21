@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Webcam from "react-webcam";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { detectHumanFace } from '@/ai/flows/face-detection-flow';
 
 declare global {
   interface Window {
@@ -27,7 +29,7 @@ interface TelegramUser {
     photo_url?: string;
 }
 
-type VerificationStatus = 'unverified' | 'detecting' | 'verified';
+type VerificationStatus = 'unverified' | 'detecting' | 'verified' | 'failed';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<TelegramUser | null>(null);
@@ -40,6 +42,7 @@ export default function ProfilePage() {
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [accountStatus, setAccountStatus] = useState<VerificationStatus>('unverified');
   const webcamRef = useRef<Webcam>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -65,21 +68,34 @@ export default function ProfilePage() {
       setTimeout(async () => {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             try {
-                await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 setHasCameraPermission(true);
                 setIsCameraActive(true);
+                if (webcamRef.current?.video) {
+                    webcamRef.current.video.srcObject = stream;
+                }
             } catch (error) {
                 console.error("Camera access denied:", error);
                 setHasCameraPermission(false);
+                toast({
+                    variant: 'destructive',
+                    title: 'Camera Access Denied',
+                    description: 'Please enable camera permissions in your browser settings.',
+                });
             }
         } else {
             setHasCameraPermission(false);
+            toast({
+                variant: 'destructive',
+                title: 'Camera Not Supported',
+                description: 'Your browser does not support camera access.',
+            });
         }
         setIsVerifying(false);
       }, 6000);
   };
 
-  const capture = useCallback(() => {
+  const capture = useCallback(async () => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
         setCapturedImage(imageSrc);
@@ -87,13 +103,36 @@ export default function ProfilePage() {
         setIsProcessingVerification(true);
         setAccountStatus('detecting');
 
-        setTimeout(() => {
-            setIsProcessingVerification(false);
+        try {
+          const result = await detectHumanFace({ photoDataUri: imageSrc });
+          if (result.isHuman) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
-        }, 10000); 
+             toast({
+              title: 'Verification Successful',
+              description: 'Your account has been verified.',
+            });
+          } else {
+            setAccountStatus('failed');
+            toast({
+              variant: 'destructive',
+              title: 'Verification Failed',
+              description: result.reason || 'No real human face detected. Please try again.',
+            });
+          }
+        } catch (error) {
+           console.error('Verification error:', error);
+           setAccountStatus('failed');
+           toast({
+              variant: 'destructive',
+              title: 'Verification Error',
+              description: 'An unexpected error occurred. Please try again later.',
+           });
+        } finally {
+            setIsProcessingVerification(false);
+        }
     }
-  }, [webcamRef]);
+  }, [webcamRef, toast]);
   
   const handleDone = () => {
     setVerificationSuccess(false);
@@ -134,6 +173,12 @@ export default function ProfilePage() {
             return (
                 <span className="text-yellow-500 font-bold flex items-center text-sm">
                     <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Verification detection...
+                </span>
+            );
+        case 'failed':
+             return (
+                <span className="text-red-500 font-bold flex items-center text-sm">
+                    <XCircle className="w-4 h-4 mr-1" /> Verification Failed
                 </span>
             );
         case 'unverified':
@@ -220,8 +265,8 @@ export default function ProfilePage() {
                             )}
                        </div>
                        {!isProcessingVerification && (
-                             <Button onClick={resetVerification} variant="outline">
-                                Retake Photo
+                            <Button onClick={resetVerification} variant="outline">
+                                Try Again
                             </Button>
                         )}
                     </div>
@@ -232,7 +277,7 @@ export default function ProfilePage() {
                         <p className="text-sm text-muted-foreground max-w-xs">Your account has been successfully verified. You can now close this message.</p>
                         <Button onClick={handleDone} className="w-full max-w-xs">Done</Button>
                     </div>
-                ) : accountStatus === 'unverified' ? (
+                ) : accountStatus === 'unverified' || accountStatus === 'failed' ? (
                     <div className='text-center space-y-4'>
                         <p className="text-sm text-muted-foreground">Verify your identity by taking a photo of your face.</p>
                         <Button onClick={handleStartVerification} className="w-full">
