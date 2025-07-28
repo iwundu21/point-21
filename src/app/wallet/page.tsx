@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,7 +26,9 @@ export default function WalletPage() {
   const [walletAddress, setWalletAddress] = useState('');
   const [savedAddress, setSavedAddress] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
@@ -34,9 +37,22 @@ export default function WalletPage() {
       setSavedAddress(storedAddress);
       setWalletAddress(storedAddress);
     }
+    const verificationStatus = localStorage.getItem('exnus_verificationStatus');
+    if (verificationStatus === 'verified') {
+      setIsVerified(true);
+    }
   }, []);
 
   const handleSaveAddress = () => {
+    if (!isVerified) {
+       toast({
+        variant: "destructive",
+        title: "Verification Required",
+        description: "Please verify your account on the profile page to save your wallet.",
+        action: <Button onClick={() => router.push('/profile')}>Go to Profile</Button>,
+       });
+       return;
+    }
     if (walletAddress.trim()) {
       localStorage.setItem('exnus_wallet', walletAddress);
       setSavedAddress(walletAddress);
@@ -94,10 +110,11 @@ export default function WalletPage() {
                                   value={walletAddress}
                                   onChange={(e) => setWalletAddress(e.target.value)}
                                   className="bg-background/80"
+                                  disabled={!isVerified}
                               />
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                   <Button disabled={!walletAddress.trim()}>
+                                   <Button disabled={!walletAddress.trim() || !isVerified}>
                                       <Save className="mr-2 h-4 w-4" /> Save Address
                                    </Button>
                                 </AlertDialogTrigger>
@@ -117,6 +134,9 @@ export default function WalletPage() {
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
+                              {!isVerified && (
+                                <p className="text-xs text-destructive text-center">Please verify your account to save your wallet.</p>
+                              )}
                           </div>
                       ) : (
                            <div className="space-y-4">
