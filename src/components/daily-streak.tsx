@@ -3,9 +3,12 @@
 import { Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const DailyStreak = () => {
-  const currentStreak = 4; // Mock data
-  const days = Array.from({ length: 7 }, (_, i) => i < currentStreak);
+interface DailyStreakProps {
+  streak: number;
+}
+
+const DailyStreak = ({ streak }: DailyStreakProps) => {
+  const days = Array.from({ length: 7 }, (_, i) => i < streak);
 
   return (
     <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
@@ -13,7 +16,7 @@ const DailyStreak = () => {
         <h3 className="font-semibold text-primary/90">Daily Login Streak</h3>
         <div className="flex items-center space-x-1 text-yellow-400">
           <Flame className="w-5 h-5" />
-          <span className="font-bold">{currentStreak} Days</span>
+          <span className="font-bold">{streak} Days</span>
         </div>
       </div>
       <div className="flex justify-between space-x-1">

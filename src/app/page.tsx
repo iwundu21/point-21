@@ -14,12 +14,14 @@ export default function Home() {
   const [forgingEndTime, setForgingEndTime] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
+  const [dailyStreak, setDailyStreak] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
-    const savedBalance = localStorage.getItem('aetherium_balance');
-    const savedEndTime = localStorage.getItem('aetherium_forgingEndTime');
-    
+    const savedBalance = localStorage.getItem('exnus_balance');
+    const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
+    const savedStreak = localStorage.getItem('exnus_daily_streak');
+
     if (savedBalance) setBalance(JSON.parse(savedBalance));
     
     if (savedEndTime) {
@@ -28,26 +30,52 @@ export default function Home() {
             setIsForgingActive(true);
             setForgingEndTime(endTime);
         } else {
-            // Award points for a session that ended while the user was away
             setBalance(prev => prev + 1000);
-            localStorage.removeItem('aetherium_forgingEndTime');
+            localStorage.removeItem('exnus_forgingEndTime');
         }
     }
+
+    // Daily streak logic
+    const today = new Date().toISOString().split('T')[0];
+    let streakData = { count: 0, lastLogin: '' };
+
+    if (savedStreak) {
+      streakData = JSON.parse(savedStreak);
+    }
+
+    if (streakData.lastLogin !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      let newStreakCount = 1;
+      if (streakData.lastLogin === yesterdayStr && streakData.count < 7) {
+        newStreakCount = streakData.count + 1;
+      } else if (streakData.count === 7 && streakData.lastLogin === yesterdayStr) {
+        newStreakCount = 1;
+      }
+      
+      setBalance(prev => prev + 200);
+      setDailyStreak(newStreakCount);
+      localStorage.setItem('exnus_daily_streak', JSON.stringify({ count: newStreakCount, lastLogin: today }));
+    } else {
+      setDailyStreak(streakData.count);
+    }
+
   }, []);
 
   useEffect(() => {
       if (isClient) {
-          localStorage.setItem('aetherium_balance', JSON.stringify(balance));
+          localStorage.setItem('exnus_balance', JSON.stringify(balance));
           if (forgingEndTime) {
-              localStorage.setItem('aetherium_forgingEndTime', JSON.stringify(forgingEndTime));
+              localStorage.setItem('exnus_forgingEndTime', JSON.stringify(forgingEndTime));
           } else {
-              localStorage.removeItem('aetherium_forgingEndTime');
+              localStorage.removeItem('exnus_forgingEndTime');
           }
       }
   }, [balance, forgingEndTime, isClient]);
 
   const handleActivateForging = () => {
-    // 24 hours in milliseconds
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     setIsForgingActive(true);
     setForgingEndTime(endTime);
@@ -61,7 +89,6 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  // Mock user data as we can't fetch from Telegram API
   const user = {
     username: 'telegram_user',
     id: '123456789'
@@ -104,7 +131,7 @@ export default function Home() {
       <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
       <div className="w-full max-w-sm">
-        <MissionsCard />
+        <MissionsCard streak={dailyStreak} />
       </div>
     </main>
   );

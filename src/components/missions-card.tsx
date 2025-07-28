@@ -5,13 +5,17 @@ import { Users, Gift, Zap, Crown, Flame } from 'lucide-react';
 import StatCard from './stat-card';
 import DailyStreak from './daily-streak';
 
-const MissionsCard = () => (
+interface MissionsCardProps {
+  streak: number;
+}
+
+const MissionsCard = ({ streak }: MissionsCardProps) => (
   <div className="w-full max-w-sm p-4 space-y-6">
     <div className="text-center">
         <h2 className="text-lg font-semibold text-primary/90">Missions & Stats</h2>
     </div>
     <div className="space-y-4">
-      <DailyStreak />
+      <DailyStreak streak={streak} />
       <StatCard 
         icon={<Crown className="w-10 h-10 text-yellow-400" />}
         title="Current Rank"
