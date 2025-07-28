@@ -66,12 +66,13 @@ export default function WelcomePage() {
         }
       } else {
         setIsLoading(false);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not identify user.' });
+        // This case is for development in a browser without Telegram
+        // You might want to show a message or use mock data
       }
     } else {
         setIsLoading(false);
     }
-  }, [router, searchParams, toast]);
+  }, [router, searchParams]);
 
   useEffect(() => {
     const allDone = socialTasks.every(task => taskStatuses[task.id] === 'verified');
@@ -98,8 +99,7 @@ export default function WelcomePage() {
 
     let userData = getUserData(user);
     let currentBalance = userData.balance || 0;
-    let referralApplied = false;
-
+    
     // Handle referral logic
     if (referralCode.trim() && !userData.referralBonusApplied) {
         const referrerData = findUserByReferralCode(referralCode.trim());
@@ -117,7 +117,6 @@ export default function WelcomePage() {
 
             userData.referralBonusApplied = true;
             userData.referredBy = referrerData.telegramUser.id.toString();
-            referralApplied = true;
 
         } else if (referrerData && referrerData.telegramUser?.id === user.id) {
             toast({
@@ -125,7 +124,7 @@ export default function WelcomePage() {
                 title: "Invalid Referral Code",
                 description: "You cannot use your own referral code.",
             });
-        } else {
+        } else if (referralCode.trim()) {
              toast({
                 variant: "destructive",
                 title: "Invalid Referral Code",
