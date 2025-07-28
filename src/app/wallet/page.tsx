@@ -65,12 +65,12 @@ export default function WalletPage() {
                     <div>
                         <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
                         <CardDescription className="mb-4">
-                            Save your wallet address to be eligible for future Exnus EXN airdrop snapshots.
+                            Save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
                         </CardDescription>
                         <div className="flex flex-col space-y-2">
                             <Input 
                                 type="text"
-                                placeholder="Enter your wallet address"
+                                placeholder="Enter your Solana wallet address"
                                 value={walletAddress}
                                 onChange={(e) => setWalletAddress(e.target.value)}
                                 className="bg-background/80"
