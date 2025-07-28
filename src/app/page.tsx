@@ -38,78 +38,93 @@ export default function Home() {
   const [dailyStreak, setDailyStreak] = useState(0);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    setIsClient(true);
-    
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      const telegramUser = tg.initDataUnsafe?.user;
-      
-      if (telegramUser) {
-        setUser(telegramUser);
-        let userData = getUserData(telegramUser);
+    const initialize = () => {
+      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        const telegramUser = tg.initDataUnsafe?.user;
         
-        // Redirect to onboarding if not completed
-        if (!userData.onboardingCompleted) {
-          const startParam = tg.initDataUnsafe?.start_param;
-          const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
-          router.replace(url);
-          return;
-        }
-
-        let currentBalance = userData.balance;
-        
-        if (userData.verificationStatus === 'verified') {
-          setIsVerified(true);
-        }
-
-        if (userData.forgingEndTime) {
-            const endTime = userData.forgingEndTime;
-            if (endTime > Date.now()) {
-                setIsForgingActive(true);
-                setForgingEndTime(endTime);
-            } else {
-                currentBalance += 1000;
-                saveUserData(telegramUser, { ...userData, balance: currentBalance, forgingEndTime: null });
-                setIsForgingActive(false);
-                setForgingEndTime(null);
-            }
-        }
-
-        const today = new Date().toISOString().split('T')[0];
-        let streakData = userData.dailyStreak;
-
-        if (streakData.lastLogin !== today) {
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-          let newStreakCount = 1;
-          if (streakData.lastLogin === yesterdayStr) {
-             newStreakCount = (streakData.count % 7) + 1;
+        if (telegramUser) {
+          const userData = getUserData(telegramUser);
+          
+          if (!userData.onboardingCompleted) {
+            const startParam = tg.initDataUnsafe?.start_param;
+            const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
+            router.replace(url);
+            return;
           }
           
-          currentBalance += 200;
-          const newStreak = { count: newStreakCount, lastLogin: today };
-          setDailyStreak(newStreakCount);
-          saveUserData(telegramUser, { ...userData, dailyStreak: newStreak });
+          setUser(telegramUser);
+          let currentBalance = userData.balance;
+          
+          if (userData.verificationStatus === 'verified') {
+            setIsVerified(true);
+          }
+
+          if (userData.forgingEndTime) {
+              const endTime = userData.forgingEndTime;
+              if (endTime > Date.now()) {
+                  setIsForgingActive(true);
+                  setForgingEndTime(endTime);
+              } else {
+                  currentBalance += 1000;
+                  setIsForgingActive(false);
+                  setForgingEndTime(null);
+                  userData.forgingEndTime = null;
+              }
+          }
+
+          const today = new Date().toISOString().split('T')[0];
+          let streakData = userData.dailyStreak;
+
+          if (streakData.lastLogin !== today) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            let newStreakCount = 1;
+            if (streakData.lastLogin === yesterdayStr) {
+               newStreakCount = (streakData.count % 7) + 1;
+            }
+            
+            currentBalance += 200;
+            const newStreak = { count: newStreakCount, lastLogin: today };
+            setDailyStreak(newStreakCount);
+            userData.dailyStreak = newStreak;
+          } else {
+            setDailyStreak(streakData.count);
+          }
+          
+          setBalance(currentBalance);
+          userData.balance = currentBalance;
+          saveUserData(telegramUser, userData);
+
         } else {
-          setDailyStreak(streakData.count);
+          router.replace('/welcome');
+          return; // Stop execution if no user
         }
-        
-        setBalance(currentBalance);
-        saveUserData(telegramUser, { ...userData, balance: currentBalance });
       } else {
-        router.replace('/welcome');
+          // If not in Telegram, maybe a dev environment
+          const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+          const userData = getUserData(mockUser);
+          if(!userData.onboardingCompleted) {
+             router.replace('/welcome');
+             return;
+          }
+          setUser(mockUser);
+          setBalance(userData.balance);
       }
-    } else {
-        setIsClient(true);
+      setIsLoading(false);
+      setIsClient(true);
     }
+    
+    initialize();
   }, [router]);
 
   useEffect(() => {
@@ -142,7 +157,7 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  if (!isClient || !user || !getUserData(user).onboardingCompleted) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
