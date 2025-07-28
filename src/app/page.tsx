@@ -50,8 +50,9 @@ export default function Home() {
       const startParam = tg?.initDataUnsafe?.start_param;
       const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
       router.replace(url);
-      // We don't set loading to false here, the redirect will unmount this component.
-      return;
+      // Explicitly set loading to false to prevent the loader from hanging
+      setIsLoading(false); 
+      return; // Stop execution for new users
     }
     
     setUser(telegramUser);
@@ -123,7 +124,7 @@ export default function Home() {
   }, [handleInitializeUser]);
 
   useEffect(() => {
-      if (!isLoading && user) {
+      if (!isLoading && user && getUserData(user).onboardingCompleted) {
           const userData = getUserData(user);
           saveUserData(user, { ...userData, balance, forgingEndTime });
       }
@@ -152,7 +153,9 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  if (isLoading) {
+  // A new check to show loader only when necessary.
+  const userData = user ? getUserData(user) : null;
+  if (isLoading || (user && !userData?.onboardingCompleted)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
