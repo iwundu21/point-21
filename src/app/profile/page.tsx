@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { verifyHumanFace } from '@/ai/flows/face-verification-flow';
 import { Toaster } from '@/components/ui/toaster';
+import { getVerificationStatus, saveVerificationStatus } from '@/lib/database';
 
 declare global {
   interface Window {
@@ -56,11 +57,11 @@ export default function ProfilePage() {
       const telegramUser = tg.initDataUnsafe?.user;
       if (telegramUser) {
         setUser(telegramUser);
+        const storedStatus = getVerificationStatus(telegramUser);
+        if (storedStatus === 'verified') {
+            setAccountStatus('verified');
+        }
       }
-    }
-    const storedStatus = localStorage.getItem('exnus_verificationStatus') as VerificationStatus;
-    if (storedStatus === 'verified') {
-        setAccountStatus('verified');
     }
   }, []);
 
@@ -122,7 +123,7 @@ export default function ProfilePage() {
           if (result.isHuman && result.isUnique) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
-            localStorage.setItem('exnus_verificationStatus', 'verified');
+            saveVerificationStatus(user, 'verified');
              toast({
               title: 'Verification Successful',
               description: 'Your account has been verified.',
@@ -130,11 +131,13 @@ export default function ProfilePage() {
           } else {
             setAccountStatus('failed');
             setFailureReason(result.reason || 'Verification failed. Please try again.');
+            saveVerificationStatus(user, 'failed');
           }
         } catch (error) {
            console.error('Verification error:', error);
            setAccountStatus('failed');
            setFailureReason('An unexpected error occurred. Please try again later.');
+           saveVerificationStatus(user, 'failed');
         } finally {
             setIsProcessingVerification(false);
         }
@@ -155,6 +158,9 @@ export default function ProfilePage() {
     setAccountStatus('unverified');
     setFailureReason(null);
     setIsVerificationInProgress(false);
+    if(user) {
+        saveVerificationStatus(user, 'unverified');
+    }
   }
 
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';

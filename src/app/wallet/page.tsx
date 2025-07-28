@@ -21,25 +21,48 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getVerificationStatus, getWalletAddress, saveWalletAddress } from '@/lib/database';
+
+declare global {
+  interface Window {
+    Telegram: any;
+  }
+}
+
+interface TelegramUser {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+}
 
 export default function WalletPage() {
   const [walletAddress, setWalletAddress] = useState('');
   const [savedAddress, setSavedAddress] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [user, setUser] = useState<TelegramUser | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
-    const storedAddress = localStorage.getItem('exnus_wallet');
-    if (storedAddress) {
-      setSavedAddress(storedAddress);
-      setWalletAddress(storedAddress);
-    }
-    const verificationStatus = localStorage.getItem('exnus_verificationStatus');
-    if (verificationStatus === 'verified') {
-      setIsVerified(true);
+    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        const telegramUser = tg.initDataUnsafe?.user;
+        if (telegramUser) {
+            setUser(telegramUser);
+            const storedAddress = getWalletAddress(telegramUser);
+            if (storedAddress) {
+                setSavedAddress(storedAddress);
+                setWalletAddress(storedAddress);
+            }
+            const verificationStatus = getVerificationStatus(telegramUser);
+            if (verificationStatus === 'verified') {
+                setIsVerified(true);
+            }
+        }
     }
   }, []);
 
@@ -53,8 +76,8 @@ export default function WalletPage() {
        });
        return;
     }
-    if (walletAddress.trim()) {
-      localStorage.setItem('exnus_wallet', walletAddress);
+    if (walletAddress.trim() && user) {
+      saveWalletAddress(user, walletAddress);
       setSavedAddress(walletAddress);
       toast({
         title: 'Wallet Address Saved',

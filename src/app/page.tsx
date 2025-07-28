@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { getUserData, saveUserData } from '@/lib/database';
 
 declare global {
   interface Window {
@@ -48,79 +49,62 @@ export default function Home() {
       const tg = window.Telegram.WebApp;
       tg.ready();
       const telegramUser = tg.initDataUnsafe?.user;
+      
       if (telegramUser) {
         setUser(telegramUser);
-      }
-
-      const savedBalance = localStorage.getItem('exnus_balance');
-      const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
-      const savedStreak = localStorage.getItem('exnus_daily_streak');
-      const verificationStatus = localStorage.getItem('exnus_verificationStatus');
-
-      if (verificationStatus === 'verified') {
-        setIsVerified(true);
-      }
-
-      let currentBalance = 0;
-      if (savedBalance) {
-        currentBalance = JSON.parse(savedBalance);
-      }
-      
-      if (savedEndTime) {
-          const endTime = JSON.parse(savedEndTime);
-          if (endTime > Date.now()) {
-              setIsForgingActive(true);
-              setForgingEndTime(endTime);
-          } else {
-              currentBalance += 1000;
-              localStorage.removeItem('exnus_forgingEndTime');
-              setIsForgingActive(false);
-              setForgingEndTime(null);
-          }
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      let streakData = { count: 0, lastLogin: '' };
-
-      if (savedStreak) {
-        try {
-          streakData = JSON.parse(savedStreak);
-        } catch (e) {
-          console.error("Could not parse daily streak data", e);
+        const userData = getUserData(telegramUser);
+        
+        let currentBalance = userData.balance;
+        
+        if (userData.verificationStatus === 'verified') {
+          setIsVerified(true);
         }
-      }
 
-      if (streakData.lastLogin !== today) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        if (userData.forgingEndTime) {
+            const endTime = userData.forgingEndTime;
+            if (endTime > Date.now()) {
+                setIsForgingActive(true);
+                setForgingEndTime(endTime);
+            } else {
+                currentBalance += 1000;
+                saveUserData(telegramUser, { forgingEndTime: null });
+                setIsForgingActive(false);
+                setForgingEndTime(null);
+            }
+        }
 
-        let newStreakCount = 1;
-        if (streakData.lastLogin === yesterdayStr) {
-           newStreakCount = (streakData.count % 7) + 1;
+        const today = new Date().toISOString().split('T')[0];
+        let streakData = userData.dailyStreak;
+
+        if (streakData.lastLogin !== today) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+          let newStreakCount = 1;
+          if (streakData.lastLogin === yesterdayStr) {
+             newStreakCount = (streakData.count % 7) + 1;
+          }
+          
+          currentBalance += 200;
+          const newStreak = { count: newStreakCount, lastLogin: today };
+          setDailyStreak(newStreakCount);
+          saveUserData(telegramUser, { dailyStreak: newStreak });
+        } else {
+          setDailyStreak(streakData.count);
         }
         
-        currentBalance += 200;
-        setDailyStreak(newStreakCount);
-        localStorage.setItem('exnus_daily_streak', JSON.stringify({ count: newStreakCount, lastLogin: today }));
-      } else {
-        setDailyStreak(streakData.count);
+        setBalance(currentBalance);
+        saveUserData(telegramUser, { balance: currentBalance });
       }
-      
-      setBalance(currentBalance);
     }
   }, []);
 
   useEffect(() => {
-      if (isClient) {
-          localStorage.setItem('exnus_balance', JSON.stringify(balance));
-          if (forgingEndTime) {
-              localStorage.setItem('exnus_forgingEndTime', JSON.stringify(forgingEndTime));
-          } else {
-              localStorage.removeItem('exnus_forgingEndTime');
-          }
+      if (isClient && user) {
+          saveUserData(user, { balance, forgingEndTime });
       }
-  }, [balance, forgingEndTime, isClient]);
+  }, [balance, forgingEndTime, isClient, user]);
 
   const handleActivateForging = () => {
     if (!isVerified) {
