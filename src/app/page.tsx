@@ -50,9 +50,8 @@ export default function Home() {
       const startParam = tg?.initDataUnsafe?.start_param;
       const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
       router.replace(url);
-      // Explicitly set loading to false to prevent the loader from hanging
       setIsLoading(false); 
-      return; // Stop execution for new users
+      return; 
     }
     
     setUser(telegramUser);
@@ -108,12 +107,12 @@ export default function Home() {
           handleInitializeUser(telegramUser);
         } else {
           // Dev environment or no user found
-          const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+          const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
           handleInitializeUser(mockUser);
         }
       } else {
         // Fallback for non-Telegram environment
-        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
         handleInitializeUser(mockUser);
       }
     };
@@ -153,7 +152,6 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  // A new check to show loader only when necessary.
   const userData = user ? getUserData(user) : null;
   if (isLoading || (user && !userData?.onboardingCompleted)) {
     return (
