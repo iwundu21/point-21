@@ -50,7 +50,6 @@ export default function Home() {
       const startParam = tg?.initDataUnsafe?.start_param;
       const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
       router.replace(url);
-      setIsLoading(false); 
       return; 
     }
     
@@ -153,7 +152,7 @@ export default function Home() {
   };
   
   const userData = user ? getUserData(user) : null;
-  if (isLoading || (user && !userData?.onboardingCompleted)) {
+  if (isLoading || !user || (user && !userData?.onboardingCompleted)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
