@@ -23,10 +23,14 @@ const DailyStreak = ({ streak }: DailyStreakProps) => {
         {days.map((active, index) => (
           <div key={index} className="flex flex-col items-center space-y-2 flex-1 min-w-0">
             <div className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+              "w-10 h-10 rounded-full flex flex-col items-center justify-center transition-all",
               active ? "bg-yellow-400 shadow-lg shadow-yellow-400/30" : "bg-primary/20"
             )}>
-              {active && <Flame className="w-6 h-6 text-white" />}
+              <span className={cn(
+                "text-xs font-bold",
+                active ? "text-white" : "text-primary/50"
+              )}>200</span>
+               <span className={cn("text-[8px]", active ? "text-white/80" : "text-primary/40")}>pts</span>
             </div>
             <p className="text-xs text-muted-foreground truncate">Day {index + 1}</p>
           </div>
