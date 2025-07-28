@@ -50,6 +50,7 @@ export default function Home() {
       const startParam = tg?.initDataUnsafe?.start_param;
       const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
       router.replace(url);
+      // We don't set loading to false here, the redirect will unmount this component.
       return;
     }
     
@@ -96,22 +97,28 @@ export default function Home() {
   }, [router]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      const telegramUser = tg.initDataUnsafe?.user;
-      
-      if (telegramUser) {
-        handleInitializeUser(telegramUser);
+    const init = () => {
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        tg.ready();
+        const telegramUser = tg.initDataUnsafe?.user;
+
+        if (telegramUser) {
+          handleInitializeUser(telegramUser);
+        } else {
+          // Dev environment or no user found
+          const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+          handleInitializeUser(mockUser);
+        }
       } else {
-        // Dev environment or no user found
-        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-        handleInitializeUser(mockUser);
-      }
-    } else {
         // Fallback for non-Telegram environment
         const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
         handleInitializeUser(mockUser);
+      }
+    };
+    
+    if (typeof window !== 'undefined') {
+      init();
     }
   }, [handleInitializeUser]);
 
