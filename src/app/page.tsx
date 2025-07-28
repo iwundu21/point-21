@@ -35,12 +35,6 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient) {
-      return;
-    }
     
     const tg = window.Telegram?.WebApp;
     if (tg) {
@@ -102,7 +96,7 @@ export default function Home() {
     }
     
     setBalance(currentBalance);
-  }, [isClient]);
+  }, []);
 
   useEffect(() => {
       if (isClient) {
