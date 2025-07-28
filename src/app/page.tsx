@@ -48,7 +48,11 @@ export default function Home() {
     const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
     const savedStreak = localStorage.getItem('exnus_daily_streak');
 
-    if (savedBalance) setBalance(JSON.parse(savedBalance));
+    if (savedBalance) {
+      setBalance(JSON.parse(savedBalance));
+    } else {
+      setBalance(0);
+    }
     
     if (savedEndTime) {
         const endTime = JSON.parse(savedEndTime);
@@ -56,8 +60,12 @@ export default function Home() {
             setIsForgingActive(true);
             setForgingEndTime(endTime);
         } else {
-            setBalance(prev => prev + 1000);
+            // Give points for finished session if they open the app after it's done
+            const lastBalance = savedBalance ? JSON.parse(savedBalance) : 0;
+            setBalance(lastBalance + 1000);
             localStorage.removeItem('exnus_forgingEndTime');
+            setIsForgingActive(false);
+            setForgingEndTime(null);
         }
     }
 
@@ -66,7 +74,11 @@ export default function Home() {
     let streakData = { count: 0, lastLogin: '' };
 
     if (savedStreak) {
-      streakData = JSON.parse(savedStreak);
+      try {
+        streakData = JSON.parse(savedStreak);
+      } catch (e) {
+        console.error("Could not parse daily streak data", e);
+      }
     }
 
     if (streakData.lastLogin !== today) {
@@ -75,10 +87,8 @@ export default function Home() {
       const yesterdayStr = yesterday.toISOString().split('T')[0];
 
       let newStreakCount = 1;
-      if (streakData.lastLogin === yesterdayStr && streakData.count < 7) {
-        newStreakCount = streakData.count + 1;
-      } else if (streakData.count === 7 && streakData.lastLogin === yesterdayStr) {
-        newStreakCount = 1;
+      if (streakData.lastLogin === yesterdayStr) {
+         newStreakCount = (streakData.count % 7) + 1;
       }
       
       setBalance(prev => prev + 200);
