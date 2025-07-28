@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function WalletPage() {
   const [walletAddress, setWalletAddress] = useState('');
@@ -118,12 +119,21 @@ export default function WalletPage() {
                                 </AlertDialog>
                             </div>
                         ) : (
-                             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                                <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
-                                <div className="flex items-center space-x-2">
-                                    <WalletIcon className="w-5 h-5 text-muted-foreground" />
-                                    <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
+                             <div className="space-y-4">
+                                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                                    <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
+                                    <div className="flex items-center space-x-2">
+                                        <WalletIcon className="w-5 h-5 text-muted-foreground" />
+                                        <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
+                                    </div>
                                 </div>
+                                <Alert variant="destructive">
+                                  <AlertTriangle className="h-4 w-4" />
+                                  <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
+                                  <AlertDescription>
+                                    Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
+                                  </AlertDescription>
+                                </Alert>
                             </div>
                         )}
                     </div>
