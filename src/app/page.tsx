@@ -68,23 +68,27 @@ export default function Home() {
   if (!isClient) {
     return (
       <div className="flex flex-col items-center justify-between min-h-screen bg-background p-4 space-y-8">
-        <Skeleton className="w-full max-w-sm h-24 rounded-lg" />
+        <div className="w-full max-w-sm space-y-4">
+          <Skeleton className="w-full h-24 rounded-lg" />
+          <Skeleton className="w-full h-24 rounded-lg" />
+        </div>
         <div className="flex flex-col items-center space-y-4">
           <Skeleton className="w-64 h-64 rounded-full" />
           <Skeleton className="w-48 h-6" />
         </div>
-        <Skeleton className="w-full max-w-sm h-32 rounded-lg" />
+        <div className="w-full max-w-sm h-12" />
       </div>
     );
   }
 
   return (
-    <main className="flex flex-col items-center justify-between min-h-screen bg-background text-foreground p-4 space-y-8 font-body">
-      <header className="w-full max-w-sm self-start">
+    <main className="flex flex-col items-center justify-evenly min-h-screen bg-background text-foreground p-4 space-y-4 font-body">
+      <header className="w-full max-w-sm space-y-4">
         <UserCard username={user.username} userId={user.id} />
+        <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
-      <div className="flex-grow flex flex-col items-center justify-center space-y-4">
+      <div className="flex flex-col items-center justify-center space-y-4">
         <MiningCircle 
           isActive={isForgingActive}
           endTime={forgingEndTime}
@@ -93,9 +97,7 @@ export default function Home() {
         />
       </div>
 
-      <footer className="w-full max-w-sm">
-        <BalanceCard balance={balance} animating={showPointsAnimation} />
-      </footer>
+      <div className="w-full max-w-sm h-12" />
     </main>
   );
 }

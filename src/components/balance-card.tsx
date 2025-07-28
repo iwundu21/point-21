@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -14,7 +15,7 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
   return (
     <Card className="w-full bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg">
       <CardHeader>
-        <CardTitle className="text-center text-primary">Aetherium Balance</CardTitle>
+        <CardTitle className="text-center text-primary">E-point</CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-center space-x-4">
         <Coins className="w-8 h-8 text-primary" />
