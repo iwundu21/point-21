@@ -193,6 +193,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+      <div className="flex-grow pb-20">
       <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
         <Card className="w-full max-w-sm bg-primary/5 border-primary/20 p-6">
             <CardContent className="flex items-center space-x-6">
@@ -264,7 +265,7 @@ export default function ProfilePage() {
                                 </div>
                             )}
                        </div>
-                       {!isProcessingVerification && (
+                       {!isProcessingVerification && accountStatus === 'failed' && (
                             <Button onClick={resetVerification} variant="outline">
                                 Try Again
                             </Button>
@@ -288,6 +289,7 @@ export default function ProfilePage() {
             </CardContent>
         </Card>
       </main>
+      </div>
       <Footer />
     </div>
   );
