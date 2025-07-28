@@ -70,74 +70,73 @@ export default function WalletPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">
-        <main className="flex-grow flex flex-col items-center justify-center p-4 mt-8">
-            <Card className="w-full max-w-sm bg-primary/5 border-primary/20">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <WalletIcon className="w-6 h-6" />
+        <main className="flex-grow flex flex-col p-4 mt-8">
+             <div className="w-full max-w-sm mx-auto space-y-6">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+                        <WalletIcon className="w-8 h-8" />
                         Wallet
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div>
-                        <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
-                        <CardDescription className="mb-4">
-                            Save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
-                        </CardDescription>
+                    </h1>
+                </div>
 
-                        {!savedAddress ? (
-                            <div className="flex flex-col space-y-2">
-                                <Input
-                                    type="text"
-                                    placeholder="Enter your Solana wallet address"
-                                    value={walletAddress}
-                                    onChange={(e) => setWalletAddress(e.target.value)}
-                                    className="bg-background/80"
-                                />
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                     <Button disabled={!walletAddress.trim()}>
-                                        <Save className="mr-2 h-4 w-4" /> Save Address
-                                     </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle className="flex items-center gap-2">
-                                        <AlertTriangle className="text-destructive" /> Are you absolutely sure?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
-                                        <p className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</p>
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={handleSaveAddress}>Confirm & Save</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        ) : (
-                             <div className="space-y-4">
-                                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                                    <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
-                                    <div className="flex items-center space-x-2">
-                                        <WalletIcon className="w-5 h-5 text-muted-foreground" />
-                                        <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
-                                    </div>
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        Save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
+                    </p>
+
+                    {!savedAddress ? (
+                        <div className="flex flex-col space-y-2">
+                            <Input
+                                type="text"
+                                placeholder="Enter your Solana wallet address"
+                                value={walletAddress}
+                                onChange={(e) => setWalletAddress(e.target.value)}
+                                className="bg-background/80"
+                            />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                 <Button disabled={!walletAddress.trim()}>
+                                    <Save className="mr-2 h-4 w-4" /> Save Address
+                                 </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="flex items-center gap-2">
+                                    <AlertTriangle className="text-destructive" /> Are you absolutely sure?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
+                                    <p className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</p>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleSaveAddress}>Confirm & Save</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    ) : (
+                         <div className="space-y-4">
+                            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                                <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
+                                <div className="flex items-center space-x-2">
+                                    <WalletIcon className="w-5 h-5 text-muted-foreground" />
+                                    <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
                                 </div>
                             </div>
-                        )}
-                         <Alert variant="destructive" className="mt-6">
-                            <AlertTriangle className="h-4 w-4" />
-                            <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
-                            <AlertDescription>
-                            Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
-                            </AlertDescription>
-                        </Alert>
-                    </div>
-                </CardContent>
-            </Card>
+                        </div>
+                    )}
+                     <Alert variant="destructive" className="mt-6">
+                        <AlertTriangle className="h-4 w-4" />
+                        <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
+                        <AlertDescription>
+                        Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            </div>
         </main>
        </div>
       <Footer />
