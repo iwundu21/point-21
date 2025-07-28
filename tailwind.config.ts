@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -92,11 +93,16 @@ export default {
           '0%, 100%': { transform: 'scale(1)', borderColor: 'hsla(51, 96%, 54%, 0.7)' },
           '50%': { transform: 'scale(1.02)', borderColor: 'hsla(51, 96%, 54%, 1)' },
         },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fast-pulse': 'fast-pulse 1s infinite cubic-bezier(0.4, 0, 0.6, 1)',
+        'fade-in': 'fade-in 0.5s ease-in-out',
       },
     },
   },

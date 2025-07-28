@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import UserCard from '@/components/user-card';
 import BalanceCard from '@/components/balance-card';
 import MiningCircle from '@/components/mining-circle';
+import ActivityFeed from '@/components/activity-feed';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
@@ -76,19 +77,21 @@ export default function Home() {
           <Skeleton className="w-64 h-64 rounded-full" />
           <Skeleton className="w-48 h-6" />
         </div>
-        <div className="w-full max-w-sm h-12" />
+        <div className="w-full max-w-sm space-y-4">
+           <Skeleton className="w-full h-48 rounded-lg" />
+        </div>
       </div>
     );
   }
 
   return (
-    <main className="flex flex-col items-center justify-evenly min-h-screen bg-background text-foreground p-4 space-y-4 font-body">
+    <main className="flex flex-col items-center justify-start min-h-screen bg-background text-foreground p-4 space-y-8 font-body">
       <header className="w-full max-w-sm space-y-4">
         <UserCard username={user.username} userId={user.id} />
         <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
-      <div className="flex flex-col items-center justify-center space-y-4">
+      <div className="flex flex-col items-center justify-center space-y-4 my-8">
         <MiningCircle 
           isActive={isForgingActive}
           endTime={forgingEndTime}
@@ -97,7 +100,9 @@ export default function Home() {
         />
       </div>
 
-      <div className="w-full max-w-sm h-12" />
+      <div className="w-full max-w-sm">
+        <ActivityFeed />
+      </div>
     </main>
   );
 }
