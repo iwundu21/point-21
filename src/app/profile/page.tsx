@@ -169,9 +169,15 @@ export default function ProfilePage() {
 
         <Card className="w-full max-w-sm bg-primary/5 border-primary/20">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Camera className="w-6 h-6" /> System Verification
-                </CardTitle>
+                {accountStatus === 'verified' ? (
+                  <CardTitle className="flex items-center gap-2 text-green-500">
+                      <CheckCircle className="w-6 h-6" /> Verified
+                  </CardTitle>
+                ) : (
+                  <CardTitle className="flex items-center gap-2">
+                      <Camera className="w-6 h-6" /> System Verification
+                  </CardTitle>
+                )}
             </CardHeader>
             <CardContent className="space-y-4">
                 {hasCameraPermission === false && (
