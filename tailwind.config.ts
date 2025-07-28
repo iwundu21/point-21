@@ -88,10 +88,15 @@ export default {
             height: '0',
           },
         },
+        'subtle-pulse': {
+          '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 hsl(var(--primary) / 0.4)' },
+          '50%': { transform: 'scale(1.02)', boxShadow: '0 0 20px 10px hsl(var(--primary) / 0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'subtle-pulse': 'subtle-pulse 2.5s infinite cubic-bezier(0.4, 0, 0.6, 1)',
       },
     },
   },
