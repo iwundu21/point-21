@@ -46,18 +46,13 @@ export default function ProfilePage() {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase();
   }
 
-  const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : '';
+  const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
 
   if (!isClient || !user) {
     return (
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         <main className="flex-grow flex flex-col items-center justify-center p-4 space-y-8">
-          <Skeleton className="w-32 h-32 rounded-full" />
-          <div className="w-full max-w-sm space-y-4">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <Skeleton className="w-full max-w-sm h-48" />
         </main>
         <Footer />
       </div>
@@ -66,32 +61,19 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-      <main className="flex-grow flex flex-col items-center p-4 space-y-8">
-        <div className="flex flex-col items-center space-y-4 pt-8">
-          <Avatar className="w-32 h-32 border-4 border-primary">
-            <AvatarImage src={user.photo_url} alt={displayName} />
-            <AvatarFallback className="text-4xl">{getInitials()}</AvatarFallback>
-          </Avatar>
-        </div>
-
-        <Card className="w-full max-w-sm bg-primary/5 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-center text-primary/90">User Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-3 rounded-lg bg-primary/10">
-              <span className="font-semibold text-primary/80">Name</span>
-              <span className="font-mono text-lg">{displayName}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg bg-primary/10">
-              <span className="font-semibold text-primary/80">Username</span>
-              <span className="font-mono text-lg">@{user.username || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg bg-primary/10">
-              <span className="font-semibold text-primary/80">Telegram ID</span>
-              <span className="font-mono text-lg">{user.id}</span>
-            </div>
-          </CardContent>
+      <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
+        <Card className="w-full max-w-sm bg-primary/5 border-primary/20 p-6">
+            <CardContent className="flex items-center space-x-6">
+                <Avatar className="w-24 h-24 border-4 border-primary">
+                    <AvatarImage src={user.photo_url} alt={displayName} />
+                    <AvatarFallback className="text-3xl">{getInitials()}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col space-y-1">
+                    <h2 className="text-2xl font-bold">{displayName}</h2>
+                    <p className="text-sm text-muted-foreground">@{user.username || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground pt-2">ID: {user.id}</p>
+                </div>
+            </CardContent>
         </Card>
       </main>
       <Footer />

@@ -34,12 +34,13 @@ const UserCard: FC<UserCardProps> = ({ user }) => {
   }
 
   const getInitials = () => {
+    if (!user) return '??';
     const firstNameInitial = user.first_name ? user.first_name[0] : '';
     const lastNameInitial = user.last_name ? user.last_name[0] : '';
-    return `${firstNameInitial}${lastNameInitial}`.toUpperCase();
+    return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
   }
 
-  const displayName = `${user.first_name} ${user.last_name || ''}`.trim();
+  const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
 
   return (
     <div className="w-full p-4">
