@@ -6,6 +6,7 @@ import BalanceCard from '@/components/balance-card';
 import MiningCircle from '@/components/mining-circle';
 import MissionsCard from '@/components/missions-card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 export default function Home() {
   const [balance, setBalance] = useState(0);
@@ -85,13 +86,13 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-start min-h-screen bg-background text-foreground p-4 space-y-8 font-body">
-      <header className="w-full max-w-sm space-y-4">
+    <main className="flex flex-col items-center justify-start min-h-screen bg-background text-foreground font-body">
+      <header className="w-full max-w-sm p-4">
         <UserCard username={user.username} userId={user.id} />
         <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
-      <div className="flex flex-col items-center justify-center space-y-4 my-8">
+      <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
         <MiningCircle 
           isActive={isForgingActive}
           endTime={forgingEndTime}
@@ -99,6 +100,8 @@ export default function Home() {
           onSessionEnd={handleSessionEnd}
         />
       </div>
+
+      <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
       <div className="w-full max-w-sm">
         <MissionsCard />
