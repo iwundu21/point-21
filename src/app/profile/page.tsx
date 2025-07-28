@@ -27,6 +27,8 @@ interface TelegramUser {
     photo_url?: string;
 }
 
+type VerificationStatus = 'unverified' | 'detecting' | 'verified';
+
 export default function ProfilePage() {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -36,6 +38,7 @@ export default function ProfilePage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isProcessingVerification, setIsProcessingVerification] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<VerificationStatus>('unverified');
   const webcamRef = useRef<Webcam>(null);
 
   useEffect(() => {
@@ -82,11 +85,13 @@ export default function ProfilePage() {
         setCapturedImage(imageSrc);
         setIsCameraActive(false);
         setIsProcessingVerification(true);
+        setAccountStatus('detecting');
 
         setTimeout(() => {
             setIsProcessingVerification(false);
             setVerificationSuccess(true);
-        }, 8000);
+            setAccountStatus('verified');
+        }, 10000); 
     }
   }, [webcamRef]);
   
@@ -99,6 +104,7 @@ export default function ProfilePage() {
     setHasCameraPermission(null);
     setVerificationSuccess(false);
     setIsProcessingVerification(false);
+    setAccountStatus('unverified');
   }
 
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
@@ -115,6 +121,30 @@ export default function ProfilePage() {
     );
   }
 
+  const renderAccountStatus = () => {
+    switch (accountStatus) {
+        case 'verified':
+            return (
+                <span className="text-green-500 font-bold flex items-center text-sm">
+                    <CheckCircle className="w-4 h-4 mr-1" /> Verified
+                </span>
+            );
+        case 'detecting':
+            return (
+                <span className="text-yellow-500 font-bold flex items-center text-sm">
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Verification detection...
+                </span>
+            );
+        case 'unverified':
+        default:
+            return (
+                <span className="text-red-500 font-bold flex items-center text-sm">
+                    <XCircle className="w-4 h-4 mr-1" /> Unverified
+                </span>
+            );
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
@@ -130,15 +160,7 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground pt-2">ID: {user.id}</p>
                     <div className="flex items-center pt-2">
                         <p className="text-sm font-semibold mr-2">Status:</p>
-                        {capturedImage && !verificationSuccess ? (
-                            <span className="text-green-500 font-bold flex items-center text-sm">
-                                <CheckCircle className="w-4 h-4 mr-1" /> Verified
-                            </span>
-                        ) : (
-                            <span className="text-red-500 font-bold flex items-center text-sm">
-                                <XCircle className="w-4 h-4 mr-1" /> Unverified
-                            </span>
-                        )}
+                        {renderAccountStatus()}
                     </div>
                 </div>
             </CardContent>
@@ -191,17 +213,15 @@ export default function ProfilePage() {
                             )}
                        </div>
 
-                        {verificationSuccess && (
+                        {verificationSuccess ? (
                             <div className='flex flex-col items-center justify-center gap-4 text-green-400'>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-6 h-6" />
-                                    <p className="font-semibold">Verification successfully</p>
+                                    <p className="font-semibold">Account Verified</p>
                                 </div>
                                 <Button onClick={handleDone} className="w-full max-w-xs">Done</Button>
                             </div>
-                        )}
-
-                        {!isProcessingVerification && !verificationSuccess && (
+                        ) : !isProcessingVerification && (
                              <Button onClick={resetVerification} variant="outline">
                                 Retake Photo
                             </Button>
