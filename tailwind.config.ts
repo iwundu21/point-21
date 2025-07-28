@@ -88,7 +88,7 @@ export default {
             height: '0',
           },
         },
-        'subtle-pulse': {
+        'fast-pulse': {
           '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 hsla(51, 96%, 54%, 0.4)' },
           '50%': { transform: 'scale(1.02)', boxShadow: '0 0 20px 10px hsla(51, 96%, 54%, 0)' },
         },
@@ -96,7 +96,7 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'subtle-pulse': 'subtle-pulse 2.5s infinite cubic-bezier(0.4, 0, 0.6, 1)',
+        'fast-pulse': 'fast-pulse 1s infinite cubic-bezier(0.4, 0, 0.6, 1)',
       },
     },
   },
