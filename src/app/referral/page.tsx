@@ -39,7 +39,7 @@ export default function ReferralPage() {
             // In a real app, you would fetch this from your backend.
             const userData = getUserData(telegramUser); 
             // Generate a referral link. In a real app, this might come from a backend.
-            const link = `https://t.me/your_bot_name?start=${telegramUser.id}`;
+            const link = `https://t.me/Exnuspoint_bot?start=${telegramUser.id}`;
             setReferralLink(link);
             setFriendsReferred(userData.balance > 1000 ? 5 : 0); // Example logic
         }
@@ -124,4 +124,3 @@ export default function ReferralPage() {
     </div>
   );
 }
-
