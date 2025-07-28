@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Gift, Copy } from 'lucide-react';
-import { getUserData } from '@/lib/database';
+import { getUserData, saveReferralCode } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 
 declare global {
@@ -19,6 +19,10 @@ declare global {
 interface TelegramUser {
     id: number;
     username?: string;
+}
+
+const generateReferralCode = () => {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
 export default function ReferralPage() {
@@ -36,10 +40,15 @@ export default function ReferralPage() {
         const telegramUser = tg.initDataUnsafe?.user;
         if (telegramUser) {
             setUser(telegramUser);
-            // In a real app, you would fetch this from your backend.
             const userData = getUserData(telegramUser); 
-            // Generate a referral link. In a real app, this might come from a backend.
-            const link = `https://t.me/Exnuspoint_bot?start=${telegramUser.id}`;
+            
+            let userReferralCode = userData.referralCode;
+            if (!userReferralCode) {
+                userReferralCode = generateReferralCode();
+                saveReferralCode(telegramUser, userReferralCode);
+            }
+
+            const link = `https://t.me/Exnuspoint_bot?start=${userReferralCode}`;
             setReferralLink(link);
             setFriendsReferred(userData.balance > 1000 ? 5 : 0); // Example logic
         }

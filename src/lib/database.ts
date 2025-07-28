@@ -21,6 +21,7 @@ export interface UserData {
     verificationStatus: 'verified' | 'unverified' | 'failed';
     walletAddress: string | null;
     telegramUser: TelegramUser | null;
+    referralCode: string | null;
 }
 
 const getUserId = (telegramUser: TelegramUser | null) => {
@@ -35,6 +36,7 @@ const defaultUserData: UserData = {
     verificationStatus: 'unverified',
     walletAddress: null,
     telegramUser: null,
+    referralCode: null,
 };
 
 // In a real app, this would fetch from a remote database.
@@ -74,3 +76,6 @@ export const saveVerificationStatus = (user: TelegramUser | null, status: 'verif
 
 export const getWalletAddress = (user: TelegramUser | null) => getUserData(user).walletAddress;
 export const saveWalletAddress = (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
+
+export const getReferralCode = (user: TelegramUser | null) => getUserData(user).referralCode;
+export const saveReferralCode = (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
