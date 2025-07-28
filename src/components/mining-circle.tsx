@@ -66,14 +66,18 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
     background: `conic-gradient(hsl(var(--primary)) ${progress}%, hsl(var(--card)) ${progress}%)`,
   };
 
-  const handleVerificationRedirect = () => {
-    router.push('/profile');
-  }
+  const handleClick = () => {
+    if (isVerified) {
+      onActivate();
+    } else {
+      router.push('/profile');
+    }
+  };
 
   return (
     <div className="flex flex-col items-center space-y-4">
       <button
-        onClick={isVerified ? onActivate : onVerificationRedirect}
+        onClick={handleClick}
         disabled={isActive}
         aria-label={isActive ? `Mining session active, time left: ${formatTime(timeLeft)}` : 'Activate Mining'}
         className={cn(
