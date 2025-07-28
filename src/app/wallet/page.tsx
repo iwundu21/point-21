@@ -17,7 +17,7 @@ export default function WalletPage() {
 
   useEffect(() => {
     setIsClient(true);
-    const storedAddress = localStorage.getItem('exnus_solana_wallet');
+    const storedAddress = localStorage.getItem('exnus_wallet');
     if (storedAddress) {
       setSavedAddress(storedAddress);
       setWalletAddress(storedAddress);
@@ -26,17 +26,17 @@ export default function WalletPage() {
 
   const handleSaveAddress = () => {
     if (walletAddress.trim()) {
-      localStorage.setItem('exnus_solana_wallet', walletAddress);
+      localStorage.setItem('exnus_wallet', walletAddress);
       setSavedAddress(walletAddress);
       toast({
         title: 'Wallet Address Saved',
-        description: 'Your Solana wallet address has been saved successfully.',
+        description: 'Your wallet address has been saved successfully.',
       });
     } else {
         toast({
             variant: 'destructive',
             title: 'Invalid Address',
-            description: 'Please enter a valid Solana wallet address.',
+            description: 'Please enter a valid wallet address.',
         });
     }
   };
@@ -63,14 +63,14 @@ export default function WalletPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div>
-                        <h3 className="text-lg font-semibold mb-2">Solana Airdrop</h3>
+                        <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
                         <CardDescription className="mb-4">
-                            Save your Solana wallet address to be eligible for future airdrop snapshots.
+                            Save your wallet address to be eligible for future Exnus EXN airdrop snapshots.
                         </CardDescription>
                         <div className="flex flex-col space-y-2">
                             <Input 
                                 type="text"
-                                placeholder="Enter your Solana wallet address"
+                                placeholder="Enter your wallet address"
                                 value={walletAddress}
                                 onChange={(e) => setWalletAddress(e.target.value)}
                                 className="bg-background/80"
