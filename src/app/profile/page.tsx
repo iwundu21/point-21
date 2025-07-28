@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -62,7 +62,21 @@ export default function ProfilePage() {
         if (storedStatus === 'verified') {
             setAccountStatus('verified');
         }
+      } else {
+        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
+        setUser(mockUser);
+        const storedStatus = getVerificationStatus(mockUser);
+        if (storedStatus === 'verified') {
+            setAccountStatus('verified');
+        }
       }
+    } else {
+       const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
+       setUser(mockUser);
+       const storedStatus = getVerificationStatus(mockUser);
+       if (storedStatus === 'verified') {
+            setAccountStatus('verified');
+       }
     }
   }, []);
 
@@ -317,7 +331,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Toaster />
-      <div className="flex-grow pb-20">
+      <div className="flex-grow pb-32">
         {isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
             <div className="w-full max-w-sm flex flex-col items-center text-center space-y-4">
@@ -369,8 +383,18 @@ export default function ProfilePage() {
             </div>
           </main>
         )}
+         <div className="text-center text-xs text-muted-foreground p-4 mt-8">
+            <div className="flex justify-center items-center space-x-4">
+                <Link href="#" className="hover:text-primary">Terms & Conditions</Link>
+                <span>|</span>
+                <Link href="#" className="hover:text-primary">Privacy Policy</Link>
+            </div>
+            <p className="mt-2">© {new Date().getFullYear()} Aetherium Points. All rights reserved.</p>
+         </div>
       </div>
       <Footer />
     </div>
   );
 }
+
+    
