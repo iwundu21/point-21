@@ -71,9 +71,9 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
         aria-label={isActive ? `Forging session active, time left: ${formatTime(timeLeft)}` : 'Activate Mining'}
         className={cn(
           'relative w-64 h-64 rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out disabled:cursor-not-allowed',
-          'bg-card/80 border-4 border-primary/50 text-foreground shadow-lg backdrop-blur-sm',
+          'bg-transparent border-4 border-yellow-400/50 text-foreground shadow-lg backdrop-blur-sm',
           isActive && 'shadow-primary/20',
-          !isActive && 'hover:bg-primary/30 hover:border-primary hover:scale-105'
+          !isActive && 'animate-subtle-pulse hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105'
         )}
       >
         <div 
@@ -81,7 +81,7 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
           style={isActive ? conicGradientStyle : {}}
         ></div>
         <div className="relative w-56 h-56 rounded-full bg-card/90 flex flex-col items-center justify-center">
-            <Zap className={cn("w-16 h-16 transition-all duration-500", isActive ? "text-primary" : "text-primary/70")} />
+            <Zap className={cn("w-16 h-16 transition-all duration-500", isActive ? "text-primary" : "text-yellow-400/70")} />
             {isActive ? (
               <div className="mt-2 text-center">
                  <p className="text-2xl font-bold tracking-tighter">{earnedPoints}/{TOTAL_POINTS}</p>
