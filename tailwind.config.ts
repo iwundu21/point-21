@@ -89,8 +89,8 @@ export default {
           },
         },
         'fast-pulse': {
-          '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 hsla(51, 96%, 54%, 0.4)' },
-          '50%': { transform: 'scale(1.02)', boxShadow: '0 0 20px 10px hsla(51, 96%, 54%, 0)' },
+          '0%, 100%': { transform: 'scale(1)', borderColor: 'hsla(51, 96%, 54%, 0.7)' },
+          '50%': { transform: 'scale(1.02)', borderColor: 'hsla(51, 96%, 54%, 1)' },
         },
       },
       animation: {
