@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Wallet, Gift, Users } from 'lucide-react';
+import { Home, User, Wallet, Gift, Users, Handshake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Footer = () => {
@@ -12,7 +12,7 @@ const Footer = () => {
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/tasks', label: 'Social', icon: Users },
-    { href: '/referral', label: 'Referral', icon: Gift },
+    { href: '/referral', label: 'Referral', icon: Handshake },
     { href: '/welcome-tasks', label: 'Welcome', icon: Gift },
     { href: '/wallet', label: 'Wallet', icon: Wallet },
     { href: '/profile', label: 'Profile', icon: User },
