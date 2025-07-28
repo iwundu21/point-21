@@ -33,7 +33,16 @@ export default function Home() {
   const [user, setUser] = useState<TelegramUser | null>(null);
 
   useEffect(() => {
+    // This effect runs once on component mount on the client side.
+    // We set isClient to true to trigger another effect that will handle all client-side logic.
     setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // This effect runs only on the client, after the component has mounted.
+    if (!isClient) {
+      return;
+    }
     
     const tg = window.Telegram?.WebApp;
     if (tg) {
@@ -48,10 +57,9 @@ export default function Home() {
     const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
     const savedStreak = localStorage.getItem('exnus_daily_streak');
 
+    let currentBalance = 0;
     if (savedBalance) {
-      setBalance(JSON.parse(savedBalance));
-    } else {
-      setBalance(0);
+      currentBalance = JSON.parse(savedBalance);
     }
     
     if (savedEndTime) {
@@ -61,8 +69,7 @@ export default function Home() {
             setForgingEndTime(endTime);
         } else {
             // Give points for finished session if they open the app after it's done
-            const lastBalance = savedBalance ? JSON.parse(savedBalance) : 0;
-            setBalance(lastBalance + 1000);
+            currentBalance += 1000;
             localStorage.removeItem('exnus_forgingEndTime');
             setIsForgingActive(false);
             setForgingEndTime(null);
@@ -91,14 +98,17 @@ export default function Home() {
          newStreakCount = (streakData.count % 7) + 1;
       }
       
-      setBalance(prev => prev + 200);
+      currentBalance += 200;
       setDailyStreak(newStreakCount);
       localStorage.setItem('exnus_daily_streak', JSON.stringify({ count: newStreakCount, lastLogin: today }));
     } else {
       setDailyStreak(streakData.count);
     }
+    
+    setBalance(currentBalance);
 
-  }, []);
+  // The dependency array ensures this effect runs only when isClient becomes true.
+  }, [isClient]);
 
   useEffect(() => {
       if (isClient) {
