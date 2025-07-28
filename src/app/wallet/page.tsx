@@ -7,7 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, Save } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function WalletPage() {
   const [walletAddress, setWalletAddress] = useState('');
@@ -41,6 +52,11 @@ export default function WalletPage() {
     }
   };
 
+  const truncateAddress = (address: string) => {
+    if (address.length < 14) return address;
+    return `${address.slice(0, 7)}****${address.slice(-7)}`;
+  }
+
   if (!isClient) {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -67,26 +83,50 @@ export default function WalletPage() {
                         <CardDescription className="mb-4">
                             Save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
                         </CardDescription>
-                        <div className="flex flex-col space-y-2">
-                            <Input 
-                                type="text"
-                                placeholder="Enter your Solana wallet address"
-                                value={walletAddress}
-                                onChange={(e) => setWalletAddress(e.target.value)}
-                                className="bg-background/80"
-                            />
-                            <Button onClick={handleSaveAddress}>
-                                <Save className="mr-2 h-4 w-4" /> Save Address
-                            </Button>
-                        </div>
+                        
+                        {!savedAddress ? (
+                            <div className="flex flex-col space-y-2">
+                                <Input 
+                                    type="text"
+                                    placeholder="Enter your Solana wallet address"
+                                    value={walletAddress}
+                                    onChange={(e) => setWalletAddress(e.target.value)}
+                                    className="bg-background/80"
+                                    disabled={!!savedAddress}
+                                />
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                     <Button disabled={!walletAddress.trim()}>
+                                        <Save className="mr-2 h-4 w-4" /> Save Address
+                                     </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle className="flex items-center gap-2">
+                                        <AlertTriangle className="text-destructive" /> Are you absolutely sure?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
+                                        <p className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</p>
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={handleSaveAddress}>Confirm & Save</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        ) : (
+                             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                                <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
+                                <div className="flex items-center space-x-2">
+                                    <WalletIcon className="w-5 h-5 text-muted-foreground" />
+                                    <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    
-                    {savedAddress && (
-                        <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                            <h4 className="font-semibold text-primary/90">Saved Address:</h4>
-                            <p className="text-sm text-muted-foreground break-all">{savedAddress}</p>
-                        </div>
-                    )}
                 </CardContent>
             </Card>
         </main>
