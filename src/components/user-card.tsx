@@ -13,7 +13,7 @@ const UserCard: FC<UserCardProps> = ({ username, userId }) => {
   return (
     <Card className="w-full bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg">
       <CardHeader>
-        <CardTitle className="text-center text-primary">User Details</CardTitle>
+        <CardTitle className="text-center text-primary">Operator Profile</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">

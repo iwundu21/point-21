@@ -7,53 +7,53 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
   const [balance, setBalance] = useState(0);
-  const [isMiningActive, setIsMiningActive] = useState(false);
-  const [miningEndTime, setMiningEndTime] = useState<number | null>(null);
+  const [isForgingActive, setIsForgingActive] = useState(false);
+  const [forgingEndTime, setForgingEndTime] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    const savedBalance = localStorage.getItem('exnus_balance');
-    const savedEndTime = localStorage.getItem('exnus_miningEndTime');
+    const savedBalance = localStorage.getItem('aetherium_balance');
+    const savedEndTime = localStorage.getItem('aetherium_forgingEndTime');
     
     if (savedBalance) setBalance(JSON.parse(savedBalance));
     
     if (savedEndTime) {
         const endTime = JSON.parse(savedEndTime);
         if (endTime > Date.now()) {
-            setIsMiningActive(true);
-            setMiningEndTime(endTime);
+            setIsForgingActive(true);
+            setForgingEndTime(endTime);
         } else {
             // Award points for a session that ended while the user was away
             setBalance(prev => prev + 1000);
-            localStorage.removeItem('exnus_miningEndTime');
+            localStorage.removeItem('aetherium_forgingEndTime');
         }
     }
   }, []);
 
   useEffect(() => {
       if (isClient) {
-          localStorage.setItem('exnus_balance', JSON.stringify(balance));
-          if (miningEndTime) {
-              localStorage.setItem('exnus_miningEndTime', JSON.stringify(miningEndTime));
+          localStorage.setItem('aetherium_balance', JSON.stringify(balance));
+          if (forgingEndTime) {
+              localStorage.setItem('aetherium_forgingEndTime', JSON.stringify(forgingEndTime));
           } else {
-              localStorage.removeItem('exnus_miningEndTime');
+              localStorage.removeItem('aetherium_forgingEndTime');
           }
       }
-  }, [balance, miningEndTime, isClient]);
+  }, [balance, forgingEndTime, isClient]);
 
-  const handleActivateMining = () => {
+  const handleActivateForging = () => {
     // 24 hours in milliseconds
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
-    setIsMiningActive(true);
-    setMiningEndTime(endTime);
+    setIsForgingActive(true);
+    setForgingEndTime(endTime);
   };
 
   const handleSessionEnd = () => {
     setBalance(prev => prev + 1000);
-    setIsMiningActive(false);
-    setMiningEndTime(null);
+    setIsForgingActive(false);
+    setForgingEndTime(null);
     setShowPointsAnimation(true);
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
@@ -85,9 +85,9 @@ export default function Home() {
       
       <div className="flex-grow flex flex-col items-center justify-center space-y-4">
         <MiningCircle 
-          isActive={isMiningActive}
-          endTime={miningEndTime}
-          onActivate={handleActivateMining}
+          isActive={isForgingActive}
+          endTime={forgingEndTime}
+          onActivate={handleActivateForging}
           onSessionEnd={handleSessionEnd}
         />
       </div>

@@ -2,8 +2,8 @@ import type {Metadata} from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Exnus Points',
-  description: 'Mine points in the Exnus ecosystem.',
+  title: 'Aetherium Points',
+  description: 'Forge Aether in the Aetherium ecosystem.',
 };
 
 export default function RootLayout({
