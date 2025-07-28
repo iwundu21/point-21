@@ -68,7 +68,7 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
       <button
         onClick={!isActive ? onActivate : undefined}
         disabled={isActive}
-        aria-label={isActive ? `Forging session active, time left: ${formatTime(timeLeft)}` : 'Activate Mining'}
+        aria-label={isActive ? `Mining session active, time left: ${formatTime(timeLeft)}` : 'Activate Mining'}
         className={cn(
           'relative w-64 h-64 rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out disabled:cursor-not-allowed',
           'bg-transparent border-4 border-yellow-400/50 text-foreground backdrop-blur-sm',
@@ -94,8 +94,8 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
       </button>
       <p className="text-center text-sm text-muted-foreground max-w-xs">
         {isActive
-          ? 'Your 24-hour forging session is active. Aether will be added automatically.'
-          : 'Activate a 24-hour forging session to earn 1000 Aether.'}
+          ? 'Your 24-hour mining session is active. E-point will be added automatically.'
+          : 'Activate a 24-hour mining session to earn 1000 E-point'}
       </p>
     </div>
   );
