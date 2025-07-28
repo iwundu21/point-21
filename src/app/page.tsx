@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import UserCard from '@/components/user-card';
@@ -67,7 +68,7 @@ export default function Home() {
   if (!isClient) {
     return (
       <div className="flex flex-col items-center justify-between min-h-screen bg-background p-4 space-y-8">
-        <Skeleton className="w-full max-w-sm h-36 rounded-lg" />
+        <Skeleton className="w-full max-w-sm h-24 rounded-lg" />
         <div className="flex flex-col items-center space-y-4">
           <Skeleton className="w-64 h-64 rounded-full" />
           <Skeleton className="w-48 h-6" />
@@ -79,7 +80,7 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-background text-foreground p-4 space-y-8 font-body">
-      <header className="w-full max-w-sm">
+      <header className="w-full max-w-sm self-start">
         <UserCard username={user.username} userId={user.id} />
       </header>
       
