@@ -105,6 +105,18 @@ export default function ProfilePage() {
                     <h2 className="text-2xl font-bold">{displayName}</h2>
                     <p className="text-sm text-muted-foreground">@{user.username || 'N/A'}</p>
                     <p className="text-xs text-muted-foreground pt-2">ID: {user.id}</p>
+                    <div className="flex items-center pt-2">
+                        <p className="text-sm font-semibold mr-2">Status:</p>
+                        {capturedImage ? (
+                            <span className="text-green-500 font-bold flex items-center text-sm">
+                                <CheckCircle className="w-4 h-4 mr-1" /> Verified
+                            </span>
+                        ) : (
+                            <span className="text-red-500 font-bold flex items-center text-sm">
+                                <XCircle className="w-4 h-4 mr-1" /> Unverified
+                            </span>
+                        )}
+                    </div>
                 </div>
             </CardContent>
         </Card>
