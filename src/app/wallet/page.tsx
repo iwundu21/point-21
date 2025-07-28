@@ -84,16 +84,15 @@ export default function WalletPage() {
                         <CardDescription className="mb-4">
                             Save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
                         </CardDescription>
-                        
+
                         {!savedAddress ? (
                             <div className="flex flex-col space-y-2">
-                                <Input 
+                                <Input
                                     type="text"
                                     placeholder="Enter your Solana wallet address"
                                     value={walletAddress}
                                     onChange={(e) => setWalletAddress(e.target.value)}
                                     className="bg-background/80"
-                                    disabled={!!savedAddress}
                                 />
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
@@ -127,15 +126,15 @@ export default function WalletPage() {
                                         <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
                                     </div>
                                 </div>
-                                <Alert variant="destructive">
-                                  <AlertTriangle className="h-4 w-4" />
-                                  <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
-                                  <AlertDescription>
-                                    Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
-                                  </AlertDescription>
-                                </Alert>
                             </div>
                         )}
+                         <Alert variant="destructive" className="mt-6">
+                            <AlertTriangle className="h-4 w-4" />
+                            <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
+                            <AlertDescription>
+                            Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 </CardContent>
             </Card>
