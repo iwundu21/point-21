@@ -41,6 +41,7 @@ export default function ProfilePage() {
   const [isProcessingVerification, setIsProcessingVerification] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [accountStatus, setAccountStatus] = useState<VerificationStatus>('unverified');
+  const [failureReason, setFailureReason] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const { toast } = useToast();
 
@@ -114,20 +115,12 @@ export default function ProfilePage() {
             });
           } else {
             setAccountStatus('failed');
-            toast({
-              variant: 'destructive',
-              title: 'Verification Failed',
-              description: result.reason || 'No real human face detected. Please try again.',
-            });
+            setFailureReason(result.reason || 'No real human face detected. Please try again.');
           }
         } catch (error) {
            console.error('Verification error:', error);
            setAccountStatus('failed');
-           toast({
-              variant: 'destructive',
-              title: 'Verification Error',
-              description: 'An unexpected error occurred. Please try again later.',
-           });
+           setFailureReason('An unexpected error occurred. Please try again later.');
         } finally {
             setIsProcessingVerification(false);
         }
@@ -145,6 +138,7 @@ export default function ProfilePage() {
     setVerificationSuccess(false);
     setIsProcessingVerification(false);
     setAccountStatus('unverified');
+    setFailureReason(null);
   }
 
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
@@ -190,6 +184,27 @@ export default function ProfilePage() {
             );
     }
   };
+  
+  const renderVerificationFailure = () => {
+    if (accountStatus !== 'failed' || isProcessingVerification || !failureReason) return null;
+
+    return (
+        <div className="text-center space-y-4 p-4 border border-destructive/50 bg-destructive/10 rounded-lg">
+             <AlertTitle className="font-bold flex items-center justify-center gap-2">
+                <XCircle className="w-5 h-5 text-destructive" />
+                Verification Failed
+            </AlertTitle>
+            <AlertDescription>
+                {failureReason}
+            </AlertDescription>
+            <div className="flex justify-center gap-4 pt-2">
+                <Button onClick={resetVerification} variant="outline" className="w-full">
+                    Try Again
+                </Button>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -265,11 +280,7 @@ export default function ProfilePage() {
                                 </div>
                             )}
                        </div>
-                       {!isProcessingVerification && accountStatus === 'failed' && (
-                            <Button onClick={resetVerification} variant="outline">
-                                Try Again
-                            </Button>
-                        )}
+                       {renderVerificationFailure()}
                     </div>
                 ) : verificationSuccess ? (
                     <div className='flex flex-col items-center justify-center gap-4 text-green-400 text-center p-4'>
@@ -279,12 +290,14 @@ export default function ProfilePage() {
                         <Button onClick={handleDone} className="w-full max-w-xs">Done</Button>
                     </div>
                 ) : accountStatus === 'unverified' || accountStatus === 'failed' ? (
-                    <div className='text-center space-y-4'>
-                        <p className="text-sm text-muted-foreground">Verify your identity by taking a photo of your face.</p>
-                        <Button onClick={handleStartVerification} className="w-full">
-                           <Camera className="mr-2 h-4 w-4" /> Start Verification
-                        </Button>
-                    </div>
+                     accountStatus === 'failed' ? renderVerificationFailure() : (
+                        <div className='text-center space-y-4'>
+                            <p className="text-sm text-muted-foreground">Verify your identity by taking a photo of your face.</p>
+                            <Button onClick={handleStartVerification} className="w-full">
+                               <Camera className="mr-2 h-4 w-4" /> Start Verification
+                            </Button>
+                        </div>
+                    )
                 ) : null}
             </CardContent>
         </Card>
@@ -294,3 +307,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
