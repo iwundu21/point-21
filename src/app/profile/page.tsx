@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Camera, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Webcam from "react-webcam";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -33,6 +33,7 @@ export default function ProfilePage() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
   const webcamRef = useRef<Webcam>(null);
 
   useEffect(() => {
@@ -54,19 +55,23 @@ export default function ProfilePage() {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase();
   }
   
-  const handleStartVerification = async () => {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-            await navigator.mediaDevices.getUserMedia({ video: true });
-            setHasCameraPermission(true);
-            setIsCameraActive(true);
-        } catch (error) {
-            console.error("Camera access denied:", error);
+  const handleStartVerification = () => {
+      setIsVerifying(true);
+      setTimeout(async () => {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                await navigator.mediaDevices.getUserMedia({ video: true });
+                setHasCameraPermission(true);
+                setIsCameraActive(true);
+            } catch (error) {
+                console.error("Camera access denied:", error);
+                setHasCameraPermission(false);
+            }
+        } else {
             setHasCameraPermission(false);
         }
-      } else {
-        setHasCameraPermission(false);
-      }
+        setIsVerifying(false);
+      }, 6000);
   };
 
   const capture = useCallback(() => {
@@ -136,8 +141,13 @@ export default function ProfilePage() {
                       </AlertDescription>
                     </Alert>
                 )}
-
-                {isCameraActive ? (
+                
+                {isVerifying ? (
+                    <div className="flex flex-col items-center justify-center space-y-4 p-8">
+                      <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                      <p className="text-muted-foreground">Please wait...</p>
+                    </div>
+                ) : isCameraActive ? (
                     <div className="space-y-4">
                         <Webcam
                             audio={false}
@@ -156,7 +166,7 @@ export default function ProfilePage() {
                             <CheckCircle className="w-6 h-6" />
                             <p className="font-semibold">Verification Photo Captured</p>
                         </div>
-                        <Button onClick={() => setCapturedImage(null)} variant="outline">
+                        <Button onClick={() => { setCapturedImage(null); setHasCameraPermission(null); }} variant="outline">
                             Retake Photo
                         </Button>
                     </div>
