@@ -113,26 +113,28 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-start min-h-screen bg-background text-foreground font-body">
-      <header className="w-full max-w-sm p-4">
+    <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4">
         <UserCard username={user.username} userId={user.id} />
         <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
-      <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
-        <MiningCircle 
-          isActive={isForgingActive}
-          endTime={forgingEndTime}
-          onActivate={handleActivateForging}
-          onSessionEnd={handleSessionEnd}
-        />
-      </div>
+      <main className="flex flex-col items-center justify-start flex-grow">
+        <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
+          <MiningCircle 
+            isActive={isForgingActive}
+            endTime={forgingEndTime}
+            onActivate={handleActivateForging}
+            onSessionEnd={handleSessionEnd}
+          />
+        </div>
 
-      <Separator className="w-full max-w-sm my-4 bg-primary/10" />
+        <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
-      <div className="w-full max-w-sm">
-        <MissionsCard streak={dailyStreak} balance={balance} />
-      </div>
-    </main>
+        <div className="w-full max-w-sm">
+          <MissionsCard streak={dailyStreak} balance={balance} />
+        </div>
+      </main>
+    </div>
   );
 }
