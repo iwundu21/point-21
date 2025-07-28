@@ -37,14 +37,12 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true);
     
-    if (typeof window !== 'undefined') {
-      const tg = window.Telegram?.WebApp;
-      if (tg) {
-        tg.ready();
-        const telegramUser = tg.initDataUnsafe?.user;
-        if (telegramUser) {
-          setUser(telegramUser);
-        }
+    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      const telegramUser = tg.initDataUnsafe?.user;
+      if (telegramUser) {
+        setUser(telegramUser);
       }
 
       const savedBalance = localStorage.getItem('exnus_balance');
