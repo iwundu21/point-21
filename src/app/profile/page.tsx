@@ -34,6 +34,8 @@ export default function ProfilePage() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isProcessingVerification, setIsProcessingVerification] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   const webcamRef = useRef<Webcam>(null);
 
   useEffect(() => {
@@ -79,9 +81,25 @@ export default function ProfilePage() {
     if (imageSrc) {
         setCapturedImage(imageSrc);
         setIsCameraActive(false);
+        setIsProcessingVerification(true);
+
+        setTimeout(() => {
+            setIsProcessingVerification(false);
+            setVerificationSuccess(true);
+        }, 8000);
     }
   }, [webcamRef]);
+  
+  const handleDone = () => {
+    setVerificationSuccess(false);
+  };
 
+  const resetVerification = () => {
+    setCapturedImage(null);
+    setHasCameraPermission(null);
+    setVerificationSuccess(false);
+    setIsProcessingVerification(false);
+  }
 
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
 
@@ -112,7 +130,7 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground pt-2">ID: {user.id}</p>
                     <div className="flex items-center pt-2">
                         <p className="text-sm font-semibold mr-2">Status:</p>
-                        {capturedImage ? (
+                        {capturedImage && !verificationSuccess ? (
                             <span className="text-green-500 font-bold flex items-center text-sm">
                                 <CheckCircle className="w-4 h-4 mr-1" /> Verified
                             </span>
@@ -148,27 +166,46 @@ export default function ProfilePage() {
                       <p className="text-muted-foreground">Please wait...</p>
                     </div>
                 ) : isCameraActive ? (
-                    <div className="space-y-4">
-                        <Webcam
-                            audio={false}
-                            ref={webcamRef}
-                            screenshotFormat="image/jpeg"
-                            className="w-full rounded-lg"
-                        />
-                        <Button onClick={capture} className="w-full">
+                    <div className="space-y-4 flex flex-col items-center">
+                        <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-primary">
+                            <Webcam
+                                audio={false}
+                                ref={webcamRef}
+                                screenshotFormat="image/jpeg"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <Button onClick={capture} className="w-full max-w-xs">
                             <Camera className="mr-2 h-4 w-4" /> Capture
                         </Button>
                     </div>
                 ) : capturedImage ? (
                     <div className="space-y-4 text-center">
-                        <img src={capturedImage} alt="Captured" className="rounded-lg w-full" />
-                        <div className='flex items-center justify-center gap-2 text-green-400'>
-                            <CheckCircle className="w-6 h-6" />
-                            <p className="font-semibold">Verification Photo Captured</p>
-                        </div>
-                        <Button onClick={() => { setCapturedImage(null); setHasCameraPermission(null); }} variant="outline">
-                            Retake Photo
-                        </Button>
+                       <div className="relative w-64 h-64 mx-auto">
+                            <img src={capturedImage} alt="Captured" className="rounded-full w-full h-full object-cover" />
+                            {isProcessingVerification && (
+                                <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center">
+                                    <Loader2 className="w-12 h-12 animate-spin text-white" />
+                                    <p className="text-white mt-2 font-semibold">Verifying...</p>
+                                </div>
+                            )}
+                       </div>
+
+                        {verificationSuccess && (
+                            <div className='flex flex-col items-center justify-center gap-4 text-green-400'>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="w-6 h-6" />
+                                    <p className="font-semibold">Verification successfully</p>
+                                </div>
+                                <Button onClick={handleDone} className="w-full max-w-xs">Done</Button>
+                            </div>
+                        )}
+
+                        {!isProcessingVerification && !verificationSuccess && (
+                             <Button onClick={resetVerification} variant="outline">
+                                Retake Photo
+                            </Button>
+                        )}
                     </div>
                 ) : (
                     <div className='text-center space-y-4'>
