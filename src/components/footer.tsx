@@ -13,6 +13,7 @@ const Footer = () => {
     { href: '/', label: 'Home', icon: Home },
     { href: '/tasks', label: 'Tasks', icon: ClipboardList },
     { href: '/referral', label: 'Referral', icon: Gift },
+    { href: '/welcome-tasks', label: 'Welcome', icon: Gift },
     { href: '/wallet', label: 'Wallet', icon: Wallet },
     { href: '/profile', label: 'Profile', icon: User },
   ];
