@@ -57,7 +57,8 @@ export const getUserData = (telegramUser: TelegramUser | null): UserData => {
         // Ensure all default fields are present
         return { ...defaultUserData, ...parsedData, telegramUser };
     }
-    return { ...defaultUserData, telegramUser };
+    const telegramUserObj = telegramUser ? { id: telegramUser.id, first_name: telegramUser.first_name, last_name: telegramUser.last_name, username: telegramUser.username, language_code: telegramUser.language_code, is_premium: telegramUser.is_premium, photo_url: telegramUser.photo_url } : null;
+    return { ...defaultUserData, telegramUser: telegramUserObj };
 };
 
 // In a real app, this would save to a remote database.
@@ -65,25 +66,34 @@ export const saveUserData = (telegramUser: TelegramUser | null, data: Partial<Om
      if (typeof window === 'undefined') return;
     const userId = getUserId(telegramUser);
     const currentData = getUserData(telegramUser);
-    const newData = { ...currentData, ...data };
+    const newData = { ...currentData, ...data, telegramUser: currentData.telegramUser };
     delete (newData as any).telegramUser; // Don't store user object in the data blob
     localStorage.setItem(userId, JSON.stringify(newData));
 };
 
 // In a real app, this would be a database query.
 export const findUserByReferralCode = (code: string): UserData | null => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined' || !code) return null;
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('user_')) {
-            const data = localStorage.getItem(key);
-            if (data) {
-                const userData: UserData = JSON.parse(data);
-                if (userData.referralCode === code) {
-                    // Re-create the telegramUser object from the key
-                    const id = parseInt(key.replace('user_', ''));
-                    return { ...userData, telegramUser: { id } as TelegramUser };
+            try {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const userData: Omit<UserData, 'telegramUser'> = JSON.parse(data);
+                    if (userData.referralCode && userData.referralCode.trim().toLowerCase() === code.trim().toLowerCase()) {
+                        const id = parseInt(key.replace('user_', ''), 10);
+                        // We need to retrieve the full user object if possible, but the key is enough for the ID.
+                        // In a real DB, you'd fetch the full user profile here.
+                        // For localStorage, we can only reconstruct the ID.
+                        const fullUserData = JSON.parse(localStorage.getItem(key) || '{}');
+                        const tgInfo = { id, username: `user${id}` }; // Mock some data
+                        return { ...defaultUserData, ...fullUserData, telegramUser: tgInfo as TelegramUser };
+                    }
                 }
+            } catch (e) {
+                console.error("Error parsing user data from localStorage", e);
+                // Malformed data, skip it.
             }
         }
     }

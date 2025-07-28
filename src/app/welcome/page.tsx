@@ -98,9 +98,10 @@ export default function WelcomePage() {
 
     let userData = getUserData(user);
     let currentBalance = userData.balance || 0;
+    let referralApplied = false;
 
     // Handle referral logic
-    if (referralCode.trim() && !userData.referredBy && !userData.referralBonusApplied) {
+    if (referralCode.trim() && !userData.referralBonusApplied) {
         const referrerData = findUserByReferralCode(referralCode.trim());
 
         if (referrerData && referrerData.telegramUser?.id !== user.id) {
@@ -110,17 +111,25 @@ export default function WelcomePage() {
                 title: "Referral Bonus!",
                 description: "You've received 50 E-points for using a referral code.",
             });
-
-            userData.referralBonusApplied = true;
-            userData.referredBy = referralCode.trim();
             
             // Update referrer's data
             applyReferralBonus(referralCode.trim());
+
+            userData.referralBonusApplied = true;
+            userData.referredBy = referrerData.telegramUser.id.toString();
+            referralApplied = true;
+
+        } else if (referrerData && referrerData.telegramUser?.id === user.id) {
+            toast({
+                variant: "destructive",
+                title: "Invalid Referral Code",
+                description: "You cannot use your own referral code.",
+            });
         } else {
              toast({
                 variant: "destructive",
                 title: "Invalid Referral Code",
-                description: "The code you entered is not valid or belongs to you.",
+                description: "The code you entered is not valid.",
             });
         }
     }
@@ -132,8 +141,10 @@ export default function WelcomePage() {
         onboardingCompleted: true,
     });
 
-    // Navigate to home page
-    router.replace('/');
+    // Navigate to home page after a short delay to show loading state
+    setTimeout(() => {
+        router.replace('/');
+    }, 1000);
   };
 
   if (isLoading) {
@@ -175,7 +186,7 @@ export default function WelcomePage() {
       <main className="flex-grow flex flex-col items-center justify-center p-4">
         <Card className="w-full max-w-sm bg-primary/5 border-primary/20">
           <CardHeader className="text-center">
-            <CardTitle>Welcome to Aetherium Points!</CardTitle>
+            <CardTitle>Welcome to Exnus Points!</CardTitle>
             <CardDescription>
               Complete a few simple tasks to get started and unlock your full access.
             </CardDescription>
@@ -210,7 +221,7 @@ export default function WelcomePage() {
             )}
 
             <Button onClick={handleContinue} disabled={!allTasksDone || isFinishing} className="w-full">
-              {isFinishing ? <Loader2 className="animate-spin" /> : 'Continue'}
+              {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Setup'}
             </Button>
           </CardContent>
         </Card>
