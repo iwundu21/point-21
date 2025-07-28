@@ -131,7 +131,7 @@ export default function Home() {
       <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
       <div className="w-full max-w-sm">
-        <MissionsCard streak={dailyStreak} />
+        <MissionsCard streak={dailyStreak} balance={balance} />
       </div>
     </main>
   );
