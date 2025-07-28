@@ -6,7 +6,7 @@ import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Gift, Copy } from 'lucide-react';
+import { Gift, Copy, MessageSquarePlus } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -32,6 +32,10 @@ export default function ReferralPage() {
   const [friendsReferred, setFriendsReferred] = useState(0);
   const { toast } = useToast();
 
+  const botUrl = "https://t.me/Exnuspoint_bot";
+  const shareMessage = `Join me on Exnus Points and get a 50 point bonus! ✨\n\nUse my referral code to get started: ${referralCode}\n\n${botUrl}`;
+
+
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
@@ -54,11 +58,11 @@ export default function ReferralPage() {
     }
   }, []);
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(referralCode);
+  const handleCopy = (textToCopy: string, successMessage: string) => {
+    navigator.clipboard.writeText(textToCopy);
     toast({
-      title: 'Code Copied!',
-      description: 'Your referral code has been copied to the clipboard.',
+      title: 'Copied to Clipboard!',
+      description: successMessage,
     });
   };
 
@@ -97,18 +101,37 @@ export default function ReferralPage() {
                   <CardHeader>
                     <CardTitle>Invite Friends, Earn E-points</CardTitle>
                     <CardDescription>
-                      Share your unique referral code. You get 200 points and your friend gets 50 points when they sign up.
+                      Share your unique referral code with friends. When they sign up, you'll earn <strong>200 E-points</strong>, and they'll get a <strong>50 E-point</strong> head start! It's a win-win.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center">
+                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center cursor-pointer" onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')}>
+                        <p className="text-xs text-primary/80 mb-1">Your Unique Code</p>
                         <p className="text-2xl font-bold tracking-widest text-primary/90">{referralCode}</p>
                     </div>
-                    <Button onClick={handleCopyCode} className="w-full">
+                    <Button onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')} className="w-full" variant="outline">
                       <Copy className="mr-2 h-4 w-4" /> Copy Code
                     </Button>
                   </CardContent>
                 </Card>
+
+                 <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader>
+                      <CardTitle>Share a Message</CardTitle>
+                      <CardDescription>
+                          Want to make it even easier? Copy the message below and send it to your friends.
+                      </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                       <div className="p-4 bg-background rounded-lg border border-primary/20 text-sm text-foreground whitespace-pre-line">
+                           {shareMessage}
+                       </div>
+                       <Button onClick={() => handleCopy(shareMessage, 'The referral message has been copied.')} className="w-full mt-4">
+                           <MessageSquarePlus className="mr-2 h-4 w-4" /> Copy Message
+                       </Button>
+                  </CardContent>
+                </Card>
+
 
                  <Card className="bg-primary/5 border-primary/20">
                     <CardHeader>
