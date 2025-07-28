@@ -5,13 +5,12 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { saveUserData, getUserData, findUserByReferralCode, applyReferralBonus } from '@/lib/database';
 import { FaTelegramPlane, FaTwitter, FaDiscord } from 'react-icons/fa';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -31,12 +30,17 @@ const socialTasks = [
   { id: 'task-discord', label: 'Join our Discord', icon: <FaDiscord className="w-5 h-5" />, href: 'https://discord.gg/your-invite' },
 ];
 
+type TaskStatus = 'idle' | 'verifying' | 'verified';
+
 export default function WelcomePage() {
   const [user, setUser] = useState<TelegramUser | null>(null);
-  const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
+  const [taskStatuses, setTaskStatuses] = useState<Record<string, TaskStatus>>(
+    socialTasks.reduce((acc, task) => ({ ...acc, [task.id]: 'idle' }), {})
+  );
   const [allTasksDone, setAllTasksDone] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isFinishing, setIsFinishing] = useState(false);
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,12 +73,19 @@ export default function WelcomePage() {
     }
   }, [router, searchParams, toast]);
 
-  const handleTaskToggle = (taskId: string, checked: boolean) => {
-    const newCompletedTasks = { ...completedTasks, [taskId]: checked };
-    setCompletedTasks(newCompletedTasks);
-    
-    const allDone = socialTasks.every(task => newCompletedTasks[task.id]);
+  useEffect(() => {
+    const allDone = socialTasks.every(task => taskStatuses[task.id] === 'verified');
     setAllTasksDone(allDone);
+  }, [taskStatuses]);
+
+  const handleTaskClick = (taskId: string, href: string) => {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    
+    setTaskStatuses(prev => ({ ...prev, [taskId]: 'verifying' }));
+
+    setTimeout(() => {
+      setTaskStatuses(prev => ({ ...prev, [taskId]: 'verified' }));
+    }, 8000);
   };
 
   const handleContinue = () => {
@@ -83,7 +94,7 @@ export default function WelcomePage() {
       return;
     }
     
-    setIsLoading(true);
+    setIsFinishing(true);
 
     let userData = getUserData(user);
     let currentBalance = userData.balance || 0;
@@ -134,6 +145,31 @@ export default function WelcomePage() {
     );
   }
 
+  const renderTaskButtonContent = (taskId: string, label: string, icon: React.ReactNode) => {
+    const status = taskStatuses[taskId];
+    switch (status) {
+        case 'verifying':
+            return (
+                <>
+                    <Loader2 className="animate-spin" /> Verifying...
+                </>
+            );
+        case 'verified':
+            return (
+                <>
+                    <Check /> Completed
+                </>
+            );
+        case 'idle':
+        default:
+            return (
+                <>
+                    {icon} {label}
+                </>
+            );
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <main className="flex-grow flex flex-col items-center justify-center p-4">
@@ -148,18 +184,15 @@ export default function WelcomePage() {
             <div className="space-y-4">
               <h3 className="font-semibold text-center text-primary/90">1. Complete Social Tasks</h3>
               {socialTasks.map((task) => (
-                <div key={task.id} className="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg">
-                  <Checkbox
-                    id={task.id}
-                    onCheckedChange={(checked) => handleTaskToggle(task.id, !!checked)}
-                  />
-                  <a href={task.href} target="_blank" rel="noopener noreferrer" className="flex-grow flex items-center gap-3 text-foreground">
-                    {task.icon}
-                    <Label htmlFor={task.id} className="cursor-pointer">
-                      {task.label}
-                    </Label>
-                  </a>
-                </div>
+                <Button
+                    key={task.id}
+                    onClick={() => handleTaskClick(task.id, task.href)}
+                    disabled={taskStatuses[task.id] !== 'idle'}
+                    className="w-full justify-center"
+                    variant={taskStatuses[task.id] === 'verified' ? 'secondary' : 'outline'}
+                >
+                    {renderTaskButtonContent(task.id, task.label, task.icon)}
+                </Button>
               ))}
             </div>
 
@@ -176,8 +209,8 @@ export default function WelcomePage() {
               </div>
             )}
 
-            <Button onClick={handleContinue} disabled={!allTasksDone || isLoading} className="w-full">
-              {isLoading ? <Loader2 className="animate-spin" /> : 'Continue'}
+            <Button onClick={handleContinue} disabled={!allTasksDone || isFinishing} className="w-full">
+              {isFinishing ? <Loader2 className="animate-spin" /> : 'Continue'}
             </Button>
           </CardContent>
         </Card>
