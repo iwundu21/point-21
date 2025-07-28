@@ -1,6 +1,7 @@
 
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import UserCard from '@/components/user-card';
 import BalanceCard from '@/components/balance-card';
 import MiningCircle from '@/components/mining-circle';
@@ -8,6 +9,8 @@ import MissionsCard from '@/components/missions-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 declare global {
   interface Window {
@@ -33,6 +36,10 @@ export default function Home() {
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [user, setUser] = useState<TelegramUser | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
+  
+  const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -48,6 +55,11 @@ export default function Home() {
       const savedBalance = localStorage.getItem('exnus_balance');
       const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
       const savedStreak = localStorage.getItem('exnus_daily_streak');
+      const verificationStatus = localStorage.getItem('exnus_verificationStatus');
+
+      if (verificationStatus === 'verified') {
+        setIsVerified(true);
+      }
 
       let currentBalance = 0;
       if (savedBalance) {
@@ -111,6 +123,15 @@ export default function Home() {
   }, [balance, forgingEndTime, isClient]);
 
   const handleActivateForging = () => {
+    if (!isVerified) {
+       toast({
+        variant: "destructive",
+        title: "Verification Required",
+        description: "Please verify your account on the profile page to start mining.",
+        action: <Button onClick={() => router.push('/profile')}>Go to Profile</Button>,
+       });
+       return;
+    }
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     setIsForgingActive(true);
     setForgingEndTime(endTime);
@@ -158,6 +179,7 @@ export default function Home() {
             endTime={forgingEndTime}
             onActivate={handleActivateForging}
             onSessionEnd={handleSessionEnd}
+            isVerified={isVerified}
           />
         </div>
 

@@ -2,14 +2,16 @@
 'use client';
 import type { FC } from 'react';
 import { useState, useEffect } from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface MiningCircleProps {
   isActive: boolean;
   endTime: number | null;
   onActivate: () => void;
   onSessionEnd: () => void;
+  isVerified: boolean;
 }
 
 const TOTAL_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -24,10 +26,11 @@ const formatTime = (ms: number): string => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
-const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, onSessionEnd }) => {
+const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, onSessionEnd, isVerified }) => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [progress, setProgress] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     if (!isActive || !endTime) {
@@ -63,39 +66,54 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
     background: `conic-gradient(hsl(var(--primary)) ${progress}%, hsl(var(--card)) ${progress}%)`,
   };
 
+  const handleVerificationRedirect = () => {
+    router.push('/profile');
+  }
+
   return (
     <div className="flex flex-col items-center space-y-4">
       <button
-        onClick={!isActive ? onActivate : undefined}
+        onClick={isVerified ? onActivate : onVerificationRedirect}
         disabled={isActive}
         aria-label={isActive ? `Mining session active, time left: ${formatTime(timeLeft)}` : 'Activate Mining'}
         className={cn(
           'relative w-64 h-64 rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out disabled:cursor-not-allowed',
-          'bg-transparent border-4 border-yellow-400/50 text-foreground backdrop-blur-sm',
-          isActive && 'shadow-primary/20',
-          !isActive && 'hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105 animate-fast-pulse'
+          'bg-transparent border-4 text-foreground backdrop-blur-sm',
+           isActive ? 'shadow-primary/20 border-primary/50' :
+           isVerified ? 'border-yellow-400/50 hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105 animate-fast-pulse' : 'border-destructive/50'
         )}
       >
         <div 
           className="absolute inset-0 rounded-full transition-all duration-1000 ease-linear"
-          style={isActive ? conicGradientStyle : {}}
+          style={isActive && isVerified ? conicGradientStyle : {}}
         ></div>
         <div className="relative w-56 h-56 rounded-full bg-card/90 flex flex-col items-center justify-center">
-            <Zap className={cn("w-16 h-16 transition-all duration-500", isActive ? "text-primary" : "text-yellow-400/70")} />
-            {isActive ? (
+            {isVerified ? (
+              <Zap className={cn("w-16 h-16 transition-all duration-500", isActive ? "text-primary" : "text-yellow-400/70")} />
+            ) : (
+               <ShieldAlert className="w-16 h-16 text-destructive" />
+            )}
+
+            {isActive && isVerified ? (
               <div className="mt-2 text-center">
                  <p className="text-2xl font-bold tracking-tighter">{earnedPoints}/{TOTAL_POINTS}</p>
                  <p className="text-2xl font-mono font-bold tracking-wider">{formatTime(timeLeft)}</p>
               </div>
             ) : (
-              <p className="mt-4 text-xl font-semibold">Activate Mining</p>
+              isVerified ? (
+                <p className="mt-4 text-xl font-semibold">Activate Mining</p>
+              ) : (
+                <p className="mt-4 text-xl font-semibold text-destructive">Verification Needed</p>
+              )
             )}
         </div>
       </button>
       <p className="text-center text-sm text-muted-foreground max-w-xs">
         {isActive
           ? 'Your 24-hour mining session is active. E-point will be added automatically.'
-          : 'Activate a 24-hour mining session to earn 1000 E-point'}
+          : isVerified
+          ? 'Activate a 24-hour mining session to earn 1000 E-point'
+          : 'Please complete face verification on your profile to start mining.'}
       </p>
     </div>
   );

@@ -12,6 +12,7 @@ import Webcam from "react-webcam";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { detectHumanFace } from '@/ai/flows/face-detection-flow';
+import { Toaster } from '@/components/ui/toaster';
 
 declare global {
   interface Window {
@@ -56,6 +57,10 @@ export default function ProfilePage() {
       if (telegramUser) {
         setUser(telegramUser);
       }
+    }
+    const storedStatus = localStorage.getItem('exnus_verificationStatus') as VerificationStatus;
+    if (storedStatus === 'verified') {
+        setAccountStatus('verified');
     }
   }, []);
 
@@ -114,6 +119,7 @@ export default function ProfilePage() {
           if (result.isHuman) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
+            localStorage.setItem('exnus_verificationStatus', 'verified');
              toast({
               title: 'Verification Successful',
               description: 'Your account has been verified.',
@@ -301,6 +307,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+      <Toaster />
       <div className="flex-grow pb-20">
         {isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
@@ -358,4 +365,4 @@ export default function ProfilePage() {
       <Footer />
     </div>
   );
- 
+}
