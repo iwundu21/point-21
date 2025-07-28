@@ -13,18 +13,18 @@ interface BalanceCardProps {
 
 const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
   return (
-    <Card className="w-full bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-center text-primary">E-point</CardTitle>
+    <Card className="w-full bg-transparent backdrop-blur-sm border-0 border-b border-primary/10 shadow-none rounded-none">
+      <CardHeader className="p-2">
+        <CardTitle className="text-center text-primary/80 font-normal text-sm">E-point</CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center justify-center space-x-4">
-        <Coins className="w-8 h-8 text-primary" />
+      <CardContent className="flex items-center justify-center space-x-2 p-2">
+        <Coins className="w-6 h-6 text-primary/80" />
         <div className="relative">
-          <span className="text-4xl font-bold tracking-tighter">
+          <span className="text-3xl font-normal tracking-tight">
             {balance.toLocaleString()}
           </span>
           <span className={cn(
-            "absolute -top-8 right-0 text-2xl font-bold text-primary transition-all duration-1000 ease-out",
+            "absolute -top-6 right-0 text-xl font-medium text-primary transition-all duration-1000 ease-out",
             animating ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
           )}>
             +1000
