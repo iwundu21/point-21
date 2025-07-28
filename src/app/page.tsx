@@ -21,6 +21,7 @@ interface TelegramUser {
     username?: string;
     language_code: string;
     is_premium?: boolean;
+    photo_url?: string;
 }
 
 export default function Home() {
@@ -33,13 +34,10 @@ export default function Home() {
   const [user, setUser] = useState<TelegramUser | null>(null);
 
   useEffect(() => {
-    // This effect runs once on component mount on the client side.
-    // We set isClient to true to trigger another effect that will handle all client-side logic.
     setIsClient(true);
   }, []);
 
   useEffect(() => {
-    // This effect runs only on the client, after the component has mounted.
     if (!isClient) {
       return;
     }
@@ -68,7 +66,6 @@ export default function Home() {
             setIsForgingActive(true);
             setForgingEndTime(endTime);
         } else {
-            // Give points for finished session if they open the app after it's done
             currentBalance += 1000;
             localStorage.removeItem('exnus_forgingEndTime');
             setIsForgingActive(false);
@@ -76,7 +73,6 @@ export default function Home() {
         }
     }
 
-    // Daily streak logic
     const today = new Date().toISOString().split('T')[0];
     let streakData = { count: 0, lastLogin: '' };
 
@@ -106,8 +102,6 @@ export default function Home() {
     }
     
     setBalance(currentBalance);
-
-  // The dependency array ensures this effect runs only when isClient becomes true.
   }, [isClient]);
 
   useEffect(() => {
@@ -135,7 +129,7 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  if (!isClient || !user) {
+  if (!isClient) {
     return (
       <div className="flex flex-col items-center justify-between min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
@@ -156,7 +150,9 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4">
-        <UserCard username={user.username || `${user.first_name} ${user.last_name || ''}`.trim()} userId={user.id.toString()} />
+        <UserCard 
+            user={user}
+        />
         <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
