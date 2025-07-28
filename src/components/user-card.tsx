@@ -41,7 +41,7 @@ const UserCard: FC<UserCardProps> = ({ user }) => {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase();
   }
 
-  const displayName = user.username || `${user.first_name} ${user.last_name || ''}`.trim();
+  const displayName = `${user.first_name} ${user.last_name || ''}`.trim();
 
   return (
     <div className="w-full p-4">
