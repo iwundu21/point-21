@@ -22,6 +22,9 @@ export interface UserData {
     walletAddress: string | null;
     telegramUser: TelegramUser | null;
     referralCode: string | null;
+    referredBy: string | null;
+    referralBonusApplied: boolean;
+    referrals: number;
 }
 
 const getUserId = (telegramUser: TelegramUser | null) => {
@@ -37,6 +40,9 @@ const defaultUserData: UserData = {
     walletAddress: null,
     telegramUser: null,
     referralCode: null,
+    referredBy: null,
+    referralBonusApplied: false,
+    referrals: 0,
 };
 
 // In a real app, this would fetch from a remote database.
@@ -45,7 +51,9 @@ export const getUserData = (telegramUser: TelegramUser | null): UserData => {
     const userId = getUserId(telegramUser);
     const data = localStorage.getItem(userId);
     if (data) {
-        return { ...defaultUserData, ...JSON.parse(data), telegramUser };
+        const parsedData = JSON.parse(data);
+        // Ensure all default fields are present
+        return { ...defaultUserData, ...parsedData, telegramUser };
     }
     return { ...defaultUserData, telegramUser };
 };
@@ -59,6 +67,38 @@ export const saveUserData = (telegramUser: TelegramUser | null, data: Partial<Om
     delete (newData as any).telegramUser; // Don't store user object in the data blob
     localStorage.setItem(userId, JSON.stringify(newData));
 };
+
+// In a real app, this would be a database query.
+export const findUserByReferralCode = (code: string): UserData | null => {
+    if (typeof window === 'undefined') return null;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('user_')) {
+            const data = localStorage.getItem(key);
+            if (data) {
+                const userData: UserData = JSON.parse(data);
+                if (userData.referralCode === code) {
+                    // Re-create the telegramUser object from the key
+                    const id = parseInt(key.replace('user_', ''));
+                    return { ...userData, telegramUser: { id } as TelegramUser };
+                }
+            }
+        }
+    }
+    return null;
+}
+
+// In a real app, this would be a transactional update in a database.
+export const applyReferralBonus = (referrerCode: string) => {
+    if (typeof window === 'undefined') return;
+    const referrerData = findUserByReferralCode(referrerCode);
+    if (referrerData && referrerData.telegramUser) {
+        const newBalance = (referrerData.balance || 0) + 200;
+        const newReferrals = (referrerData.referrals || 0) + 1;
+        saveUserData(referrerData.telegramUser, { balance: newBalance, referrals: newReferrals });
+    }
+};
+
 
 // --- Specific Data Functions ---
 

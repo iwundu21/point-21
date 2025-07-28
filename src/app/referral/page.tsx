@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Gift, Copy } from 'lucide-react';
-import { getUserData, saveReferralCode } from '@/lib/database';
+import { getUserData, saveUserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 
 declare global {
@@ -29,7 +29,7 @@ export default function ReferralPage() {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [referralLink, setReferralLink] = useState('');
   const [isClient, setIsClient] = useState(false);
-  const [friendsReferred, setFriendsReferred] = useState(0); // Mock data
+  const [friendsReferred, setFriendsReferred] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -45,12 +45,12 @@ export default function ReferralPage() {
             let userReferralCode = userData.referralCode;
             if (!userReferralCode) {
                 userReferralCode = generateReferralCode();
-                saveReferralCode(telegramUser, userReferralCode);
+                saveUserData(telegramUser, { referralCode: userReferralCode });
             }
 
             const link = `https://t.me/Exnuspoint_bot?start=${userReferralCode}`;
             setReferralLink(link);
-            setFriendsReferred(userData.balance > 1000 ? 5 : 0); // Example logic
+            setFriendsReferred(userData.referrals || 0);
         }
     }
   }, []);
@@ -98,7 +98,7 @@ export default function ReferralPage() {
                   <CardHeader>
                     <CardTitle>Invite Friends, Earn E-points</CardTitle>
                     <CardDescription>
-                      Share your unique referral link with friends. You'll both receive bonuses when they sign up and start forging!
+                      Share your unique referral link. You get 200 points and your friend gets 50 points when they sign up.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -122,7 +122,7 @@ export default function ReferralPage() {
                        </div>
                        <div className="flex justify-between items-center">
                            <span className="text-muted-foreground">Bonus Earned:</span>
-                           <span className="font-bold text-xl">{(friendsReferred * 500).toLocaleString()} E-points</span>
+                           <span className="font-bold text-xl">{(friendsReferred * 200).toLocaleString()} E-points</span>
                        </div>
                     </CardContent>
                  </Card>

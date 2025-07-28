@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData } from '@/lib/database';
+import { getUserData, saveUserData, findUserByReferralCode, applyReferralBonus, UserData } from '@/lib/database';
 
 declare global {
   interface Window {
@@ -49,10 +49,11 @@ export default function Home() {
       const tg = window.Telegram.WebApp;
       tg.ready();
       const telegramUser = tg.initDataUnsafe?.user;
+      const startParam = tg.initDataUnsafe?.start_param;
       
       if (telegramUser) {
         setUser(telegramUser);
-        const userData = getUserData(telegramUser);
+        let userData = getUserData(telegramUser);
         
         let currentBalance = userData.balance;
         
@@ -94,8 +95,30 @@ export default function Home() {
           setDailyStreak(streakData.count);
         }
         
+        // Handle referral logic
+        if (startParam && !userData.referredBy && !userData.referralBonusApplied) {
+            const referrerCode = startParam;
+            const referrerData = findUserByReferralCode(referrerCode);
+
+            if (referrerData && referrerData.telegramUser?.id !== telegramUser.id) {
+                // Award new user
+                currentBalance += 50;
+                toast({
+                    title: "Referral Bonus!",
+                    description: "You've received 50 E-points for using a referral link.",
+                });
+
+                // Mark bonus as applied for the new user
+                userData.referralBonusApplied = true;
+                userData.referredBy = referrerCode;
+                
+                // Update referrer's data
+                applyReferralBonus(referrerCode);
+            }
+        }
+        
         setBalance(currentBalance);
-        saveUserData(telegramUser, { balance: currentBalance });
+        saveUserData(telegramUser, { ...userData, balance: currentBalance });
       }
     }
   }, []);
