@@ -49,12 +49,19 @@ export default function Home() {
       const tg = window.Telegram.WebApp;
       tg.ready();
       const telegramUser = tg.initDataUnsafe?.user;
-      const startParam = tg.initDataUnsafe?.start_param;
       
       if (telegramUser) {
         setUser(telegramUser);
         let userData = getUserData(telegramUser);
         
+        // Redirect to onboarding if not completed
+        if (!userData.onboardingCompleted) {
+          const startParam = tg.initDataUnsafe?.start_param;
+          const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
+          router.replace(url);
+          return;
+        }
+
         let currentBalance = userData.balance;
         
         if (userData.verificationStatus === 'verified') {
@@ -95,33 +102,18 @@ export default function Home() {
           setDailyStreak(streakData.count);
         }
         
-        // Handle referral logic
-        if (startParam && !userData.referredBy && !userData.referralBonusApplied) {
-            const referrerCode = startParam;
-            const referrerData = findUserByReferralCode(referrerCode);
-
-            if (referrerData && referrerData.telegramUser?.id !== telegramUser.id) {
-                // Award new user
-                currentBalance += 50;
-                toast({
-                    title: "Referral Bonus!",
-                    description: "You've received 50 E-points for using a referral link.",
-                });
-
-                // Mark bonus as applied for the new user
-                userData.referralBonusApplied = true;
-                userData.referredBy = referrerCode;
-                
-                // Update referrer's data
-                applyReferralBonus(referrerCode);
-            }
-        }
+        // Referral logic is now handled on the welcome page
         
         setBalance(currentBalance);
         saveUserData(telegramUser, { ...userData, balance: currentBalance });
+      } else {
+        // If no user, maybe redirect to an error page or welcome page
+        router.replace('/welcome');
       }
+    } else {
+        setIsClient(true);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
       if (isClient && user) {
@@ -152,9 +144,10 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  if (!isClient) {
+  // Show a loading state while checking user data and redirecting
+  if (!isClient || !user) {
     return (
-      <div className="flex flex-col items-center justify-between min-h-screen bg-background p-4 space-y-8">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
           <Skeleton className="w-full h-24 rounded-lg" />
           <Skeleton className="w-full h-24 rounded-lg" />

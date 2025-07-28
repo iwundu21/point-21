@@ -25,6 +25,7 @@ export interface UserData {
     referredBy: string | null;
     referralBonusApplied: boolean;
     referrals: number;
+    onboardingCompleted: boolean;
 }
 
 const getUserId = (telegramUser: TelegramUser | null) => {
@@ -43,6 +44,7 @@ const defaultUserData: UserData = {
     referredBy: null,
     referralBonusApplied: false,
     referrals: 0,
+    onboardingCompleted: false,
 };
 
 // In a real app, this would fetch from a remote database.
