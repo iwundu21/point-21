@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ClipboardList } from 'lucide-react';
+import { Users } from 'lucide-react';
 import Footer from '@/components/footer';
 
 export default function TasksPage() {
@@ -12,14 +12,14 @@ export default function TasksPage() {
              <div className="w-full max-w-sm mx-auto space-y-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <ClipboardList className="w-8 h-8" />
-                        O.B. Tasks
+                        <Users className="w-8 h-8" />
+                        Social Engagement
                     </h1>
                 </div>
 
                 <div className="space-y-4 text-center">
                   <p className="text-sm text-muted-foreground">
-                    This is where your onboarding or other tasks will be displayed.
+                    This is where your social engagement tasks will be displayed.
                   </p>
                 </div>
             </div>
