@@ -27,7 +27,7 @@ const generateReferralCode = () => {
 
 export default function ReferralPage() {
   const [user, setUser] = useState<TelegramUser | null>(null);
-  const [referralLink, setReferralLink] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [friendsReferred, setFriendsReferred] = useState(0);
   const { toast } = useToast();
@@ -48,18 +48,17 @@ export default function ReferralPage() {
                 saveUserData(telegramUser, { referralCode: userReferralCode });
             }
 
-            const link = `https://t.me/Exnuspoint_bot?start=${userReferralCode}`;
-            setReferralLink(link);
+            setReferralCode(userReferralCode);
             setFriendsReferred(userData.referrals || 0);
         }
     }
   }, []);
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(referralLink);
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(referralCode);
     toast({
-      title: 'Link Copied!',
-      description: 'Your referral link has been copied to the clipboard.',
+      title: 'Code Copied!',
+      description: 'Your referral code has been copied to the clipboard.',
     });
   };
 
@@ -98,15 +97,15 @@ export default function ReferralPage() {
                   <CardHeader>
                     <CardTitle>Invite Friends, Earn E-points</CardTitle>
                     <CardDescription>
-                      Share your unique referral link. You get 200 points and your friend gets 50 points when they sign up.
+                      Share your unique referral code. You get 200 points and your friend gets 50 points when they sign up.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-center">
-                        <p className="text-sm text-muted-foreground break-all">{referralLink}</p>
+                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center">
+                        <p className="text-2xl font-bold tracking-widest text-primary/90">{referralCode}</p>
                     </div>
-                    <Button onClick={handleCopyLink} className="w-full">
-                      <Copy className="mr-2 h-4 w-4" /> Copy Link
+                    <Button onClick={handleCopyCode} className="w-full">
+                      <Copy className="mr-2 h-4 w-4" /> Copy Code
                     </Button>
                   </CardContent>
                 </Card>
