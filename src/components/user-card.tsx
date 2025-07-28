@@ -52,7 +52,6 @@ const UserCard: FC<UserCardProps> = ({ user }) => {
         </Avatar>
         <div className="flex flex-col">
           <span className="font-semibold text-lg">{displayName}</span>
-          <span className="text-sm text-muted-foreground">E-point Balance</span>
         </div>
       </div>
     </div>
