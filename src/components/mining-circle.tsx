@@ -73,7 +73,7 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
           'relative w-64 h-64 rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out disabled:cursor-not-allowed',
           'bg-transparent border-4 border-yellow-400/50 text-foreground shadow-lg backdrop-blur-sm',
           isActive && 'shadow-primary/20',
-          !isActive && 'animate-subtle-pulse hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105'
+          !isActive && 'hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105'
         )}
       >
         <div 
