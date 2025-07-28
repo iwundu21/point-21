@@ -8,6 +8,21 @@ import MissionsCard from '@/components/missions-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 
+declare global {
+  interface Window {
+    Telegram: any;
+  }
+}
+
+interface TelegramUser {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    language_code: string;
+    is_premium?: boolean;
+}
+
 export default function Home() {
   const [balance, setBalance] = useState(0);
   const [isForgingActive, setIsForgingActive] = useState(false);
@@ -15,9 +30,20 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(0);
+  const [user, setUser] = useState<TelegramUser | null>(null);
 
   useEffect(() => {
     setIsClient(true);
+    
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      const telegramUser = tg.initDataUnsafe?.user;
+      if (telegramUser) {
+        setUser(telegramUser);
+      }
+    }
+
     const savedBalance = localStorage.getItem('exnus_balance');
     const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
     const savedStreak = localStorage.getItem('exnus_daily_streak');
@@ -89,12 +115,7 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  const user = {
-    username: 'telegram_user',
-    id: '123456789'
-  };
-
-  if (!isClient) {
+  if (!isClient || !user) {
     return (
       <div className="flex flex-col items-center justify-between min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
@@ -115,7 +136,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4">
-        <UserCard username={user.username} userId={user.id} />
+        <UserCard username={user.username || `${user.first_name} ${user.last_name || ''}`.trim()} userId={user.id.toString()} />
         <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
