@@ -97,6 +97,7 @@ export default function ProfilePage() {
   
   const handleDone = () => {
     setVerificationSuccess(false);
+    setCapturedImage(null);
   };
 
   const resetVerification = () => {
@@ -201,7 +202,7 @@ export default function ProfilePage() {
                             <Camera className="mr-2 h-4 w-4" /> Capture
                         </Button>
                     </div>
-                ) : capturedImage ? (
+                ) : capturedImage && !verificationSuccess ? (
                     <div className="space-y-4 text-center">
                        <div className="relative w-64 h-64 mx-auto">
                             <img src={capturedImage} alt="Captured" className="rounded-full w-full h-full object-cover" />
@@ -212,29 +213,27 @@ export default function ProfilePage() {
                                 </div>
                             )}
                        </div>
-
-                        {verificationSuccess ? (
-                            <div className='flex flex-col items-center justify-center gap-4 text-green-400'>
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-6 h-6" />
-                                    <p className="font-semibold">Account Verified</p>
-                                </div>
-                                <Button onClick={handleDone} className="w-full max-w-xs">Done</Button>
-                            </div>
-                        ) : !isProcessingVerification && (
+                       {!isProcessingVerification && (
                              <Button onClick={resetVerification} variant="outline">
                                 Retake Photo
                             </Button>
                         )}
                     </div>
-                ) : (
+                ) : verificationSuccess ? (
+                    <div className='flex flex-col items-center justify-center gap-4 text-green-400 text-center p-4'>
+                        <CheckCircle className="w-12 h-12" />
+                        <h3 className="text-xl font-semibold">Account Verified</h3>
+                        <p className="text-sm text-muted-foreground max-w-xs">Your account has been successfully verified. You can now close this message.</p>
+                        <Button onClick={handleDone} className="w-full max-w-xs">Done</Button>
+                    </div>
+                ) : accountStatus === 'unverified' ? (
                     <div className='text-center space-y-4'>
                         <p className="text-sm text-muted-foreground">Verify your identity by taking a photo of your face.</p>
                         <Button onClick={handleStartVerification} className="w-full">
                            <Camera className="mr-2 h-4 w-4" /> Start Verification
                         </Button>
                     </div>
-                )}
+                ) : null}
             </CardContent>
         </Card>
       </main>
