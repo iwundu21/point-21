@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { saveUserData, getUserData, findUserByReferralCode, applyReferralBonus } from '@/lib/database';
 import { FaTelegramPlane, FaTwitter, FaDiscord } from 'react-icons/fa';
@@ -57,17 +56,17 @@ export default function WelcomePage() {
         const userData = getUserData(telegramUser);
         if (userData.onboardingCompleted) {
             router.replace('/');
-        } else {
-            const refFromUrl = searchParams.get('ref');
-            if(refFromUrl) {
-                setReferralCode(refFromUrl);
-            }
-            setIsLoading(false);
+            return;
         }
+        
+        const refFromUrl = searchParams.get('ref');
+        if (refFromUrl) {
+            setReferralCode(refFromUrl);
+        }
+        setIsLoading(false);
+        
       } else {
         setIsLoading(false);
-        // This case is for development in a browser without Telegram
-        // You might want to show a message or use mock data
       }
     } else {
         setIsLoading(false);
@@ -89,7 +88,7 @@ export default function WelcomePage() {
     }, 8000);
   };
 
-  const handleContinue = () => {
+  const handleFinishSetup = () => {
     if (!user) {
       toast({ variant: 'destructive', title: 'Error', description: 'User not found. Please restart the app.' });
       return;
@@ -98,49 +97,40 @@ export default function WelcomePage() {
     setIsFinishing(true);
 
     let userData = getUserData(user);
-    let currentBalance = userData.balance || 0;
     
-    // Handle referral logic
     if (referralCode.trim() && !userData.referralBonusApplied) {
         const referrerData = findUserByReferralCode(referralCode.trim());
 
         if (referrerData && referrerData.telegramUser?.id !== user.id) {
-            // Award new user
-            currentBalance += 50;
+            userData = applyReferralBonus(user, referralCode.trim());
             toast({
                 title: "Referral Bonus!",
-                description: "You've received 50 E-points for using a referral code.",
+                description: "You've received 50 E-points for using a referral code. The referrer has also been rewarded.",
             });
-            
-            // Update referrer's data
-            applyReferralBonus(referralCode.trim());
-
-            userData.referralBonusApplied = true;
-            userData.referredBy = referrerData.telegramUser.id.toString();
-
         } else if (referrerData && referrerData.telegramUser?.id === user.id) {
             toast({
                 variant: "destructive",
                 title: "Invalid Referral Code",
                 description: "You cannot use your own referral code.",
             });
+            setIsFinishing(false);
+            return;
         } else if (referralCode.trim()) {
              toast({
                 variant: "destructive",
                 title: "Invalid Referral Code",
                 description: "The code you entered is not valid.",
             });
+            setIsFinishing(false);
+            return;
         }
     }
     
-    // Save updated data and mark onboarding as complete
     saveUserData(user, {
         ...userData,
-        balance: currentBalance,
         onboardingCompleted: true,
     });
 
-    // Navigate to home page after a short delay to show loading state
     setTimeout(() => {
         router.replace('/');
     }, 1000);
@@ -219,7 +209,7 @@ export default function WelcomePage() {
               </div>
             )}
 
-            <Button onClick={handleContinue} disabled={!allTasksDone || isFinishing} className="w-full">
+            <Button onClick={handleFinishSetup} disabled={!allTasksDone || isFinishing} className="w-full">
               {isFinishing ? <Loader2 className="animate-spin" /> : 'Finish Setup'}
             </Button>
           </CardContent>

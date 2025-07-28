@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, findUserByReferralCode, applyReferralBonus, UserData } from '@/lib/database';
+import { getUserData, saveUserData } from '@/lib/database';
 
 declare global {
   interface Window {
@@ -75,7 +75,7 @@ export default function Home() {
                 setForgingEndTime(endTime);
             } else {
                 currentBalance += 1000;
-                saveUserData(telegramUser, { forgingEndTime: null });
+                saveUserData(telegramUser, { ...userData, balance: currentBalance, forgingEndTime: null });
                 setIsForgingActive(false);
                 setForgingEndTime(null);
             }
@@ -97,17 +97,14 @@ export default function Home() {
           currentBalance += 200;
           const newStreak = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
-          saveUserData(telegramUser, { dailyStreak: newStreak });
+          saveUserData(telegramUser, { ...userData, dailyStreak: newStreak });
         } else {
           setDailyStreak(streakData.count);
         }
         
-        // Referral logic is now handled on the welcome page
-        
         setBalance(currentBalance);
         saveUserData(telegramUser, { ...userData, balance: currentBalance });
       } else {
-        // If no user, maybe redirect to an error page or welcome page
         router.replace('/welcome');
       }
     } else {
@@ -117,7 +114,8 @@ export default function Home() {
 
   useEffect(() => {
       if (isClient && user) {
-          saveUserData(user, { balance, forgingEndTime });
+          const userData = getUserData(user);
+          saveUserData(user, { ...userData, balance, forgingEndTime });
       }
   }, [balance, forgingEndTime, isClient, user]);
 
@@ -144,8 +142,7 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  // Show a loading state while checking user data and redirecting
-  if (!isClient || !user) {
+  if (!isClient || !user || !getUserData(user).onboardingCompleted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
