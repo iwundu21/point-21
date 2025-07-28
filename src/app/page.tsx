@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import UserCard from '@/components/user-card';
 import BalanceCard from '@/components/balance-card';
@@ -33,7 +33,6 @@ export default function Home() {
   const [balance, setBalance] = useState(0);
   const [isForgingActive, setIsForgingActive] = useState(false);
   const [forgingEndTime, setForgingEndTime] = useState<number | null>(null);
-  const [isClient, setIsClient] = useState(false);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [user, setUser] = useState<TelegramUser | null>(null);
@@ -43,96 +42,85 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const initialize = () => {
-      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        const telegramUser = tg.initDataUnsafe?.user;
-        
-        if (telegramUser) {
-          const userData = getUserData(telegramUser);
-          
-          if (!userData.onboardingCompleted) {
-            const startParam = tg.initDataUnsafe?.start_param;
-            const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
-            router.replace(url);
-            return;
-          }
-          
-          setUser(telegramUser);
-          let currentBalance = userData.balance;
-          
-          if (userData.verificationStatus === 'verified') {
-            setIsVerified(true);
-          }
-
-          if (userData.forgingEndTime) {
-              const endTime = userData.forgingEndTime;
-              if (endTime > Date.now()) {
-                  setIsForgingActive(true);
-                  setForgingEndTime(endTime);
-              } else {
-                  currentBalance += 1000;
-                  setIsForgingActive(false);
-                  setForgingEndTime(null);
-                  userData.forgingEndTime = null;
-              }
-          }
-
-          const today = new Date().toISOString().split('T')[0];
-          let streakData = userData.dailyStreak;
-
-          if (streakData.lastLogin !== today) {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-            let newStreakCount = 1;
-            if (streakData.lastLogin === yesterdayStr) {
-               newStreakCount = (streakData.count % 7) + 1;
-            }
-            
-            currentBalance += 200;
-            const newStreak = { count: newStreakCount, lastLogin: today };
-            setDailyStreak(newStreakCount);
-            userData.dailyStreak = newStreak;
-          } else {
-            setDailyStreak(streakData.count);
-          }
-          
-          setBalance(currentBalance);
-          userData.balance = currentBalance;
-          saveUserData(telegramUser, userData);
-
-        } else {
-          router.replace('/welcome');
-          return; // Stop execution if no user
-        }
-      } else {
-          // If not in Telegram, maybe a dev environment
-          const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-          const userData = getUserData(mockUser);
-          if(!userData.onboardingCompleted) {
-             router.replace('/welcome');
-             return;
-          }
-          setUser(mockUser);
-          setBalance(userData.balance);
-      }
-      setIsLoading(false);
-      setIsClient(true);
+  const handleInitializeUser = useCallback((telegramUser: TelegramUser) => {
+    const userData = getUserData(telegramUser);
+    
+    if (!userData.onboardingCompleted) {
+      const tg = window.Telegram?.WebApp;
+      const startParam = tg?.initDataUnsafe?.start_param;
+      const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
+      router.replace(url);
+      return;
     }
     
-    initialize();
+    setUser(telegramUser);
+    let currentBalance = userData.balance;
+    
+    if (userData.verificationStatus === 'verified') {
+      setIsVerified(true);
+    }
+
+    if (userData.forgingEndTime && userData.forgingEndTime > Date.now()) {
+      setIsForgingActive(true);
+      setForgingEndTime(userData.forgingEndTime);
+    } else if (userData.forgingEndTime) {
+      currentBalance += 1000;
+      userData.forgingEndTime = null;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    let streakData = userData.dailyStreak;
+
+    if (streakData.lastLogin !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      let newStreakCount = 1;
+      if (streakData.lastLogin === yesterdayStr) {
+         newStreakCount = (streakData.count % 7) + 1;
+      }
+      
+      currentBalance += 200;
+      const newStreak = { count: newStreakCount, lastLogin: today };
+      setDailyStreak(newStreakCount);
+      userData.dailyStreak = newStreak;
+    } else {
+      setDailyStreak(streakData.count);
+    }
+    
+    setBalance(currentBalance);
+    userData.balance = currentBalance;
+    saveUserData(telegramUser, userData);
+    setIsLoading(false);
   }, [router]);
 
   useEffect(() => {
-      if (isClient && user) {
+    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      const telegramUser = tg.initDataUnsafe?.user;
+      
+      if (telegramUser) {
+        handleInitializeUser(telegramUser);
+      } else {
+        // Dev environment or no user found
+        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+        handleInitializeUser(mockUser);
+      }
+    } else {
+        // Fallback for non-Telegram environment
+        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+        handleInitializeUser(mockUser);
+    }
+  }, [handleInitializeUser]);
+
+  useEffect(() => {
+      if (!isLoading && user) {
           const userData = getUserData(user);
           saveUserData(user, { ...userData, balance, forgingEndTime });
       }
-  }, [balance, forgingEndTime, isClient, user]);
+  }, [balance, forgingEndTime, isLoading, user]);
 
   const handleActivateForging = () => {
     if (!isVerified) {
