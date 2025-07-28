@@ -385,9 +385,9 @@ export default function ProfilePage() {
         )}
          <div className="text-center text-xs text-muted-foreground p-4 mt-8">
             <div className="flex justify-center items-center space-x-4">
-                <Link href="#" className="hover:text-primary">Terms & Conditions</Link>
+                <Link href="/terms" className="hover:text-primary">Terms & Conditions</Link>
                 <span>|</span>
-                <Link href="#" className="hover:text-primary">Privacy Policy</Link>
+                <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
             </div>
             <p className="mt-2">© {new Date().getFullYear()} Aetherium Points. All rights reserved.</p>
          </div>
