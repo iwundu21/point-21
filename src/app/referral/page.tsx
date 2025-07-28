@@ -3,12 +3,12 @@
 
 import { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Gift, Copy, MessageSquarePlus } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 declare global {
   interface Window {
@@ -89,7 +89,7 @@ export default function ReferralPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">
         <main className="flex-grow flex flex-col p-4 mt-8">
-             <div className="w-full max-w-sm mx-auto space-y-6">
+             <div className="w-full max-w-sm mx-auto space-y-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
                         <Gift className="w-8 h-8" />
@@ -97,57 +97,48 @@ export default function ReferralPage() {
                     </h1>
                 </div>
 
-                <Card className="bg-primary/5 border-primary/20">
-                  <CardHeader>
-                    <CardTitle>Invite Friends, Earn E-points</CardTitle>
-                    <CardDescription>
-                      Share your unique referral code with friends. When they sign up, you'll earn <strong>200 E-points</strong>, and they'll get a <strong>50 E-point</strong> head start! It's a win-win.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center cursor-pointer" onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')}>
-                        <p className="text-xs text-primary/80 mb-1">Your Unique Code</p>
-                        <p className="text-2xl font-bold tracking-widest text-primary/90">{referralCode}</p>
-                    </div>
-                    <Button onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')} className="w-full" variant="outline">
-                      <Copy className="mr-2 h-4 w-4" /> Copy Code
-                    </Button>
-                  </CardContent>
-                </Card>
+                <div className="space-y-4 text-center">
+                  <h2 className="text-xl font-semibold">Invite Friends, Earn E-points</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Share your unique referral code with friends. When they sign up, you'll earn <strong>200 E-points</strong>, and they'll get a <strong>50 E-point</strong> head start! It's a win-win.
+                  </p>
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center cursor-pointer" onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')}>
+                      <p className="text-xs text-primary/80 mb-1">Your Unique Code</p>
+                      <p className="text-2xl font-bold tracking-widest text-primary/90">{referralCode}</p>
+                  </div>
+                  <Button onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')} className="w-full" variant="outline">
+                    <Copy className="mr-2 h-4 w-4" /> Copy Code
+                  </Button>
+                </div>
+                
+                <Separator className="w-full" />
 
-                 <Card className="bg-primary/5 border-primary/20">
-                  <CardHeader>
-                      <CardTitle>Share a Message</CardTitle>
-                      <CardDescription>
-                          Want to make it even easier? Copy the message below and send it to your friends.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                       <div className="p-4 bg-background rounded-lg border border-primary/20 text-sm text-foreground whitespace-pre-line">
-                           {shareMessage}
-                       </div>
-                       <Button onClick={() => handleCopy(shareMessage, 'The referral message has been copied.')} className="w-full mt-4">
-                           <MessageSquarePlus className="mr-2 h-4 w-4" /> Copy Message
-                       </Button>
-                  </CardContent>
-                </Card>
+                 <div className="space-y-4 text-center">
+                  <h2 className="text-xl font-semibold">Share a Message</h2>
+                  <p className="text-sm text-muted-foreground">
+                      Want to make it even easier? Copy the message below and send it to your friends.
+                  </p>
+                   <div className="p-4 bg-background rounded-lg border border-primary/20 text-sm text-foreground whitespace-pre-line text-left">
+                       {shareMessage}
+                   </div>
+                   <Button onClick={() => handleCopy(shareMessage, 'The referral message has been copied.')} className="w-full mt-4">
+                       <MessageSquarePlus className="mr-2 h-4 w-4" /> Copy Message
+                   </Button>
+                </div>
 
+                <Separator className="w-full" />
 
-                 <Card className="bg-primary/5 border-primary/20">
-                    <CardHeader>
-                        <CardTitle>Your Referral Stats</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                       <div className="flex justify-between items-center">
-                           <span className="text-muted-foreground">Friends Referred:</span>
-                           <span className="font-bold text-xl">{friendsReferred}</span>
-                       </div>
-                       <div className="flex justify-between items-center">
-                           <span className="text-muted-foreground">Bonus Earned:</span>
-                           <span className="font-bold text-xl">{(friendsReferred * 200).toLocaleString()} E-points</span>
-                       </div>
-                    </CardContent>
-                 </Card>
+                 <div className="space-y-4 text-center">
+                    <h2 className="text-xl font-semibold">Your Referral Stats</h2>
+                    <div className="flex justify-between items-center p-4 bg-primary/5 rounded-lg">
+                       <span className="text-muted-foreground">Friends Referred:</span>
+                       <span className="font-bold text-xl">{friendsReferred}</span>
+                   </div>
+                   <div className="flex justify-between items-center p-4 bg-primary/5 rounded-lg">
+                       <span className="text-muted-foreground">Bonus Earned:</span>
+                       <span className="font-bold text-xl">{(friendsReferred * 200).toLocaleString()} E-points</span>
+                   </div>
+                 </div>
             </div>
         </main>
        </div>
@@ -155,3 +146,4 @@ export default function ReferralPage() {
     </div>
   );
 }
+
