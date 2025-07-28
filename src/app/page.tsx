@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import UserCard from '@/components/user-card';
 import BalanceCard from '@/components/balance-card';
 import MiningCircle from '@/components/mining-circle';
-import ActivityFeed from '@/components/activity-feed';
+import MissionsCard from '@/components/missions-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
@@ -101,7 +101,7 @@ export default function Home() {
       </div>
 
       <div className="w-full max-w-sm">
-        <ActivityFeed />
+        <MissionsCard />
       </div>
     </main>
   );
