@@ -25,7 +25,6 @@ export interface UserData {
     referredBy: string | null;
     referralBonusApplied: boolean;
     referrals: number;
-    onboardingCompleted: boolean;
 }
 
 const getUserId = (telegramUser: TelegramUser | null) => {
@@ -33,23 +32,21 @@ const getUserId = (telegramUser: TelegramUser | null) => {
     return `user_${telegramUser.id}`;
 }
 
-const defaultUserData: UserData = {
+const defaultUserData: Omit<UserData, 'telegramUser'> = {
     balance: 0,
     forgingEndTime: null,
     dailyStreak: { count: 0, lastLogin: '' },
     verificationStatus: 'unverified',
     walletAddress: null,
-    telegramUser: null,
     referralCode: null,
     referredBy: null,
     referralBonusApplied: false,
     referrals: 0,
-    onboardingCompleted: false,
 };
 
 // In a real app, this would fetch from a remote database.
 export const getUserData = (telegramUser: TelegramUser | null): UserData => {
-    if (typeof window === 'undefined') return defaultUserData;
+    if (typeof window === 'undefined') return { ...defaultUserData, telegramUser: null };
     const userId = getUserId(telegramUser);
     const data = localStorage.getItem(userId);
     if (data) {
@@ -91,7 +88,8 @@ export const findUserByReferralCode = (code: string): UserData | null => {
                         const mockUser: TelegramUser = {
                             id: id,
                             first_name: `User ${id}`, // Placeholder
-                            username: `user${id}`
+                            username: `user${id}`,
+                             language_code: 'en'
                         }
                         return { ...defaultUserData, ...parsedData, telegramUser: mockUser };
                     }

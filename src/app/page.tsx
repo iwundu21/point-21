@@ -45,14 +45,6 @@ export default function Home() {
   const handleInitializeUser = useCallback((telegramUser: TelegramUser) => {
     const userData = getUserData(telegramUser);
     
-    if (!userData.onboardingCompleted) {
-      const tg = window.Telegram?.WebApp;
-      const startParam = tg?.initDataUnsafe?.start_param;
-      const url = startParam ? `/welcome?ref=${startParam}` : '/welcome';
-      router.replace(url);
-      return; 
-    }
-    
     setUser(telegramUser);
     let currentBalance = userData.balance;
     
@@ -93,7 +85,7 @@ export default function Home() {
     userData.balance = currentBalance;
     saveUserData(telegramUser, userData);
     setIsLoading(false);
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     const init = () => {
@@ -122,7 +114,7 @@ export default function Home() {
   }, [handleInitializeUser]);
 
   useEffect(() => {
-      if (!isLoading && user && getUserData(user).onboardingCompleted) {
+      if (!isLoading && user) {
           const userData = getUserData(user);
           saveUserData(user, { ...userData, balance, forgingEndTime });
       }
@@ -151,8 +143,7 @@ export default function Home() {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  const userData = user ? getUserData(user) : null;
-  if (isLoading || !user || (user && !userData?.onboardingCompleted)) {
+  if (isLoading || !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
