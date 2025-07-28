@@ -7,6 +7,7 @@ import MiningCircle from '@/components/mining-circle';
 import MissionsCard from '@/components/missions-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import Footer from '@/components/footer';
 
 declare global {
   interface Window {
@@ -36,66 +37,68 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true);
     
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      const telegramUser = tg.initDataUnsafe?.user;
-      if (telegramUser) {
-        setUser(telegramUser);
-      }
-    }
-
-    const savedBalance = localStorage.getItem('exnus_balance');
-    const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
-    const savedStreak = localStorage.getItem('exnus_daily_streak');
-
-    let currentBalance = 0;
-    if (savedBalance) {
-      currentBalance = JSON.parse(savedBalance);
-    }
-    
-    if (savedEndTime) {
-        const endTime = JSON.parse(savedEndTime);
-        if (endTime > Date.now()) {
-            setIsForgingActive(true);
-            setForgingEndTime(endTime);
-        } else {
-            currentBalance += 1000;
-            localStorage.removeItem('exnus_forgingEndTime');
-            setIsForgingActive(false);
-            setForgingEndTime(null);
+    if (typeof window !== 'undefined') {
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        tg.ready();
+        const telegramUser = tg.initDataUnsafe?.user;
+        if (telegramUser) {
+          setUser(telegramUser);
         }
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    let streakData = { count: 0, lastLogin: '' };
-
-    if (savedStreak) {
-      try {
-        streakData = JSON.parse(savedStreak);
-      } catch (e) {
-        console.error("Could not parse daily streak data", e);
       }
-    }
 
-    if (streakData.lastLogin !== today) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const savedBalance = localStorage.getItem('exnus_balance');
+      const savedEndTime = localStorage.getItem('exnus_forgingEndTime');
+      const savedStreak = localStorage.getItem('exnus_daily_streak');
 
-      let newStreakCount = 1;
-      if (streakData.lastLogin === yesterdayStr) {
-         newStreakCount = (streakData.count % 7) + 1;
+      let currentBalance = 0;
+      if (savedBalance) {
+        currentBalance = JSON.parse(savedBalance);
       }
       
-      currentBalance += 200;
-      setDailyStreak(newStreakCount);
-      localStorage.setItem('exnus_daily_streak', JSON.stringify({ count: newStreakCount, lastLogin: today }));
-    } else {
-      setDailyStreak(streakData.count);
+      if (savedEndTime) {
+          const endTime = JSON.parse(savedEndTime);
+          if (endTime > Date.now()) {
+              setIsForgingActive(true);
+              setForgingEndTime(endTime);
+          } else {
+              currentBalance += 1000;
+              localStorage.removeItem('exnus_forgingEndTime');
+              setIsForgingActive(false);
+              setForgingEndTime(null);
+          }
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      let streakData = { count: 0, lastLogin: '' };
+
+      if (savedStreak) {
+        try {
+          streakData = JSON.parse(savedStreak);
+        } catch (e) {
+          console.error("Could not parse daily streak data", e);
+        }
+      }
+
+      if (streakData.lastLogin !== today) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        let newStreakCount = 1;
+        if (streakData.lastLogin === yesterdayStr) {
+           newStreakCount = (streakData.count % 7) + 1;
+        }
+        
+        currentBalance += 200;
+        setDailyStreak(newStreakCount);
+        localStorage.setItem('exnus_daily_streak', JSON.stringify({ count: newStreakCount, lastLogin: today }));
+      } else {
+        setDailyStreak(streakData.count);
+      }
+      
+      setBalance(currentBalance);
     }
-    
-    setBalance(currentBalance);
   }, []);
 
   useEffect(() => {
@@ -150,7 +153,7 @@ export default function Home() {
         <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
-      <main className="flex flex-col items-center justify-start flex-grow">
+      <main className="flex flex-col items-center justify-start flex-grow pb-24">
         <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
           <MiningCircle 
             isActive={isForgingActive}
@@ -166,6 +169,7 @@ export default function Home() {
           <MissionsCard streak={dailyStreak} balance={balance} />
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

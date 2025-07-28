@@ -2,7 +2,6 @@
 'use client';
 
 import type { FC } from 'react';
-import { User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from './ui/skeleton';
 
@@ -28,7 +27,6 @@ const UserCard: FC<UserCardProps> = ({ user }) => {
           <Skeleton className="h-12 w-12 rounded-full" />
           <div className="space-y-2">
             <Skeleton className="h-4 w-[150px]" />
-            <Skeleton className="h-4 w-[100px]" />
           </div>
         </div>
       </div>
