@@ -35,6 +35,14 @@ const getInitials = (user: UserData) => {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
 }
 
+const getLeagueInfo = (balance: number) => {
+    if (balance < 1000) return { name: "Bronze", progress: (balance / 1000) * 100 };
+    if (balance < 5000) return { name: "Silver", progress: ((balance - 1000) / 4000) * 100 };
+    if (balance < 10000) return { name: "Gold", progress: ((balance - 5000) / 5000) * 100 };
+    if (balance < 50000) return { name: "Platinum", progress: ((balance - 10000) / 40000) * 100 };
+    return { name: "Diamond", progress: 100 };
+}
+
 const LEADERBOARD_TOTAL_LIMIT = 100;
 
 export default function LeaderboardPage() {
@@ -172,7 +180,7 @@ export default function LeaderboardPage() {
                                    </div>
                                    <div className="text-right">
                                        <p className="font-bold text-primary">{user.balance.toLocaleString()}</p>
-                                       <p className="text-xs text-muted-foreground">E-points</p>
+                                       <p className="text-xs text-muted-foreground">{getLeagueInfo(user.balance).name} League</p>
                                    </div>
                                </CardContent>
                            </Card>
@@ -209,7 +217,7 @@ export default function LeaderboardPage() {
                                    </div>
                                    <div className="text-right">
                                        <p className="font-bold text-primary">{currentUserData.balance.toLocaleString()}</p>
-                                       <p className="text-xs text-muted-foreground">E-points</p>
+                                       <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserData.balance).name} League</p>
                                    </div>
                                 </CardContent>
                             </Card>
