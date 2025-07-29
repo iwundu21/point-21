@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, UserData, getLeaderboardUsers } from '@/lib/database';
+import { getUserData, saveUserData, getLeaderboardUsers } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan } from 'lucide-react';
@@ -102,11 +102,6 @@ export default function Home({}: {}) {
         freshUserData.balance = currentBalance;
         await saveUserData(telegramUser, freshUserData);
 
-        // Fetch leaderboard to get rank
-        const { users: leaderboard } = await getLeaderboardUsers();
-        const rankIndex = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
-        setUserRank(rankIndex !== -1 ? rankIndex + 1 : null);
-
     } catch (error) {
         console.error("Initialization failed:", error);
         toast({
@@ -133,13 +128,31 @@ export default function Home({}: {}) {
       if (telegramUser) {
         handleInitializeUser(telegramUser);
       } else {
-        // Fallback for development
-        const mockUser: TelegramUser = { id: 12345, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
-        handleInitializeUser(mockUser);
+        // Fallback for development should not create a user
+        setIsLoading(false);
       }
     };
     init();
   }, [handleInitializeUser]);
+  
+  // Separate effect to fetch rank after user is initialized
+  useEffect(() => {
+    const fetchRank = async () => {
+      if (user) {
+        try {
+           const { users: leaderboard } = await getLeaderboardUsers();
+           const rankIndex = leaderboard.findIndex(u => u.telegramUser?.id === user.id);
+           setUserRank(rankIndex !== -1 ? rankIndex + 1 : null);
+        } catch (error) {
+          console.error("Could not fetch user rank", error);
+        }
+      }
+    }
+    if(!isLoading){
+       fetchRank();
+    }
+  }, [user, isLoading]);
+
 
   const handleActivateForging = async () => {
     if (!isVerified) {
@@ -211,7 +224,19 @@ export default function Home({}: {}) {
     );
   }
 
-  if (!user) return null; // Should not happen if not loading and not banned
+  if (!user) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+            <Alert variant="destructive" className="max-w-sm">
+                <ShieldBan className="h-5 w-5" />
+                <AlertTitle>Access Denied</AlertTitle>
+                <AlertDescription>
+                   This application is only accessible via Telegram.
+                </AlertDescription>
+            </Alert>
+        </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
