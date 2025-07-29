@@ -8,6 +8,7 @@ import DailyStreak from './daily-streak';
 interface MissionsCardProps {
   streak: number;
   balance: number;
+  rank: number | null;
 }
 
 const getLeagueInfo = (balance: number) => {
@@ -18,9 +19,10 @@ const getLeagueInfo = (balance: number) => {
     return { name: "Diamond", progress: 100 };
 }
 
-const MissionsCard = ({ streak, balance }: MissionsCardProps) => {
+const MissionsCard = ({ streak, balance, rank }: MissionsCardProps) => {
     const { name: leagueName, progress } = getLeagueInfo(balance);
-    const rank = Math.floor(50000 - balance / 100);
+
+    const rankDisplay = rank ? `#${rank.toLocaleString()}` : "Unranked";
 
     return (
         <div className="w-full max-w-sm p-4 space-y-6">
@@ -32,7 +34,7 @@ const MissionsCard = ({ streak, balance }: MissionsCardProps) => {
                 <StatCard 
                     icon={<Crown className="w-10 h-10 text-yellow-400" />}
                     title="Current Rank"
-                    value={`#${rank.toLocaleString()} (${leagueName})`}
+                    value={`${rankDisplay} (${leagueName})`}
                     progress={progress}
                 />
             </div>

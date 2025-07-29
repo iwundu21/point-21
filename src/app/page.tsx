@@ -11,10 +11,12 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, UserData } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getLeaderboardUsers } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan } from 'lucide-react';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+
 
 declare global {
   interface Window {
@@ -43,6 +45,7 @@ export default function Home({}: {}) {
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
+  const [userRank, setUserRank] = useState<number | null>(null);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -98,6 +101,12 @@ export default function Home({}: {}) {
         setBalance(currentBalance);
         freshUserData.balance = currentBalance;
         await saveUserData(telegramUser, freshUserData);
+
+        // Fetch leaderboard to get rank
+        const { users: leaderboard } = await getLeaderboardUsers();
+        const rankIndex = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
+        setUserRank(rankIndex !== -1 ? rankIndex + 1 : null);
+
     } catch (error) {
         console.error("Initialization failed:", error);
         toast({
@@ -144,8 +153,10 @@ export default function Home({}: {}) {
     }
     setIsActivating(true);
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
-    if (user) {
-        await saveUserData(user, { forgingEndTime: endTime });
+    if (user && userData) {
+        const updatedData = { ...userData, forgingEndTime: endTime };
+        await saveUserData(user, updatedData);
+        setUserData(updatedData);
     }
     setTimeout(() => {
         setIsForgingActive(true);
@@ -159,8 +170,10 @@ export default function Home({}: {}) {
     setBalance(newBalance);
     setIsForgingActive(false);
     setForgingEndTime(null);
-    if(user){
-        await saveUserData(user, { balance: newBalance, forgingEndTime: null });
+    if(user && userData){
+        const updatedData = { ...userData, balance: newBalance, forgingEndTime: null };
+        await saveUserData(user, updatedData);
+        setUserData(updatedData);
     }
     setShowPointsAnimation(true);
     setTimeout(() => setShowPointsAnimation(false), 2000);
@@ -227,7 +240,7 @@ export default function Home({}: {}) {
         <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
         <div className="w-full max-w-sm">
-          <MissionsCard streak={dailyStreak} balance={balance} />
+          <MissionsCard streak={dailyStreak} balance={balance} rank={userRank} />
         </div>
       </main>
       <Footer />
