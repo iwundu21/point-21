@@ -7,7 +7,7 @@ import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle } from 'lucide-reac
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 declare global {
   interface Window {
@@ -196,33 +196,14 @@ export default function TasksPage() {
                     </p>
                 </div>
 
-                <div className="space-y-4">
-                    {availableTasks.map(task => (
-                        <TaskItem
-                            key={task.id}
-                            icon={task.icon}
-                            title={task.title}
-                            description={task.description}
-                            points={task.points}
-                            link={task.link}
-                            completed={false}
-                            onComplete={() => handleTaskComplete(task.id as keyof SocialTasksState, task.link)}
-                        />
-                    ))}
-                </div>
-
-                 {allTasksCompleted && (
-                   <div className="flex items-center justify-center gap-2 text-green-500 font-semibold p-4 bg-green-500/10 rounded-lg">
-                        <CheckCircle className="w-6 h-6" />
-                        <span>All social tasks completed! Great job!</span>
-                   </div>
-                )}
-
-                {completedTasks.length > 0 && (
-                    <div className="space-y-4">
-                        <Separator />
-                        <h2 className="text-lg font-semibold text-center text-muted-foreground">Completed Tasks</h2>
-                        {completedTasks.map(task => (
+                <Tabs defaultValue="available" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="available">Available</TabsTrigger>
+                    <TabsTrigger value="completed">Completed ({completedTasks.length})</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="available">
+                    <div className="space-y-4 pt-4">
+                        {availableTasks.length > 0 ? availableTasks.map(task => (
                             <TaskItem
                                 key={task.id}
                                 icon={task.icon}
@@ -230,12 +211,38 @@ export default function TasksPage() {
                                 description={task.description}
                                 points={task.points}
                                 link={task.link}
-                                completed={true}
-                                onComplete={() => {}}
+                                completed={false}
+                                onComplete={() => handleTaskComplete(task.id as keyof SocialTasksState, task.link)}
                             />
-                        ))}
+                        )) : (
+                           <div className="flex items-center justify-center gap-2 text-green-500 font-semibold p-4 bg-green-500/10 rounded-lg mt-4">
+                                <CheckCircle className="w-6 h-6" />
+                                <span>All social tasks completed!</span>
+                           </div>
+                        )}
                     </div>
-                )}
+                  </TabsContent>
+                  <TabsContent value="completed">
+                    <div className="space-y-4 pt-4">
+                      {completedTasks.length > 0 ? completedTasks.map(task => (
+                          <TaskItem
+                              key={task.id}
+                              icon={task.icon}
+                              title={task.title}
+                              description={task.description}
+                              points={task.points}
+                              link={task.link}
+                              completed={true}
+                              onComplete={() => {}}
+                          />
+                      )) : (
+                        <div className="text-center text-muted-foreground p-8">
+                            You haven't completed any tasks yet.
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
             </div>
         </main>
        </div>
