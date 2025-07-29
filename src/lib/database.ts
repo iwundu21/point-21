@@ -54,36 +54,6 @@ const defaultUserData: Omit<UserData, 'telegramUser'> = {
     },
 };
 
-const initializeMockUsers = () => {
-    const mockUsers = [
-        { id: 1, first_name: 'Alice', username: 'alice', balance: 5000, photo_url: 'https://placehold.co/128x128/E91E63/white?text=A' },
-        { id: 2, first_name: 'Bob', username: 'bob', balance: 12000, photo_url: 'https://placehold.co/128x128/3F51B5/white?text=B' },
-        { id: 3, first_name: 'Charlie', username: 'charlie', balance: 800, photo_url: 'https://placehold.co/128x128/4CAF50/white?text=C' },
-        { id: 4, first_name: 'Diana', username: 'diana', balance: 25000, photo_url: 'https://placehold.co/128x128/FF9800/white?text=D' },
-        { id: 5, first_name: 'Eve', username: 'eve', balance: 100, photo_url: 'https://placehold.co/128x128/9C27B0/white?text=E' },
-    ];
-
-    mockUsers.forEach(u => {
-        const user: TelegramUser = { id: u.id, first_name: u.first_name, username: u.username, language_code: 'en', photo_url: u.photo_url };
-        const userId = getUserId(user);
-        if (!localStorage.getItem(userId)) {
-            const userData = {
-                ...defaultUserData,
-                telegramUser: user,
-                balance: u.balance,
-                referralCode: `REF${u.id}`
-            };
-            localStorage.setItem(userId, JSON.stringify(userData));
-        }
-    });
-};
-
-if (typeof window !== 'undefined' && !localStorage.getItem('mock_users_initialized')) {
-    initializeMockUsers();
-    localStorage.setItem('mock_users_initialized', 'true');
-}
-
-
 // In a real app, this would fetch from a remote database.
 export const getUserData = (telegramUser: TelegramUser | null): UserData => {
     if (typeof window === 'undefined') return { ...defaultUserData, telegramUser: null };
