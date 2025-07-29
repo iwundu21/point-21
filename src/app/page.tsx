@@ -44,8 +44,8 @@ export default function Home({}: {}) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleInitializeUser = useCallback((telegramUser: TelegramUser) => {
-    const userData = getUserData(telegramUser);
+  const handleInitializeUser = useCallback(async (telegramUser: TelegramUser) => {
+    const userData = await getUserData(telegramUser);
     
     setUser(telegramUser);
     let currentBalance = userData.balance;
@@ -85,7 +85,7 @@ export default function Home({}: {}) {
     
     setBalance(currentBalance);
     userData.balance = currentBalance;
-    saveUserData(telegramUser, userData);
+    await saveUserData(telegramUser, userData);
     setIsLoading(false);
   }, []);
 
@@ -117,8 +117,7 @@ export default function Home({}: {}) {
 
   useEffect(() => {
       if (!isLoading && user) {
-          const userData = getUserData(user);
-          saveUserData(user, { ...userData, balance, forgingEndTime });
+          saveUserData(user, { balance, forgingEndTime });
       }
   }, [balance, forgingEndTime, isLoading, user]);
 

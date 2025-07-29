@@ -20,6 +20,11 @@ declare global {
 interface TelegramUser {
     id: number;
     username?: string;
+    first_name: string;
+    last_name?: string;
+    language_code: string;
+    is_premium?: boolean;
+    photo_url?: string;
 }
 
 const generateReferralCode = () => {
@@ -44,25 +49,28 @@ export default function ReferralPage({}: ReferralPageProps) {
 
   useEffect(() => {
     setIsClient(true);
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        const telegramUser = tg.initDataUnsafe?.user;
-        if (telegramUser) {
-            setUser(telegramUser);
-            const userData = getUserData(telegramUser); 
-            
-            let userReferralCode = userData.referralCode;
-            if (!userReferralCode) {
-                userReferralCode = generateReferralCode();
-                saveUserData(telegramUser, { ...userData, referralCode: userReferralCode });
-            }
+    const init = async () => {
+        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            const telegramUser = tg.initDataUnsafe?.user;
+            if (telegramUser) {
+                setUser(telegramUser);
+                const userData = await getUserData(telegramUser); 
+                
+                let userReferralCode = userData.referralCode;
+                if (!userReferralCode) {
+                    userReferralCode = generateReferralCode();
+                    await saveUserData(telegramUser, { ...userData, referralCode: userReferralCode });
+                }
 
-            setReferralCode(userReferralCode);
-            setFriendsReferred(userData.referrals || 0);
-            setBonusApplied(userData.referralBonusApplied);
+                setReferralCode(userReferralCode);
+                setFriendsReferred(userData.referrals || 0);
+                setBonusApplied(userData.referralBonusApplied);
+            }
         }
     }
+    init();
   }, []);
 
   const handleCopy = (textToCopy: string, successMessage: string) => {
@@ -73,13 +81,13 @@ export default function ReferralPage({}: ReferralPageProps) {
     });
   };
 
-  const handleRedeemCode = () => {
+  const handleRedeemCode = async () => {
     if (!user || !enteredCode.trim()) return;
 
     setIsRedeeming(true);
 
-    setTimeout(() => {
-        const currentUserData = getUserData(user);
+    try {
+        const currentUserData = await getUserData(user);
         if (currentUserData.referralBonusApplied) {
             toast({ variant: 'destructive', title: 'Bonus Already Applied', description: 'You have already redeemed a referral bonus.' });
             setIsRedeeming(false);
@@ -92,19 +100,21 @@ export default function ReferralPage({}: ReferralPageProps) {
             return;
         }
 
-        const referrer = findUserByReferralCode(enteredCode.trim());
+        const updatedUser = await applyReferralBonus(user, enteredCode.trim());
 
-        if (referrer) {
-            applyReferralBonus(user, enteredCode.trim());
+        if (updatedUser) {
             setBonusApplied(true);
             toast({ title: 'Success!', description: 'You have received a 50 E-point bonus!' });
         } else {
             toast({ variant: 'destructive', title: 'Invalid Code', description: 'The referral code you entered is not valid.' });
         }
-
+    } catch (error) {
+        console.error("Redemption error:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+    } finally {
         setIsRedeeming(false);
         setEnteredCode('');
-    }, 1500);
+    }
   };
 
 

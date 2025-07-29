@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, Crown, User as UserIcon } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import Footer from '@/components/footer';
-import { getAllUsers, UserData } from '@/lib/database';
+import { getLeaderboardUsers, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +22,7 @@ interface TelegramUser {
     first_name: string;
     last_name?: string;
     username?: string;
+    photo_url?: string;
 }
 
 const getInitials = (user: UserData) => {
@@ -38,29 +39,27 @@ export default function LeaderboardPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            const telegramUser = tg.initDataUnsafe?.user;
-            if (telegramUser) {
-                setCurrentUser(telegramUser);
+        const fetchData = async () => {
+            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.ready();
+                const telegramUser = tg.initDataUnsafe?.user;
+                 if (telegramUser) {
+                    setCurrentUser(telegramUser);
+                } else {
+                     const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
+                     setCurrentUser(mockUser);
+                }
             } else {
-                 const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser' };
+                 const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
                  setCurrentUser(mockUser);
             }
 
-            const users = getAllUsers();
-            const sortedUsers = users.sort((a, b) => b.balance - a.balance);
-            setLeaderboard(sortedUsers);
+            const users = await getLeaderboardUsers();
+            setLeaderboard(users);
             setIsLoading(false);
-        } else {
-             const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser' };
-             setCurrentUser(mockUser);
-             const users = getAllUsers();
-             const sortedUsers = users.sort((a, b) => b.balance - a.balance);
-             setLeaderboard(sortedUsers);
-             setIsLoading(false);
-        }
+        };
+        fetchData();
     }, []);
 
     const currentUserRank = currentUser ? leaderboard.findIndex(u => u.telegramUser?.id === currentUser.id) : -1;

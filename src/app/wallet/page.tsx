@@ -35,6 +35,9 @@ interface TelegramUser {
     first_name: string;
     last_name?: string;
     username?: string;
+    language_code: string;
+    is_premium?: boolean;
+    photo_url?: string;
 }
 
 interface WalletPageProps {}
@@ -51,42 +54,45 @@ export default function WalletPage({}: WalletPageProps) {
 
   useEffect(() => {
     setIsClient(true);
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        const telegramUser = tg.initDataUnsafe?.user;
-        if (telegramUser) {
-            setUser(telegramUser);
-            const storedAddress = getWalletAddress(telegramUser);
-            if (storedAddress) {
-                setSavedAddress(storedAddress);
-                setWalletAddress(storedAddress);
+    const init = async () => {
+        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            const telegramUser = tg.initDataUnsafe?.user;
+            if (telegramUser) {
+                setUser(telegramUser);
+                const storedAddress = await getWalletAddress(telegramUser);
+                if (storedAddress) {
+                    setSavedAddress(storedAddress);
+                    setWalletAddress(storedAddress);
+                }
+                const verificationStatus = await getVerificationStatus(telegramUser);
+                if (verificationStatus === 'verified') {
+                    setIsVerified(true);
+                }
+                const userBalance = await getBalance(telegramUser);
+                setBalance(userBalance);
+            } else {
+                const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+                setUser(mockUser);
+                const storedAddress = await getWalletAddress(mockUser);
+                 if (storedAddress) {
+                    setSavedAddress(storedAddress);
+                    setWalletAddress(storedAddress);
+                }
+                const verificationStatus = await getVerificationStatus(mockUser);
+                if (verificationStatus === 'verified') {
+                    setIsVerified(true);
+                }
+                const userBalance = await getBalance(mockUser);
+                setBalance(userBalance);
             }
-            const verificationStatus = getVerificationStatus(telegramUser);
-            if (verificationStatus === 'verified') {
-                setIsVerified(true);
-            }
-            const userBalance = getBalance(telegramUser);
-            setBalance(userBalance);
-        } else {
-            const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser' };
-            setUser(mockUser);
-            const storedAddress = getWalletAddress(mockUser);
-             if (storedAddress) {
-                setSavedAddress(storedAddress);
-                setWalletAddress(storedAddress);
-            }
-            const verificationStatus = getVerificationStatus(mockUser);
-            if (verificationStatus === 'verified') {
-                setIsVerified(true);
-            }
-            const userBalance = getBalance(mockUser);
-            setBalance(userBalance);
         }
     }
+    init();
   }, []);
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     if (!isVerified) {
        toast({
         variant: "destructive",
@@ -97,7 +103,7 @@ export default function WalletPage({}: WalletPageProps) {
        return;
     }
     if (walletAddress.trim() && user) {
-      saveWalletAddress(user, walletAddress);
+      await saveWalletAddress(user, walletAddress);
       setSavedAddress(walletAddress);
       toast({
         title: 'Wallet Address Saved',

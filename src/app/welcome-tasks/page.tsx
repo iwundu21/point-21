@@ -6,7 +6,6 @@ import Footer from '@/components/footer';
 import { Gift, CheckCircle } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
-import { Twitter, Send, Disc } from 'lucide-react'; // Using similar icons from lucide as placeholders
 
 declare global {
   interface Window {
@@ -16,6 +15,12 @@ declare global {
 
 interface TelegramUser {
   id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code: string;
+  is_premium?: boolean;
+  photo_url?: string;
 }
 
 type WelcomeTasks = {
@@ -53,27 +58,32 @@ export default function WelcomeTasksPage() {
 
     useEffect(() => {
         setIsClient(true);
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            const telegramUser = tg.initDataUnsafe?.user;
-            if (telegramUser) {
-                setUser(telegramUser);
-                const userData = getUserData(telegramUser);
-                setTasks(userData.welcomeTasks);
+        const init = async () => {
+            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.ready();
+                const telegramUser = tg.initDataUnsafe?.user;
+                if (telegramUser) {
+                    setUser(telegramUser);
+                    const userData = await getUserData(telegramUser);
+                    if(userData.welcomeTasks) {
+                        setTasks(userData.welcomeTasks);
+                    }
+                }
             }
         }
+        init();
     }, []);
 
-    const handleTaskComplete = (taskName: keyof WelcomeTasks, link: string) => {
+    const handleTaskComplete = async (taskName: keyof WelcomeTasks, link: string) => {
         if (!user || tasks[taskName]) return;
 
-        const userData = getUserData(user);
+        const userData = await getUserData(user);
         const updatedTasks = { ...tasks, [taskName]: true };
         const updatedBalance = userData.balance + 300;
         
         setTasks(updatedTasks);
-        saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+        await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
         window.open(link, '_blank');
     };
@@ -138,4 +148,3 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
-

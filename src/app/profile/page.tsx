@@ -54,32 +54,35 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   useEffect(() => {
     setIsClient(true);
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      const telegramUser = tg.initDataUnsafe?.user;
-      if (telegramUser) {
-        setUser(telegramUser);
-        const storedStatus = getVerificationStatus(telegramUser);
-        if (storedStatus === 'verified') {
-            setAccountStatus('verified');
+    const init = async () => {
+        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+          const tg = window.Telegram.WebApp;
+          tg.ready();
+          const telegramUser = tg.initDataUnsafe?.user;
+          if (telegramUser) {
+            setUser(telegramUser);
+            const storedStatus = await getVerificationStatus(telegramUser);
+            if (storedStatus === 'verified') {
+                setAccountStatus('verified');
+            }
+          } else {
+            const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
+            setUser(mockUser);
+            const storedStatus = await getVerificationStatus(mockUser);
+            if (storedStatus === 'verified') {
+                setAccountStatus('verified');
+            }
+          }
+        } else {
+           const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
+           setUser(mockUser);
+           const storedStatus = await getVerificationStatus(mockUser);
+           if (storedStatus === 'verified') {
+                setAccountStatus('verified');
+           }
         }
-      } else {
-        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
-        setUser(mockUser);
-        const storedStatus = getVerificationStatus(mockUser);
-        if (storedStatus === 'verified') {
-            setAccountStatus('verified');
-        }
-      }
-    } else {
-       const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
-       setUser(mockUser);
-       const storedStatus = getVerificationStatus(mockUser);
-       if (storedStatus === 'verified') {
-            setAccountStatus('verified');
-       }
     }
+    init();
   }, []);
 
   const getInitials = () => {
@@ -140,7 +143,7 @@ export default function ProfilePage({}: ProfilePageProps) {
           if (result.isHuman && result.isUnique) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
-            saveVerificationStatus(user, 'verified');
+            await saveVerificationStatus(user, 'verified');
              toast({
               title: 'Verification Successful',
               description: 'Your account has been verified.',
@@ -148,13 +151,13 @@ export default function ProfilePage({}: ProfilePageProps) {
           } else {
             setAccountStatus('failed');
             setFailureReason(result.reason || 'Verification failed. Please try again.');
-            saveVerificationStatus(user, 'failed');
+            await saveVerificationStatus(user, 'failed');
           }
         } catch (error) {
            console.error('Verification error:', error);
            setAccountStatus('failed');
            setFailureReason('An unexpected error occurred. Please try again later.');
-           saveVerificationStatus(user, 'failed');
+           await saveVerificationStatus(user, 'failed');
         } finally {
             setIsProcessingVerification(false);
         }
@@ -167,7 +170,7 @@ export default function ProfilePage({}: ProfilePageProps) {
     setIsVerificationInProgress(false);
   };
 
-  const resetVerification = () => {
+  const resetVerification = async () => {
     setCapturedImage(null);
     setHasCameraPermission(null);
     setVerificationSuccess(false);
@@ -176,7 +179,7 @@ export default function ProfilePage({}: ProfilePageProps) {
     setFailureReason(null);
     setIsVerificationInProgress(false);
     if(user) {
-        saveVerificationStatus(user, 'unverified');
+        await saveVerificationStatus(user, 'unverified');
     }
   }
 
