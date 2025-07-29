@@ -3,11 +3,12 @@
 
 import { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
-import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle } from 'lucide-react';
+import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
 
 declare global {
   interface Window {
@@ -88,6 +89,8 @@ const socialTasksList = [
     },
 ];
 
+const TASKS_PER_PAGE = 10;
+
 export default function TasksPage() {
     const [user, setUser] = useState<TelegramUser | null>(null);
     const [tasks, setTasks] = useState<SocialTasksState>({
@@ -99,6 +102,8 @@ export default function TasksPage() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
+    const [availableCurrentPage, setAvailableCurrentPage] = useState(1);
+    const [completedCurrentPage, setCompletedCurrentPage] = useState(1);
 
     useEffect(() => {
         const init = () => {
@@ -143,10 +148,11 @@ export default function TasksPage() {
     const handleTaskComplete = (taskName: keyof SocialTasksState, link: string) => {
         if (!user || tasks[taskName] || verifyingTaskId) return;
 
+        window.open(link, '_blank');
+        
         const task = socialTasksList.find(t => t.id === taskName);
         if (!task) return;
 
-        window.open(link, '_blank');
         setVerifyingTaskId(task.id);
 
         setTimeout(async () => {
@@ -163,6 +169,20 @@ export default function TasksPage() {
     
     const availableTasks = socialTasksList.filter(task => !tasks[task.id as keyof SocialTasksState]);
     const completedTasks = socialTasksList.filter(task => tasks[task.id as keyof SocialTasksState]);
+
+    // Pagination for Available Tasks
+    const totalAvailablePages = Math.ceil(availableTasks.length / TASKS_PER_PAGE);
+    const paginatedAvailableTasks = availableTasks.slice(
+        (availableCurrentPage - 1) * TASKS_PER_PAGE,
+        availableCurrentPage * TASKS_PER_PAGE
+    );
+
+    // Pagination for Completed Tasks
+    const totalCompletedPages = Math.ceil(completedTasks.length / TASKS_PER_PAGE);
+    const paginatedCompletedTasks = completedTasks.slice(
+        (completedCurrentPage - 1) * TASKS_PER_PAGE,
+        completedCurrentPage * TASKS_PER_PAGE
+    );
 
     if (isLoading || !user) {
       return (
@@ -211,7 +231,7 @@ export default function TasksPage() {
                   </TabsList>
                   <TabsContent value="available">
                     <div className="space-y-4 pt-4">
-                        {availableTasks.length > 0 ? availableTasks.map(task => (
+                        {paginatedAvailableTasks.length > 0 ? paginatedAvailableTasks.map(task => (
                             <TaskItem
                                 key={task.id}
                                 icon={task.icon}
@@ -230,10 +250,31 @@ export default function TasksPage() {
                            </div>
                         )}
                     </div>
+                    {totalAvailablePages > 1 && (
+                         <div className="flex items-center justify-between pt-4">
+                            <div className="text-sm text-muted-foreground">
+                                Page {availableCurrentPage} of {totalAvailablePages}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button variant="outline" size="icon" onClick={() => setAvailableCurrentPage(1)} disabled={availableCurrentPage === 1}>
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setAvailableCurrentPage(p => p - 1)} disabled={availableCurrentPage === 1}>
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setAvailableCurrentPage(p => p + 1)} disabled={availableCurrentPage === totalAvailablePages}>
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setAvailableCurrentPage(totalAvailablePages)} disabled={availableCurrentPage === totalAvailablePages}>
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                   </TabsContent>
                   <TabsContent value="completed">
                     <div className="space-y-4 pt-4">
-                      {completedTasks.length > 0 ? completedTasks.map(task => (
+                      {paginatedCompletedTasks.length > 0 ? paginatedCompletedTasks.map(task => (
                           <TaskItem
                               key={task.id}
                               icon={task.icon}
@@ -251,6 +292,27 @@ export default function TasksPage() {
                         </div>
                       )}
                     </div>
+                     {totalCompletedPages > 1 && (
+                         <div className="flex items-center justify-between pt-4">
+                            <div className="text-sm text-muted-foreground">
+                                Page {completedCurrentPage} of {totalCompletedPages}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button variant="outline" size="icon" onClick={() => setCompletedCurrentPage(1)} disabled={completedCurrentPage === 1}>
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCompletedCurrentPage(p => p - 1)} disabled={completedCurrentPage === 1}>
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCompletedCurrentPage(p => p + 1)} disabled={completedCurrentPage === totalCompletedPages}>
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCompletedCurrentPage(totalCompletedPages)} disabled={completedCurrentPage === totalCompletedPages}>
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                   </TabsContent>
                 </Tabs>
             </div>
@@ -260,3 +322,4 @@ export default function TasksPage() {
     </div>
   );
 }
+
