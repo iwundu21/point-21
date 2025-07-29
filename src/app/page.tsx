@@ -190,7 +190,7 @@ export default function Home({}: {}) {
           <ShieldBan className="h-5 w-5" />
           <AlertTitle>Account Blocked</AlertTitle>
           <AlertDescription>
-            This account has been blocked for violating our terms of service regarding duplicate accounts. If you believe this is an error, please contact support.
+            This account has been blocked. If you believe this is an error, please contact support.
           </AlertDescription>
         </Alert>
       </div>
