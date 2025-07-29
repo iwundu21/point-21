@@ -2,7 +2,7 @@
 'use client';
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc } from 'firebase/firestore';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
 
@@ -78,14 +78,15 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
             fetchedData.referralCode = generateReferralCode();
             await setDoc(userRef, { referralCode: fetchedData.referralCode }, { merge: true });
         }
-        return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser };
+        return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id };
     } else {
         const newUser = {
             ...defaultUserData(telegramUser),
             referralCode: generateReferralCode() // Generate code on creation
         };
         await setDoc(userRef, newUser);
-        return newUser;
+        const newSnap = await getDoc(userRef);
+        return { ...newUser, id: newSnap.id };
     }
 };
 
@@ -102,7 +103,7 @@ export const findUserByReferralCode = async (code: string): Promise<UserData | n
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
-        return { ...defaultUserData(null), ...(userDoc.data() as UserData) };
+        return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
     }
     return null;
 }
@@ -113,7 +114,7 @@ export const findUserByFace = async (faceUri: string): Promise<UserData | null> 
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
-        return { ...defaultUserData(null), ...(userDoc.data() as UserData) };
+        return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
     }
     return null;
 }
@@ -166,13 +167,51 @@ export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<Doc
     
     const users: UserData[] = [];
     querySnapshot.forEach((doc) => {
-        users.push({ ...defaultUserData(null), ...(doc.data() as UserData) });
+        users.push({ ...defaultUserData(null), ...(doc.data() as UserData), id: doc.id });
     });
     
     const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
 
     return { users, lastDoc };
 }
+
+// --- Admin Functions ---
+
+const ADMIN_PAGE_SIZE = 20;
+
+export const getAllUsers = async (lastVisible: QueryDocumentSnapshot<DocumentData> | null = null): Promise<{ users: UserData[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
+    const usersRef = collection(db, 'users');
+    let q;
+    if (lastVisible) {
+        q = query(usersRef, orderBy('telegramUser.id'), startAfter(lastVisible), limit(ADMIN_PAGE_SIZE));
+    } else {
+        q = query(usersRef, orderBy('telegramUser.id'), limit(ADMIN_PAGE_SIZE));
+    }
+    
+    const querySnapshot = await getDocs(q);
+    
+    const users: UserData[] = [];
+    querySnapshot.forEach((doc) => {
+        users.push({ ...defaultUserData(null), ...(doc.data() as UserData), id: doc.id });
+    });
+    
+    const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+
+    return { users, lastDoc };
+};
+
+
+export const updateUserStatus = async (userId: string, status: 'active' | 'banned') => {
+    if (!userId) return;
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { status }, { merge: true });
+};
+
+export const deleteUser = async (userId: string) => {
+    if (!userId) return;
+    const userRef = doc(db, 'users', userId);
+    await deleteDoc(userRef);
+};
 
 
 export const banUser = async (telegramUser: TelegramUser | null) => {
