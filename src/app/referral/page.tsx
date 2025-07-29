@@ -27,10 +27,6 @@ interface TelegramUser {
     photo_url?: string;
 }
 
-const generateReferralCode = () => {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-}
-
 interface ReferralPageProps {}
 
 export default function ReferralPage({}: ReferralPageProps) {
@@ -75,14 +71,7 @@ export default function ReferralPage({}: ReferralPageProps) {
             setIsLoading(true);
             try {
                 const userData = await getUserData(user); 
-                
-                let userReferralCode = userData.referralCode;
-                if (!userReferralCode) {
-                    userReferralCode = generateReferralCode();
-                    await saveUserData(user, { ...userData, referralCode: userReferralCode });
-                }
-
-                setReferralCode(userReferralCode);
+                setReferralCode(userData.referralCode || '');
                 setFriendsReferred(userData.referrals || 0);
                 setBonusApplied(userData.referralBonusApplied);
             } catch (error) {

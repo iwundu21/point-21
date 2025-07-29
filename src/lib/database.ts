@@ -34,6 +34,10 @@ export interface UserData {
     };
 }
 
+const generateReferralCode = () => {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
 const getUserId = (telegramUser: TelegramUser | null) => {
     if (!telegramUser) return 'guest'; // Should not happen in a real scenario
     return `user_${telegramUser.id}`;
@@ -64,12 +68,13 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-        // Combine fetched data with defaults to ensure all fields are present
         const fetchedData = userSnap.data() as Partial<UserData>;
         return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser };
     } else {
-        // Create a new user with default data
-        const newUser = defaultUserData(telegramUser);
+        const newUser = {
+            ...defaultUserData(telegramUser),
+            referralCode: generateReferralCode() // Generate code on creation
+        };
         await setDoc(userRef, newUser);
         return newUser;
     }
