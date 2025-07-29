@@ -293,7 +293,7 @@ const UserTable = ({
     
      const handleExportAirdrop = () => {
         const airdropData = users
-            .filter(user => user.walletAddress) // Only include users with a wallet address
+            .filter(user => user.walletAddress && user.status === 'active') // Only include active users with a wallet address
             .map(user => {
                 const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
                 return {
@@ -307,12 +307,11 @@ const UserTable = ({
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', `airdrop_distribution_${users[0]?.status || 'users'}.csv`);
+        link.setAttribute('download', 'airdrop_distribution_active_users.csv');
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        // toast({ title: "Export Successful", description: "Airdrop CSV file has been downloaded." });
     };
 
     return (
@@ -587,7 +586,7 @@ export default function AdminPage() {
       };
 
     const totalPoints = useMemo(() => {
-        return allUsers.reduce((acc, user) => acc + user.balance, 0);
+        return allUsers.filter(u => u.status === 'active').reduce((acc, user) => acc + user.balance, 0);
     }, [allUsers]);
 
     const renderAdminSkeleton = () => (
@@ -653,7 +652,7 @@ export default function AdminPage() {
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Points</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
                         <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -770,5 +769,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-
