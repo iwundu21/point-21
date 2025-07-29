@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, Save, AlertTriangle } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle, Coins } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getVerificationStatus, getWalletAddress, saveWalletAddress } from '@/lib/database';
+import { getVerificationStatus, getWalletAddress, saveWalletAddress, getBalance } from '@/lib/database';
+import { Separator } from '@/components/ui/separator';
 
 declare global {
   interface Window {
@@ -44,6 +45,7 @@ export default function WalletPage({}: WalletPageProps) {
   const [isClient, setIsClient] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<TelegramUser | null>(null);
+  const [balance, setBalance] = useState(0);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -64,6 +66,22 @@ export default function WalletPage({}: WalletPageProps) {
             if (verificationStatus === 'verified') {
                 setIsVerified(true);
             }
+            const userBalance = getBalance(telegramUser);
+            setBalance(userBalance);
+        } else {
+            const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser' };
+            setUser(mockUser);
+            const storedAddress = getWalletAddress(mockUser);
+             if (storedAddress) {
+                setSavedAddress(storedAddress);
+                setWalletAddress(storedAddress);
+            }
+            const verificationStatus = getVerificationStatus(mockUser);
+            if (verificationStatus === 'verified') {
+                setIsVerified(true);
+            }
+            const userBalance = getBalance(mockUser);
+            setBalance(userBalance);
         }
     }
   }, []);
@@ -119,6 +137,20 @@ export default function WalletPage({}: WalletPageProps) {
                         Wallet
                     </h1>
                 </div>
+                
+                 <Card className="w-full bg-primary/5 border-primary/10">
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-sm font-medium text-primary/80">Total Balance</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="flex items-center space-x-2">
+                            <Coins className="w-6 h-6 text-primary" />
+                            <span className="text-2xl font-bold">{balance.toLocaleString()} E-points</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Separator />
 
                 <div className="space-y-6">
                     <div>
