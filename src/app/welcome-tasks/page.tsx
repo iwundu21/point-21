@@ -6,6 +6,7 @@ import Footer from '@/components/footer';
 import { Gift, CheckCircle } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
+import { Skeleton } from '@/components/ui/skeleton';
 
 declare global {
   interface Window {
@@ -54,26 +55,40 @@ export default function WelcomeTasksPage() {
         subscribedOnTelegram: false,
         joinedDiscord: false,
     });
-    const [isClient, setIsClient] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setIsClient(true);
         const init = async () => {
+            setIsLoading(true);
+            let telegramUser: TelegramUser | null = null;
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
                 tg.ready();
-                const telegramUser = tg.initDataUnsafe?.user;
-                if (telegramUser) {
-                    setUser(telegramUser);
-                    const userData = await getUserData(telegramUser);
-                    if(userData.welcomeTasks) {
-                        setTasks(userData.welcomeTasks);
-                    }
-                }
+                telegramUser = tg.initDataUnsafe?.user;
+            }
+
+            if (telegramUser) {
+                setUser(telegramUser);
+            } else {
+                const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+                setUser(mockUser);
             }
         }
         init();
     }, []);
+
+    useEffect(() => {
+        const loadTaskData = async () => {
+            if (user) {
+                const userData = await getUserData(user);
+                if(userData.welcomeTasks) {
+                    setTasks(userData.welcomeTasks);
+                }
+                setIsLoading(false);
+            }
+        }
+        loadTaskData();
+    }, [user]);
 
     const handleTaskComplete = async (taskName: keyof WelcomeTasks, link: string) => {
         if (!user || tasks[taskName]) return;
@@ -89,6 +104,29 @@ export default function WelcomeTasksPage() {
     };
 
     const allTasksCompleted = Object.values(tasks).every(Boolean);
+
+    if (isLoading) {
+      return (
+        <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+            <div className="flex-grow pb-20">
+                <main className="flex-grow flex flex-col p-4 mt-8">
+                    <div className="w-full max-w-sm mx-auto space-y-8">
+                        <div className="text-center space-y-2">
+                           <Skeleton className="h-8 w-48 mx-auto" />
+                           <Skeleton className="h-4 w-64 mx-auto" />
+                        </div>
+                        <div className="space-y-4">
+                          <Skeleton className="h-24 w-full" />
+                          <Skeleton className="h-24 w-full" />
+                          <Skeleton className="h-24 w-full" />
+                        </div>
+                    </div>
+                </main>
+            </div>
+            <Footer />
+        </div>
+      )
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -135,7 +173,7 @@ export default function WelcomeTasksPage() {
                            />
                         </div>
 
-                         {isClient && allTasksCompleted && (
+                         {!isLoading && allTasksCompleted && (
                            <div className="flex items-center justify-center gap-2 text-green-500 font-semibold p-4 bg-green-500/10 rounded-lg">
                                 <CheckCircle className="w-6 h-6" />
                                 <span>All welcome tasks completed!</span>

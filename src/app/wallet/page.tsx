@@ -23,6 +23,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getVerificationStatus, getWalletAddress, saveWalletAddress, getBalance } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 declare global {
   interface Window {
@@ -51,46 +52,49 @@ export default function WalletPage({}: WalletPageProps) {
   const [balance, setBalance] = useState(0);
   const { toast } = useToast();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
     const init = async () => {
+        setIsLoading(true);
+        let telegramUser: TelegramUser | null = null;
+
         if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
             const tg = window.Telegram.WebApp;
             tg.ready();
-            const telegramUser = tg.initDataUnsafe?.user;
-            if (telegramUser) {
-                setUser(telegramUser);
-                const storedAddress = await getWalletAddress(telegramUser);
-                if (storedAddress) {
-                    setSavedAddress(storedAddress);
-                    setWalletAddress(storedAddress);
-                }
-                const verificationStatus = await getVerificationStatus(telegramUser);
-                if (verificationStatus === 'verified') {
-                    setIsVerified(true);
-                }
-                const userBalance = await getBalance(telegramUser);
-                setBalance(userBalance);
-            } else {
-                const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-                setUser(mockUser);
-                const storedAddress = await getWalletAddress(mockUser);
-                 if (storedAddress) {
-                    setSavedAddress(storedAddress);
-                    setWalletAddress(storedAddress);
-                }
-                const verificationStatus = await getVerificationStatus(mockUser);
-                if (verificationStatus === 'verified') {
-                    setIsVerified(true);
-                }
-                const userBalance = await getBalance(mockUser);
-                setBalance(userBalance);
-            }
+            telegramUser = tg.initDataUnsafe?.user;
+        }
+
+        if (telegramUser) {
+            setUser(telegramUser);
+        } else {
+            const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+            setUser(mockUser);
         }
     }
     init();
   }, []);
+
+  useEffect(() => {
+    const loadUserData = async () => {
+        if (user) {
+            const storedAddress = await getWalletAddress(user);
+            if (storedAddress) {
+                setSavedAddress(storedAddress);
+                setWalletAddress(storedAddress);
+            }
+            const verificationStatus = await getVerificationStatus(user);
+            if (verificationStatus === 'verified') {
+                setIsVerified(true);
+            }
+            const userBalance = await getBalance(user);
+            setBalance(userBalance);
+            setIsLoading(false);
+        }
+    }
+    loadUserData();
+  }, [user]);
 
   const handleSaveAddress = async () => {
     if (!isVerified) {
@@ -123,10 +127,17 @@ export default function WalletPage({}: WalletPageProps) {
     return `${address.slice(0, 7)}****${address.slice(-7)}`;
   }
 
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-            <div className="flex-grow pb-20"></div>
+            <div className="flex-grow pb-20 p-4 mt-8 max-w-sm mx-auto w-full">
+                <div className="space-y-6">
+                    <Skeleton className="h-8 w-24 mx-auto" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-1" />
+                    <Skeleton className="h-40 w-full" />
+                </div>
+            </div>
             <Footer />
         </div>
     )

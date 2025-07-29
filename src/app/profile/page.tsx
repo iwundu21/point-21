@@ -55,24 +55,19 @@ export default function ProfilePage({}: ProfilePageProps) {
   useEffect(() => {
     setIsClient(true);
     const init = async () => {
+        let telegramUser: TelegramUser | null = null;
         if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
           const tg = window.Telegram.WebApp;
           tg.ready();
-          const telegramUser = tg.initDataUnsafe?.user;
-          if (telegramUser) {
+          telegramUser = tg.initDataUnsafe?.user;
+        }
+
+        if (telegramUser) {
             setUser(telegramUser);
             const storedStatus = await getVerificationStatus(telegramUser);
             if (storedStatus === 'verified') {
                 setAccountStatus('verified');
             }
-          } else {
-            const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
-            setUser(mockUser);
-            const storedStatus = await getVerificationStatus(mockUser);
-            if (storedStatus === 'verified') {
-                setAccountStatus('verified');
-            }
-          }
         } else {
            const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
            setUser(mockUser);

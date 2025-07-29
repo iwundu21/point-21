@@ -40,19 +40,19 @@ export default function LeaderboardPage() {
 
     useEffect(() => {
         const fetchData = async () => {
+            setIsLoading(true);
+            let telegramUser: TelegramUser | null = null;
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
                 tg.ready();
-                const telegramUser = tg.initDataUnsafe?.user;
-                 if (telegramUser) {
-                    setCurrentUser(telegramUser);
-                } else {
-                     const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
-                     setCurrentUser(mockUser);
-                }
+                telegramUser = tg.initDataUnsafe?.user;
+            }
+            
+            if (telegramUser) {
+                setCurrentUser(telegramUser);
             } else {
-                 const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
-                 setCurrentUser(mockUser);
+                const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
+                setCurrentUser(mockUser);
             }
 
             const users = await getLeaderboardUsers();

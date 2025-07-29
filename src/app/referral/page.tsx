@@ -50,24 +50,33 @@ export default function ReferralPage({}: ReferralPageProps) {
   useEffect(() => {
     setIsClient(true);
     const init = async () => {
+        let telegramUser: TelegramUser | null = null;
         if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
             const tg = window.Telegram.WebApp;
             tg.ready();
-            const telegramUser = tg.initDataUnsafe?.user;
-            if (telegramUser) {
-                setUser(telegramUser);
-                const userData = await getUserData(telegramUser); 
-                
-                let userReferralCode = userData.referralCode;
-                if (!userReferralCode) {
-                    userReferralCode = generateReferralCode();
-                    await saveUserData(telegramUser, { ...userData, referralCode: userReferralCode });
-                }
+            telegramUser = tg.initDataUnsafe?.user;
+        }
 
-                setReferralCode(userReferralCode);
-                setFriendsReferred(userData.referrals || 0);
-                setBonusApplied(userData.referralBonusApplied);
+        if (telegramUser) {
+            setUser(telegramUser);
+            const userData = await getUserData(telegramUser); 
+            
+            let userReferralCode = userData.referralCode;
+            if (!userReferralCode) {
+                userReferralCode = generateReferralCode();
+                await saveUserData(telegramUser, { ...userData, referralCode: userReferralCode });
             }
+
+            setReferralCode(userReferralCode);
+            setFriendsReferred(userData.referrals || 0);
+            setBonusApplied(userData.referralBonusApplied);
+        } else {
+             const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+             setUser(mockUser);
+             // In dev, you might want to simulate these values
+             setReferralCode(generateReferralCode());
+             setFriendsReferred(0);
+             setBonusApplied(false);
         }
     }
     init();

@@ -45,6 +45,7 @@ export default function Home({}: {}) {
   const { toast } = useToast();
 
   const handleInitializeUser = useCallback(async (telegramUser: TelegramUser) => {
+    setIsLoading(true);
     const userData = await getUserData(telegramUser);
     
     setUser(telegramUser);
@@ -91,28 +92,22 @@ export default function Home({}: {}) {
 
   useEffect(() => {
     const init = () => {
-      const tg = window.Telegram?.WebApp;
-      if (tg) {
+      let telegramUser: TelegramUser | null = null;
+      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
         tg.ready();
-        const telegramUser = tg.initDataUnsafe?.user;
-
-        if (telegramUser) {
-          handleInitializeUser(telegramUser);
-        } else {
-          // Dev environment or no user found
-          const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
-          handleInitializeUser(mockUser);
-        }
+        telegramUser = tg.initDataUnsafe?.user;
+      }
+      
+      if (telegramUser) {
+        handleInitializeUser(telegramUser);
       } else {
-        // Fallback for non-Telegram environment
+        // Fallback for development
         const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
         handleInitializeUser(mockUser);
       }
     };
-    
-    if (typeof window !== 'undefined') {
-      init();
-    }
+    init();
   }, [handleInitializeUser]);
 
   useEffect(() => {
