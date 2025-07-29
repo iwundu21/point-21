@@ -283,7 +283,9 @@ export default function AdminPage() {
             const term = searchTerm.toLowerCase();
             const telegramId = user.telegramUser?.id.toString() || '';
             const walletAddress = user.walletAddress?.toLowerCase() || '';
-            return telegramId.includes(term) || walletAddress.includes(term);
+            const username = user.telegramUser?.username?.toLowerCase() || '';
+            const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
+            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
         });
     }, [allUsers, searchTerm]);
     
@@ -477,7 +479,7 @@ export default function AdminPage() {
                       <div className="relative pt-2">
                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                          <Input 
-                            placeholder="Search by Telegram ID or Wallet Address..."
+                            placeholder="Search by ID, Wallet, Username or First Name..."
                             className="pl-9"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
