@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { getUserData } from '@/lib/database';
 
 // NOTE: Add your Telegram user ID here to see the Admin link
 const ADMIN_IDS = [123, 12345, 6954452147]; 
@@ -20,32 +21,63 @@ interface TelegramUser {
     id: number;
 }
 
+const socialTasksList = [
+    { id: 'commentedOnX' },
+    { id: 'likedOnX' },
+    { id: 'retweetedOnX' },
+    { id: 'followedOnX' },
+    { id: 'subscribedOnTelegram' },
+];
 
 const Footer = () => {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
+  const [hasAvailableTasks, setHasAvailableTasks] = useState(false);
 
   useEffect(() => {
-    let telegramUser: TelegramUser | null = null;
+    let user: TelegramUser | null = null;
     if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
       if (tg.initDataUnsafe?.user) {
-          telegramUser = tg.initDataUnsafe.user;
+          user = tg.initDataUnsafe.user;
           tg.ready();
       }
     }
     
-    if (telegramUser) {
-        setIsAdmin(ADMIN_IDS.includes(telegramUser.id));
+    if (user) {
+        setTelegramUser(user);
+        setIsAdmin(ADMIN_IDS.includes(user.id));
     } else {
         // Fallback for development, check against all mock IDs
-        setIsAdmin(ADMIN_IDS.includes(123) || ADMIN_IDS.includes(12345));
+        const mockUser: TelegramUser = { id: 123 };
+        setTelegramUser(mockUser);
+        setIsAdmin(ADMIN_IDS.includes(mockUser.id));
     }
   }, []);
 
+  useEffect(() => {
+    const checkTasks = async () => {
+        if(telegramUser) {
+            const userData = await getUserData(telegramUser);
+            if(userData.socialTasks) {
+                const completedCount = Object.values(userData.socialTasks).filter(Boolean).length;
+                if(completedCount < socialTasksList.length) {
+                    setHasAvailableTasks(true);
+                } else {
+                    setHasAvailableTasks(false);
+                }
+            } else {
+                setHasAvailableTasks(true); // If socialTasks object doesn't exist, they have tasks
+            }
+        }
+    }
+    checkTasks();
+  }, [telegramUser]);
+
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/tasks', label: 'Social', icon: Users },
+    { href: '/tasks', label: 'Social', icon: Users, notification: hasAvailableTasks },
     { href: '/referral', label: 'Ref', icon: Handshake },
     { href: '/welcome-tasks', label: 'Wel', icon: Gift },
     { href: '/leaderboard', label: 'Leader', icon: Trophy },
@@ -61,11 +93,14 @@ const Footer = () => {
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center text-sm w-full p-1">
+            <Link key={item.href} href={item.href} className="relative flex flex-col items-center justify-center text-sm w-full p-1">
               <item.icon className={cn("w-6 h-6 mb-1", isActive ? 'text-primary' : 'text-muted-foreground')} />
               <span className={cn("text-xs", isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>
                 {item.label}
               </span>
+              {item.notification && !isActive && (
+                <span className="absolute top-1 right-1/2 translate-x-3 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
             </Link>
           );
         })}
