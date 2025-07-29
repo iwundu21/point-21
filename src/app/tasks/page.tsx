@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
-import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Info } from 'lucide-react';
 import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -209,9 +209,10 @@ export default function TasksPage() {
                                 onComplete={() => handleTaskComplete(task)}
                             />
                         )) : (
-                           <div className="flex items-center justify-center gap-2 text-green-500 font-semibold p-4 bg-green-500/10 rounded-lg mt-4">
-                                <CheckCircle className="w-6 h-6" />
-                                <span>All social tasks completed!</span>
+                           <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground font-semibold p-8 bg-primary/5 rounded-lg mt-4">
+                                <Info className="w-8 h-8" />
+                                <span>No available tasks.</span>
+                                <span>Come back later.</span>
                            </div>
                         )}
                     </div>
@@ -287,3 +288,5 @@ export default function TasksPage() {
     </div>
   );
 }
+
+    
