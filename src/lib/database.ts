@@ -61,8 +61,7 @@ export const getUserData = (telegramUser: TelegramUser | null): UserData => {
     const data = localStorage.getItem(userId);
     if (data) {
         const parsedData = JSON.parse(data);
-        const telegramUserObj = telegramUser ? { id: telegramUser.id, first_name: telegramUser.first_name, last_name: telegramUser.last_name, username: telegramUser.username, language_code: telegramUser.language_code, is_premium: telegramUser.is_premium, photo_url: telegramUser.photo_url } : null;
-        // Merge with defaults to ensure new fields are present
+        const telegramUserObj = telegramUser ? { id: telegramUser.id, first_name: telegramUser.first_name, last_name: telegramUser.last_name, username: telegramUser.username, language_code: telegramUser.language_code, is_premium: telegramUser.is_premium, photo_url: telegramUser.photo_url } : (parsedData.telegramUser || null);
         return { ...defaultUserData, ...parsedData, telegramUser: telegramUserObj };
     }
     const telegramUserObj = telegramUser ? { id: telegramUser.id, first_name: telegramUser.first_name, last_name: telegramUser.last_name, username: telegramUser.username, language_code: telegramUser.language_code, is_premium: telegramUser.is_premium, photo_url: telegramUser.photo_url } : null;
@@ -74,11 +73,8 @@ export const saveUserData = (telegramUser: TelegramUser | null, data: Partial<Us
      if (typeof window === 'undefined' || !telegramUser) return;
     const userId = getUserId(telegramUser);
     const currentData = getUserData(telegramUser);
-    const newData = { ...currentData, ...data };
-    // We only want to store the data part, not the user object itself in the value.
-    const dataToStore = { ...newData };
-    delete (dataToStore as any).telegramUser;
-    localStorage.setItem(userId, JSON.stringify(dataToStore));
+    const newData = { ...currentData, ...data, telegramUser };
+    localStorage.setItem(userId, JSON.stringify(newData));
 };
 
 // In a real app, this would be a database query.
@@ -90,18 +86,9 @@ export const findUserByReferralCode = (code: string): UserData | null => {
             try {
                 const data = localStorage.getItem(key);
                 if (data) {
-                    const parsedData: Omit<UserData, 'telegramUser'> = JSON.parse(data);
+                    const parsedData: UserData = JSON.parse(data);
                     if (parsedData.referralCode && parsedData.referralCode.trim().toLowerCase() === code.trim().toLowerCase()) {
-                        const id = parseInt(key.replace('user_', ''), 10);
-                        // In a real DB, you'd fetch the full user profile. For localStorage, we need to reconstruct it.
-                        // This is a limitation of this mock setup. A real user object would be stored elsewhere.
-                        const mockUser: TelegramUser = {
-                            id: id,
-                            first_name: `User ${id}`, // Placeholder
-                            username: `user${id}`,
-                             language_code: 'en'
-                        }
-                        return { ...defaultUserData, ...parsedData, telegramUser: mockUser };
+                        return { ...defaultUserData, ...parsedData };
                     }
                 }
             } catch (e) {
@@ -149,19 +136,10 @@ export const getAllUsers = (): UserData[] => {
             try {
                 const data = localStorage.getItem(key);
                 if (data) {
-                    const parsedData: Omit<UserData, 'telegramUser'> = JSON.parse(data);
-                    const id = parseInt(key.replace('user_', ''), 10);
-                    // This is a mock reconstruction of the user object.
-                    // A real DB would store and retrieve this properly.
-                    const mockUser: TelegramUser = {
-                        id: id,
-                        first_name: parsedData.telegramUser?.first_name || `User ${id}`,
-                        last_name: parsedData.telegramUser?.last_name,
-                        username: parsedData.telegramUser?.username || `user${id}`,
-                        language_code: parsedData.telegramUser?.language_code || 'en',
-                        photo_url: parsedData.telegramUser?.photo_url,
-                    };
-                    users.push({ ...defaultUserData, ...parsedData, telegramUser: mockUser });
+                    const parsedData: UserData = JSON.parse(data);
+                     if(parsedData.telegramUser) {
+                        users.push({ ...defaultUserData, ...parsedData });
+                    }
                 }
             } catch (e) {
                 console.error("Error parsing user data from localStorage", e);
