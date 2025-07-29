@@ -145,7 +145,11 @@ export default function AdminPage() {
 
     const handleUpdateStatus = async (userId: string, status: 'active' | 'banned') => {
         await updateUserStatus(userId, status);
-        setUsers(users.map(u => u.id === userId ? { ...u, status } : u));
+        setUsers(currentUsers =>
+            currentUsers.map(user =>
+                user.id === userId ? { ...user, status: status } : user
+            )
+        );
         toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
     }
 
@@ -337,3 +341,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

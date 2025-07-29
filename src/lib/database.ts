@@ -17,6 +17,7 @@ interface TelegramUser {
 }
 
 export interface UserData {
+    id: string; // Document ID
     balance: number;
     forgingEndTime: number | null;
     dailyStreak: { count: number; lastLogin: string };
@@ -45,7 +46,7 @@ const getUserId = (telegramUser: TelegramUser | null) => {
     return `user_${telegramUser.id}`;
 }
 
-const defaultUserData = (telegramUser: TelegramUser | null): UserData => ({
+const defaultUserData = (telegramUser: TelegramUser | null): Omit<UserData, 'id'> => ({
     balance: 0,
     forgingEndTime: null,
     dailyStreak: { count: 0, lastLogin: '' },
@@ -66,13 +67,13 @@ const defaultUserData = (telegramUser: TelegramUser | null): UserData => ({
 });
 
 export const getUserData = async (telegramUser: TelegramUser | null): Promise<UserData> => {
-    if (!telegramUser) return defaultUserData(null);
+    if (!telegramUser) return { ...defaultUserData(null), id: 'guest' };
     const userId = getUserId(telegramUser);
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-        const fetchedData = userSnap.data() as Partial<UserData>;
+        const fetchedData = userSnap.data() as Partial<Omit<UserData, 'id'>>;
         // Ensure every existing user has a referral code
         if (!fetchedData.referralCode) {
             fetchedData.referralCode = generateReferralCode();
@@ -80,17 +81,16 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
         }
         return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id };
     } else {
-        const newUser = {
+        const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(telegramUser),
             referralCode: generateReferralCode() // Generate code on creation
         };
         await setDoc(userRef, newUser);
-        const newSnap = await getDoc(userRef);
-        return { ...newUser, id: newSnap.id };
+        return { ...newUser, id: userId };
     }
 };
 
-export const saveUserData = async (telegramUser: TelegramUser | null, data: Partial<UserData>) => {
+export const saveUserData = async (telegramUser: TelegramUser | null, data: Partial<Omit<UserData, 'id'>>) => {
     if (!telegramUser) return;
     const userId = getUserId(telegramUser);
     const userRef = doc(db, 'users', userId);
@@ -123,7 +123,7 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
     const referrer = await findUserByReferralCode(referrerCode);
     if (referrer?.telegramUser) {
         await runTransaction(db, async (transaction) => {
-            const referrerRef = doc(db, 'users', getUserId(referrer.telegramUser));
+            const referrerRef = doc(db, 'users', getUserId(referrer.telegramUser!));
             const newUserRef = doc(db, 'users', getUserId(newUser));
 
             const referrerDoc = await transaction.get(referrerRef);
@@ -167,7 +167,7 @@ export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<Doc
     
     const users: UserData[] = [];
     querySnapshot.forEach((doc) => {
-        users.push({ ...defaultUserData(null), ...(doc.data() as UserData), id: doc.id });
+        users.push({ ...defaultUserData(null), ...(doc.data() as Omit<UserData, 'id'>), id: doc.id });
     });
     
     const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
@@ -192,7 +192,7 @@ export const getAllUsers = async (lastVisible: QueryDocumentSnapshot<DocumentDat
     
     const users: UserData[] = [];
     querySnapshot.forEach((doc) => {
-        users.push({ ...defaultUserData(null), ...(doc.data() as UserData), id: doc.id });
+        users.push({ ...defaultUserData(null), ...(doc.data() as Omit<UserData, 'id'>), id: doc.id });
     });
     
     const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
@@ -239,3 +239,5 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
+
+    
