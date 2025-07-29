@@ -2,7 +2,7 @@
 'use client';
 import type { FC } from 'react';
 import { useState, useEffect } from 'react';
-import { Zap, ShieldAlert, Loader2 } from 'lucide-react';
+import { Zap, ShieldAlert, Loader2, Gift, UserCheck, Handshake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -11,8 +11,10 @@ interface MiningCircleProps {
   endTime: number | null;
   onActivate: () => void;
   onSessionEnd: () => void;
-  isVerified: boolean;
   isActivating: boolean;
+  hasRedeemedReferral: boolean;
+  hasCompletedWelcomeTasks: boolean;
+  isVerified: boolean;
 }
 
 const TOTAL_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -27,7 +29,16 @@ const formatTime = (ms: number): string => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
-const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, onSessionEnd, isVerified, isActivating }) => {
+const MiningCircle: FC<MiningCircleProps> = ({ 
+  isActive, 
+  endTime, 
+  onActivate, 
+  onSessionEnd, 
+  isActivating, 
+  hasRedeemedReferral, 
+  hasCompletedWelcomeTasks, 
+  isVerified 
+}) => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [progress, setProgress] = useState(0);
   const [earnedPoints, setEarnedPoints] = useState(0);
@@ -69,64 +80,80 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
 
   const handleClick = () => {
     if (isActivating) return;
-    if (isVerified) {
-      onActivate();
-    } else {
-      router.push('/profile');
+
+    if (!hasRedeemedReferral) {
+        router.push('/referral');
+        return;
     }
+    if (!hasCompletedWelcomeTasks) {
+        router.push('/welcome-tasks');
+        return;
+    }
+    if (!isVerified) {
+        router.push('/profile');
+        return;
+    }
+
+    onActivate();
   };
+
+  const getButtonState = () => {
+    if (isActivating) return { disabled: true, text: 'Activating...', icon: <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-spin" />, className: 'border-primary/30' };
+    if (isActive) return { disabled: true, text: 'Mining Active', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-primary" />, className: 'shadow-primary/20 border-primary/50' };
+
+    if (!hasRedeemedReferral) {
+      return { disabled: false, text: 'Redeem Code', icon: <Handshake className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
+    }
+    if (!hasCompletedWelcomeTasks) {
+      return { disabled: false, text: 'Complete Tasks', icon: <Gift className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
+    }
+    if (!isVerified) {
+      return { disabled: false, text: 'Verification Needed', icon: <ShieldAlert className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
+    }
+    return { disabled: false, text: 'Activate Mining', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400/70" />, className: 'border-yellow-400/50 hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105 animate-fast-pulse' };
+  };
+
+  const getHelperText = () => {
+    if (isActivating) return 'Your mining rig is firing up...';
+    if (isActive) return 'Your 24-hour mining session is active. E-point will be added automatically.';
+    if (!hasRedeemedReferral) return 'First, redeem a referral code to continue.';
+    if (!hasCompletedWelcomeTasks) return 'Next, complete all the welcome tasks.';
+    if (!isVerified) return 'Please complete face verification on your profile to start mining.';
+    return 'Activate a 24-hour mining session to earn 1000 E-point';
+  }
+
+  const { disabled, text, icon, className: stateClassName } = getButtonState();
 
   return (
     <div className="flex flex-col items-center space-y-4">
       <button
         onClick={handleClick}
-        disabled={isActive || isActivating}
+        disabled={disabled}
         aria-label={isActive ? `Mining session active, time left: ${formatTime(timeLeft)}` : 'Activate Mining'}
         className={cn(
           'relative w-56 h-56 sm:w-64 sm:h-64 rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out disabled:cursor-not-allowed',
           'bg-transparent border-4 text-foreground backdrop-blur-sm',
-           isActive ? 'shadow-primary/20 border-primary/50' :
-           isActivating ? 'border-primary/30' :
-           isVerified ? 'border-yellow-400/50 hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105 animate-fast-pulse' : 'border-destructive/50'
+           stateClassName
         )}
       >
         <div 
           className="absolute inset-0 rounded-full transition-all duration-1000 ease-linear"
           style={isActive && isVerified ? conicGradientStyle : {}}
         ></div>
-        <div className="relative w-[13rem] h-[13rem] sm:w-56 sm:h-56 rounded-full bg-card/90 flex flex-col items-center justify-center">
-            {isActivating ? (
-              <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-spin" />
-            ) : isVerified ? (
-              <Zap className={cn("w-12 h-12 sm:w-16 sm:h-16 transition-all duration-500", isActive ? "text-primary" : "text-yellow-400/70")} />
-            ) : (
-               <ShieldAlert className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />
-            )}
-
-            {isActivating ? (
-               <p className="mt-4 text-lg sm:text-xl font-semibold text-primary/80">Activating...</p>
-            ) : isActive && isVerified ? (
+        <div className="relative w-[13rem] h-[13rem] sm:w-56 sm:h-56 rounded-full bg-card/90 flex flex-col items-center justify-center text-center">
+            {icon}
+             {isActive ? (
               <div className="mt-2 text-center">
                  <p className="text-xl sm:text-2xl font-bold tracking-tighter">{earnedPoints}/{TOTAL_POINTS}</p>
                  <p className="text-xl sm:text-2xl font-mono font-bold tracking-wider">{formatTime(timeLeft)}</p>
               </div>
             ) : (
-              isVerified ? (
-                <p className="mt-4 text-lg sm:text-xl font-semibold">Activate Mining</p>
-              ) : (
-                <p className="mt-4 text-lg sm:text-xl font-semibold text-destructive text-center">Verification Needed</p>
-              )
+                <p className="mt-4 text-lg sm:text-xl font-semibold">{text}</p>
             )}
         </div>
       </button>
       <p className="text-center text-sm text-muted-foreground max-w-xs">
-        {isActivating
-          ? 'Your mining rig is firing up...'
-          : isActive
-          ? 'Your 24-hour mining session is active. E-point will be added automatically.'
-          : isVerified
-          ? 'Activate a 24-hour mining session to earn 1000 E-point'
-          : 'Please complete face verification on your profile to start mining.'}
+        {getHelperText()}
       </p>
     </div>
   );

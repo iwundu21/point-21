@@ -61,10 +61,14 @@ export default function Home({}: {}) {
   const [dailyStreak, setDailyStreak] = useState(0);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
   const [rank, setRank] = useState<number | null>(null);
+
+  // New state for sequential tasks
+  const [hasRedeemedReferral, setHasRedeemedReferral] = useState(false);
+  const [hasCompletedWelcomeTasks, setHasCompletedWelcomeTasks] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -90,9 +94,12 @@ export default function Home({}: {}) {
         const currentUserRank = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
         setRank(currentUserRank !== -1 ? currentUserRank + 1 : null);
         
-        if (freshUserData.verificationStatus === 'verified') {
-          setIsVerified(true);
-        }
+        // Set state for sequential tasks
+        setHasRedeemedReferral(freshUserData.referralBonusApplied);
+        const allWelcomeTasksDone = Object.values(freshUserData.welcomeTasks || {}).every(Boolean);
+        setHasCompletedWelcomeTasks(allWelcomeTasksDone);
+        setIsVerified(freshUserData.verificationStatus === 'verified');
+
 
         if (freshUserData.forgingEndTime && freshUserData.forgingEndTime > Date.now()) {
           setIsForgingActive(true);
@@ -162,6 +169,24 @@ export default function Home({}: {}) {
   }, [handleInitializeUser]);
   
   const handleActivateForging = async () => {
+    if (!hasRedeemedReferral) {
+       toast({
+        variant: "destructive",
+        title: "Referral Code Required",
+        description: "Please redeem a referral code to unlock the next step.",
+        action: <Button onClick={() => router.push('/referral')}>Go to Referrals</Button>,
+       });
+       return;
+    }
+     if (!hasCompletedWelcomeTasks) {
+       toast({
+        variant: "destructive",
+        title: "Welcome Tasks Required",
+        description: "Please complete all welcome tasks to continue.",
+        action: <Button onClick={() => router.push('/welcome-tasks')}>Go to Tasks</Button>,
+       });
+       return;
+    }
     if (!isVerified) {
        toast({
         variant: "destructive",
@@ -171,6 +196,7 @@ export default function Home({}: {}) {
        });
        return;
     }
+
     setIsActivating(true);
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     if (user && userData) {
@@ -281,8 +307,10 @@ export default function Home({}: {}) {
             endTime={forgingEndTime}
             onActivate={handleActivateForging}
             onSessionEnd={handleSessionEnd}
-            isVerified={isVerified}
             isActivating={isActivating}
+            hasRedeemedReferral={hasRedeemedReferral}
+            hasCompletedWelcomeTasks={hasCompletedWelcomeTasks}
+            isVerified={isVerified}
           />
         </div>
 
