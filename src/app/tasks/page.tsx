@@ -98,6 +98,7 @@ export default function TasksPage() {
         subscribedOnTelegram: false,
     });
     const [isLoading, setIsLoading] = useState(true);
+    const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
 
     useEffect(() => {
         const init = () => {
@@ -139,20 +140,25 @@ export default function TasksPage() {
         loadTaskData();
     }, [user]);
 
-    const handleTaskComplete = async (taskName: keyof SocialTasksState, link: string) => {
-        if (!user || tasks[taskName]) return;
+    const handleTaskComplete = (taskName: keyof SocialTasksState, link: string) => {
+        if (!user || tasks[taskName] || verifyingTaskId) return;
 
-        const userData = await getUserData(user);
         const task = socialTasksList.find(t => t.id === taskName);
         if (!task) return;
 
-        const updatedTasks = { ...tasks, [taskName]: true };
-        const updatedBalance = userData.balance + task.points;
-        
-        setTasks(updatedTasks);
-        await saveUserData(user, { socialTasks: updatedTasks, balance: updatedBalance });
+        setVerifyingTaskId(task.id);
 
-        window.open(link, '_blank');
+        setTimeout(async () => {
+            const userData = await getUserData(user);
+            const updatedTasks = { ...tasks, [taskName]: true };
+            const updatedBalance = userData.balance + task.points;
+            
+            setTasks(updatedTasks);
+            await saveUserData(user, { ...userData, socialTasks: updatedTasks, balance: updatedBalance });
+            
+            window.open(link, '_blank');
+            setVerifyingTaskId(null);
+        }, 9000);
     };
     
     const availableTasks = socialTasksList.filter(task => !tasks[task.id as keyof SocialTasksState]);
@@ -214,6 +220,7 @@ export default function TasksPage() {
                                 points={task.points}
                                 link={task.link}
                                 completed={false}
+                                isVerifying={verifyingTaskId === task.id}
                                 onComplete={() => handleTaskComplete(task.id as keyof SocialTasksState, task.link)}
                             />
                         )) : (
@@ -235,6 +242,7 @@ export default function TasksPage() {
                               points={task.points}
                               link={task.link}
                               completed={true}
+                              isVerifying={false}
                               onComplete={() => {}}
                           />
                       )) : (

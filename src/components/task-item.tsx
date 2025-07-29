@@ -3,7 +3,7 @@
 
 import { ReactNode } from 'react';
 import { Button } from './ui/button';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TaskItemProps {
@@ -13,10 +13,11 @@ interface TaskItemProps {
     points: number;
     link: string;
     completed: boolean;
+    isVerifying: boolean;
     onComplete: () => void;
 }
 
-const TaskItem = ({ icon, title, description, points, link, completed, onComplete }: TaskItemProps) => {
+const TaskItem = ({ icon, title, description, points, link, completed, isVerifying, onComplete }: TaskItemProps) => {
     return (
         <div className={cn(
             "p-4 rounded-lg flex items-center space-x-4 transition-all",
@@ -37,14 +38,25 @@ const TaskItem = ({ icon, title, description, points, link, completed, onComplet
                 size="sm"
                 variant={completed ? "ghost" : "default"}
                 onClick={onComplete}
-                disabled={completed}
+                disabled={completed || isVerifying}
                 className={cn(
                     "w-24",
                     completed && "text-green-500 cursor-default hover:bg-transparent"
                 )}
             >
-                {completed ? <CheckCircle className="w-5 h-5 mr-1" /> : 'Go'}
-                {completed && 'Done'}
+                {isVerifying ? (
+                    <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Verifying
+                    </>
+                ) : completed ? (
+                    <>
+                        <CheckCircle className="w-5 h-5 mr-1" />
+                        Done
+                    </>
+                ) : (
+                    'Go'
+                )}
             </Button>
         </div>
     );
