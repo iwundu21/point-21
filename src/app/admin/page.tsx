@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff } from 'lucide-react';
 import Footer from '@/components/footer';
 import { getAllUsers, updateUserStatus, deleteUser, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -214,7 +214,7 @@ export default function AdminPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-24">
         <main className="flex-grow flex flex-col p-4 mt-8">
-             <div className="w-full max-w-4xl mx-auto space-y-6">
+             <div className="w-full max-w-6xl mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
                         <Shield className="w-8 h-8 text-primary" />
@@ -230,10 +230,12 @@ export default function AdminPage() {
                         {isLoading && users.length === 0 ? (
                             renderAdminSkeleton()
                         ) : (
+                          <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>User</TableHead>
+                                    <TableHead>Photo</TableHead>
                                     <TableHead>Balance</TableHead>
                                     <TableHead>Referrals</TableHead>
                                     <TableHead>Status</TableHead>
@@ -244,16 +246,29 @@ export default function AdminPage() {
                                 {users.map((user) => (
                                     <TableRow key={user.id}>
                                         <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Avatar className="w-8 h-8">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="w-10 h-10">
                                                     <AvatarImage src={user.telegramUser?.photo_url} />
                                                     <AvatarFallback>{getInitials(user)}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className="font-medium truncate max-w-[120px]">{user.telegramUser?.first_name || 'Anonymous'}</p>
+                                                    <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Anonymous'}</p>
                                                     <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
+                                                    <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id}</p>
                                                 </div>
                                             </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {user.faceVerificationUri ? (
+                                                <Avatar className="w-10 h-10 border">
+                                                    <AvatarImage src={user.faceVerificationUri} />
+                                                    <AvatarFallback><CameraOff className="w-4 h-4 text-muted-foreground" /></AvatarFallback>
+                                                </Avatar>
+                                            ) : (
+                                                <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-full">
+                                                  <CameraOff className="w-5 h-5 text-muted-foreground" />
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell>{user.balance.toLocaleString()}</TableCell>
                                         <TableCell>{user.referrals}</TableCell>
@@ -287,6 +302,7 @@ export default function AdminPage() {
                                 ))}
                             </TableBody>
                            </Table>
+                          </div>
                         )}
                          {hasMore && (
                             <div className="text-center mt-4">
@@ -305,3 +321,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
