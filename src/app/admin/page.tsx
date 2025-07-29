@@ -251,27 +251,10 @@ const UserTable = ({
     isLoading: boolean,
     onBalanceUpdated: (userId: string, newBalance: number) => void
 }) => {
-    const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm]);
-
-    const filteredUsers = useMemo(() => {
-        if (!searchTerm) return users;
-        return users.filter(user => {
-            const term = searchTerm.toLowerCase();
-            const telegramId = user.telegramUser?.id.toString() || '';
-            const walletAddress = user.walletAddress?.toLowerCase() || '';
-            const username = user.telegramUser?.username?.toLowerCase() || '';
-            const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
-            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
-        });
-    }, [users, searchTerm]);
-
-    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
-    const paginatedUsers = filteredUsers.slice(
+    const totalPages = Math.ceil(users.length / USERS_PER_PAGE);
+    const paginatedUsers = users.slice(
         (currentPage - 1) * USERS_PER_PAGE,
         currentPage * USERS_PER_PAGE
     );
@@ -291,47 +274,9 @@ const UserTable = ({
         </div>
     );
     
-     const handleExportAirdrop = () => {
-        const airdropData = users
-            .filter(user => user.walletAddress && user.status === 'active') // Only include active users with a wallet address
-            .map(user => {
-                const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
-                return {
-                    walletAddress: user.walletAddress,
-                    airdropAmount: airdropAmount.toFixed(4) // Adjust precision as needed
-                };
-            });
-
-        const csv = Papa.unparse(airdropData);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'airdrop_distribution_active_users.csv');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     return (
         <div>
-           <div className="flex items-center gap-2 py-4">
-              <div className="relative flex-grow">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                      placeholder="Search by ID, Wallet, Username or First Name..."
-                      className="pl-9 w-full sm:w-[300px]"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-              </div>
-              <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-              </Button>
-            </div>
-             {isLoading && users.length === 0 ? (
+            {isLoading && users.length === 0 ? (
                 renderAdminSkeleton()
             ) : (
             <>
@@ -438,7 +383,7 @@ const UserTable = ({
             </div>
             <div className="flex items-center justify-between pt-4">
                 <div className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages} ({filteredUsers.length} users)
+                    Page {currentPage} of {totalPages} ({users.length} users)
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
@@ -471,6 +416,7 @@ export default function AdminPage() {
     const [codeAuthenticated, setCodeAuthenticated] = useState(false);
     const [socialTasks, setSocialTasks] = useState<SocialTask[]>([]);
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const { toast } = useToast();
 
@@ -526,8 +472,20 @@ export default function AdminPage() {
       }
     }, [isAdmin, codeAuthenticated]);
     
-    const activeUsers = useMemo(() => allUsers.filter(u => u.status === 'active'), [allUsers]);
-    const bannedUsers = useMemo(() => allUsers.filter(u => u.status === 'banned'), [allUsers]);
+    const filteredUsers = useMemo(() => {
+        if (!searchTerm) return allUsers;
+        return allUsers.filter(user => {
+            const term = searchTerm.toLowerCase();
+            const telegramId = user.telegramUser?.id.toString() || '';
+            const walletAddress = user.walletAddress?.toLowerCase() || '';
+            const username = user.telegramUser?.username?.toLowerCase() || '';
+            const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
+            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
+        });
+    }, [allUsers, searchTerm]);
+    
+    const activeUsers = useMemo(() => filteredUsers.filter(u => u.status === 'active'), [filteredUsers]);
+    const bannedUsers = useMemo(() => filteredUsers.filter(u => u.status === 'banned'), [filteredUsers]);
 
     const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned') => {
         if (!user.telegramUser) return;
@@ -588,6 +546,29 @@ export default function AdminPage() {
     const totalPoints = useMemo(() => {
         return allUsers.filter(u => u.status === 'active').reduce((acc, user) => acc + user.balance, 0);
     }, [allUsers]);
+
+    const handleExportAirdrop = () => {
+        const airdropData = allUsers
+            .filter(user => user.walletAddress && user.status === 'active') // Only include active users with a wallet address
+            .map(user => {
+                const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                return {
+                    walletAddress: user.walletAddress,
+                    airdropAmount: airdropAmount.toFixed(4) // Adjust precision as needed
+                };
+            });
+
+        const csv = Papa.unparse(airdropData);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'airdrop_distribution_active_users.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const renderAdminSkeleton = () => (
         <div className="space-y-2">
@@ -732,14 +713,32 @@ export default function AdminPage() {
               <Card>
                 <CardHeader>
                     <CardTitle>User Management</CardTitle>
+                    <CardDescription>
+                      Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div className="flex items-center gap-2 py-4">
+                      <div className="relative flex-grow">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                              placeholder="Search by ID, Wallet, Username or First Name..."
+                              className="pl-9 w-full"
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                      </div>
+                      <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
+                          <Download className="mr-2 h-4 w-4" />
+                          Export Airdrop List
+                      </Button>
+                    </div>
                     <Tabs defaultValue="active">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="active">Active ({activeUsers.length})</TabsTrigger>
                             <TabsTrigger value="banned">Banned ({bannedUsers.length})</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="active">
+                        <TabsContent value="active" className="mt-4">
                             <UserTable
                                 users={activeUsers}
                                 onUpdateStatus={handleUpdateStatus}
@@ -750,7 +749,7 @@ export default function AdminPage() {
                                 onBalanceUpdated={handleBalanceUpdated}
                             />
                         </TabsContent>
-                        <TabsContent value="banned">
+                        <TabsContent value="banned" className="mt-4">
                             <UserTable
                                 users={bannedUsers}
                                 onUpdateStatus={handleUpdateStatus}
