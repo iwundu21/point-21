@@ -2,7 +2,7 @@
 'use client';
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
 
@@ -15,6 +15,17 @@ interface TelegramUser {
     is_premium?: boolean;
     photo_url?: string;
 }
+
+export interface SocialTask {
+    id: string; // Document ID from Firestore
+    title: string;
+    description: string;
+    points: number;
+    link: string;
+    icon: string; // Storing icon name as string e.g., "MessageCircle"
+    createdAt: any; // Firestore timestamp
+}
+
 
 export interface UserData {
     id: string; // Document ID
@@ -34,13 +45,14 @@ export interface UserData {
         subscribedOnTelegram: boolean;
         joinedDiscord: boolean;
     };
-    socialTasks: {
+    socialTasks: { // Kept for backward compatibility, new tasks use completedSocialTasks
         commentedOnX: boolean;
         likedOnX: boolean;
         retweetedOnX: boolean;
         followedOnX: boolean;
         subscribedOnTelegram: boolean;
     };
+    completedSocialTasks: string[]; // Array of completed task IDs
     status: 'active' | 'banned';
 }
 
@@ -77,6 +89,7 @@ const defaultUserData = (telegramUser: TelegramUser | null): Omit<UserData, 'id'
         followedOnX: false,
         subscribedOnTelegram: false,
     },
+    completedSocialTasks: [],
     status: 'active',
 });
 
@@ -225,6 +238,33 @@ export const banUser = async (telegramUser: TelegramUser | null) => {
 }
 
 
+// --- Social Task Admin Functions ---
+export const addSocialTask = async (task: Omit<SocialTask, 'id' | 'createdAt'>) => {
+    const tasksCollection = collection(db, 'socialTasks');
+    await addDoc(tasksCollection, {
+        ...task,
+        createdAt: serverTimestamp()
+    });
+};
+
+export const getSocialTasks = async (): Promise<SocialTask[]> => {
+    const tasksCollection = collection(db, 'socialTasks');
+    const q = query(tasksCollection, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const tasks: SocialTask[] = [];
+    querySnapshot.forEach(doc => {
+        tasks.push({ id: doc.id, ...doc.data() } as SocialTask);
+    });
+    return tasks;
+};
+
+export const deleteSocialTask = async (taskId: string) => {
+    if (!taskId) return;
+    const taskRef = doc(db, 'socialTasks', taskId);
+    await deleteDoc(taskRef);
+};
+
+
 // --- Specific Data Functions ---
 
 export const getBalance = async (user: TelegramUser | null) => (await getUserData(user)).balance;
@@ -244,4 +284,3 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
-

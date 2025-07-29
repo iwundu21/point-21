@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -30,8 +30,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
 import { useToast } from '@/hooks/use-toast';
 import { buttonVariants } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { renderIcon } from '@/app/tasks/page';
 
 
 // NOTE: Add your Telegram user ID here for admin access
@@ -61,6 +74,98 @@ const getInitials = (user: UserData) => {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
 }
 
+
+const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [link, setLink] = useState('');
+    const [points, setPoints] = useState(100);
+    const [icon, setIcon] = useState('MessageCircle');
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        if (!title || !description || !link || !points || !icon) {
+            toast({ variant: 'destructive', title: 'Missing fields', description: 'Please fill out all fields.' });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await addSocialTask({ title, description, link, points: Number(points), icon });
+            toast({ title: 'Task Added', description: 'The new social task has been created.' });
+            onTaskAdded();
+            setIsOpen(false);
+            // Reset form
+            setTitle(''); setDescription(''); setLink(''); setPoints(100); setIcon('MessageCircle');
+        } catch (error) {
+            console.error("Failed to add task:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not add the task.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Task
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Add New Social Task</DialogTitle>
+                    <DialogDescription>
+                        Create a new task for users to complete. Click save when you're done.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="title" className="text-right">Title</Label>
+                        <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="description" className="text-right">Description</Label>
+                        <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="link" className="text-right">Link</Label>
+                        <Input id="link" value={link} onChange={e => setLink(e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="points" className="text-right">Points</Label>
+                        <Input id="points" type="number" value={points} onChange={e => setPoints(Number(e.target.value))} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="icon" className="text-right">Icon</Label>
+                        <Select onValueChange={setIcon} defaultValue={icon}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select an icon" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="MessageCircle"><MessageCircle className="inline-block mr-2 h-4 w-4" /> Comment</SelectItem>
+                                <SelectItem value="ThumbsUp"><ThumbsUp className="inline-block mr-2 h-4 w-4" /> Like</SelectItem>
+                                <SelectItem value="Repeat"><Repeat className="inline-block mr-2 h-4 w-4" /> Retweet</SelectItem>
+                                <SelectItem value="XIcon">X / Twitter</SelectItem>
+                                <SelectItem value="TelegramIcon">Telegram</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Task
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
 export default function AdminPage() {
     const [allUsers, setAllUsers] = useState<UserData[]>([]);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
@@ -70,6 +175,8 @@ export default function AdminPage() {
     const [codeAuthenticated, setCodeAuthenticated] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [socialTasks, setSocialTasks] = useState<SocialTask[]>([]);
+    const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
     const { toast } = useToast();
 
@@ -101,22 +208,26 @@ export default function AdminPage() {
         init();
     }, []);
     
-    const fetchUsers = async () => {
+    const fetchAdminData = async () => {
         if (!isAdmin && !codeAuthenticated) return;
         setIsLoading(true);
+        setIsLoadingTasks(true);
         try {
             const { users: newUsers } = await getAllUsers();
             setAllUsers(newUsers);
+            const tasks = await getSocialTasks();
+            setSocialTasks(tasks);
         } catch (error) {
-            console.error("Failed to fetch users:", error);
+            console.error("Failed to fetch admin data:", error);
         } finally {
             setIsLoading(false);
+            setIsLoadingTasks(false);
         }
     };
     
     useEffect(() => {
       if(isAdmin || codeAuthenticated) {
-        fetchUsers();
+        fetchAdminData();
       } else {
         setIsLoading(false);
       }
@@ -136,6 +247,12 @@ export default function AdminPage() {
         await deleteUser(userId);
         setAllUsers(allUsers.filter(u => u.id !== userId));
         toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
+    }
+
+    const handleDeleteTask = async (taskId: string) => {
+        await deleteSocialTask(taskId);
+        setSocialTasks(socialTasks.filter(t => t.id !== taskId));
+        toast({ variant: 'destructive', title: 'Task Deleted'});
     }
     
     const handleCodeSubmit = () => {
@@ -229,6 +346,65 @@ export default function AdminPage() {
                       Admin Dashboard
                   </h1>
               </div>
+
+              <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Social Task Management</CardTitle>
+                        <AddTaskDialog onTaskAdded={fetchAdminData} />
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {isLoadingTasks ? (
+                        renderAdminSkeleton()
+                    ) : (
+                        <div className="overflow-x-auto">
+                           <Table>
+                               <TableHeader>
+                                   <TableRow>
+                                       <TableHead>Icon</TableHead>
+                                       <TableHead>Title</TableHead>
+                                       <TableHead>Points</TableHead>
+                                       <TableHead>Link</TableHead>
+                                       <TableHead className="text-right">Actions</TableHead>
+                                   </TableRow>
+                               </TableHeader>
+                               <TableBody>
+                                   {socialTasks.map((task) => (
+                                       <TableRow key={task.id}>
+                                           <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
+                                           <TableCell className="font-medium">{task.title}</TableCell>
+                                           <TableCell>{task.points}</TableCell>
+                                           <TableCell>
+                                               <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
+                                                   {task.link}
+                                               </a>
+                                           </TableCell>
+                                           <TableCell className="text-right">
+                                               <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>This will permanently delete this social task.</AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteTask(task.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete Task</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                           </TableCell>
+                                       </TableRow>
+                                   ))}
+                               </TableBody>
+                           </Table>
+                        </div>
+                    )}
+                </CardContent>
+              </Card>
 
               <Card>
                   <CardHeader>
@@ -362,3 +538,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

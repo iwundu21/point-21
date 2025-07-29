@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
-import { getUserData } from '@/lib/database';
+import { getUserData, getSocialTasks } from '@/lib/database';
 
 // NOTE: Add your Telegram user ID here to see the Admin link
 const ADMIN_IDS = [123, 12345, 6954452147]; 
@@ -20,14 +20,6 @@ declare global {
 interface TelegramUser {
     id: number;
 }
-
-const socialTasksList = [
-    { id: 'commentedOnX' },
-    { id: 'likedOnX' },
-    { id: 'retweetedOnX' },
-    { id: 'followedOnX' },
-    { id: 'subscribedOnTelegram' },
-];
 
 const Footer = () => {
   const pathname = usePathname();
@@ -60,15 +52,13 @@ const Footer = () => {
     const checkTasks = async () => {
         if(telegramUser) {
             const userData = await getUserData(telegramUser);
-            if(userData.socialTasks) {
-                const completedCount = Object.values(userData.socialTasks).filter(Boolean).length;
-                if(completedCount < socialTasksList.length) {
-                    setHasAvailableTasks(true);
-                } else {
-                    setHasAvailableTasks(false);
-                }
+            const socialTasks = await getSocialTasks();
+            const completedCount = userData.completedSocialTasks?.length || 0;
+
+            if (completedCount < socialTasks.length) {
+                setHasAvailableTasks(true);
             } else {
-                setHasAvailableTasks(true); // If socialTasks object doesn't exist, they have tasks
+                setHasAvailableTasks(false);
             }
         }
     }

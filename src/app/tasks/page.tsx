@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
 import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
-import { getUserData, saveUserData } from '@/lib/database';
+import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,14 +26,6 @@ interface TelegramUser {
   photo_url?: string;
 }
 
-type SocialTasksState = {
-    commentedOnX: boolean;
-    likedOnX: boolean;
-    retweetedOnX: boolean;
-    followedOnX: boolean;
-    subscribedOnTelegram: boolean;
-};
-
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -46,60 +38,24 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-const socialTasksList = [
-    {
-        id: 'commentedOnX',
-        icon: <MessageCircle className="w-6 h-6" />,
-        title: "Comment on X",
-        description: "Leave a comment on our latest post.",
-        points: 100,
-        link: "https://x.com/exnusprotocol/status/1815814524223225916",
-    },
-    {
-        id: 'likedOnX',
-        icon: <ThumbsUp className="w-6 h-6" />,
-        title: "Like on X",
-        description: "Show your support by liking our post.",
-        points: 100,
-        link: "https://x.com/exnusprotocol/status/1815814524223225916",
-    },
-    {
-        id: 'retweetedOnX',
-        icon: <Repeat className="w-6 h-6" />,
-        title: "Retweet on X",
-        description: "Share our post with your followers.",
-        points: 100,
-        link: "https://x.com/exnusprotocol/status/1815814524223225916",
-    },
-    {
-        id: 'followedOnX',
-        icon: <XIcon className="w-6 h-6" />,
-        title: "Follow on X",
-        description: "Stay up-to-date with our latest news.",
-        points: 100,
-        link: "https://x.com/exnusprotocol",
-    },
-    {
-        id: 'subscribedOnTelegram',
-        icon: <TelegramIcon className="w-6 h-6" />,
-        title: "Subscribe on Telegram",
-        description: "Get announcements directly from the source.",
-        points: 100,
-        link: "https://t.me/Exnusprotocol",
-    },
-];
+export const renderIcon = (iconName: string, className?: string) => {
+    switch(iconName) {
+        case 'MessageCircle': return <MessageCircle className={className} />;
+        case 'ThumbsUp': return <ThumbsUp className={className} />;
+        case 'Repeat': return <Repeat className={className} />;
+        case 'XIcon': return <XIcon className={className} />;
+        case 'TelegramIcon': return <TelegramIcon className={className} />;
+        default: return <Users className={className} />;
+    }
+}
+
 
 const TASKS_PER_PAGE = 10;
 
 export default function TasksPage() {
     const [user, setUser] = useState<TelegramUser | null>(null);
-    const [tasks, setTasks] = useState<SocialTasksState>({
-        commentedOnX: false,
-        likedOnX: false,
-        retweetedOnX: false,
-        followedOnX: false,
-        subscribedOnTelegram: false,
-    });
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [allTasks, setAllTasks] = useState<SocialTask[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
     const [availableCurrentPage, setAvailableCurrentPage] = useState(1);
@@ -131,10 +87,12 @@ export default function TasksPage() {
             if (user) {
                 setIsLoading(true);
                 try {
-                    const userData = await getUserData(user);
-                    if(userData.socialTasks) {
-                        setTasks(userData.socialTasks);
-                    }
+                    const [userData, socialTasks] = await Promise.all([
+                        getUserData(user),
+                        getSocialTasks()
+                    ]);
+                    setUserData(userData);
+                    setAllTasks(socialTasks);
                 } catch(error) {
                     console.error("Failed to load task data:", error);
                 } finally {
@@ -145,30 +103,37 @@ export default function TasksPage() {
         loadTaskData();
     }, [user]);
 
-    const handleTaskComplete = (taskName: keyof SocialTasksState, link: string) => {
-        if (!user || tasks[taskName] || verifyingTaskId) return;
+    const handleTaskComplete = (task: SocialTask) => {
+        if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id)) return;
 
-        window.open(link, '_blank');
+        window.open(task.link, '_blank');
         
-        const task = socialTasksList.find(t => t.id === taskName);
-        if (!task) return;
-
         setVerifyingTaskId(task.id);
 
         setTimeout(async () => {
-            const userData = await getUserData(user);
-            const updatedTasks = { ...tasks, [taskName]: true };
-            const updatedBalance = userData.balance + task.points;
+            const freshUserData = await getUserData(user);
+            const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
+            const updatedBalance = freshUserData.balance + task.points;
             
-            setTasks(updatedTasks);
-            await saveUserData(user, { ...userData, socialTasks: updatedTasks, balance: updatedBalance });
+            const updatedData = { 
+                ...freshUserData, 
+                completedSocialTasks: updatedCompletedTasks, 
+                balance: updatedBalance 
+            };
+            
+            await saveUserData(user, { 
+                completedSocialTasks: updatedCompletedTasks, 
+                balance: updatedBalance 
+            });
+
+            setUserData(updatedData);
             
             setVerifyingTaskId(null);
         }, 9000);
     };
     
-    const availableTasks = socialTasksList.filter(task => !tasks[task.id as keyof SocialTasksState]);
-    const completedTasks = socialTasksList.filter(task => tasks[task.id as keyof SocialTasksState]);
+    const availableTasks = allTasks.filter(task => !userData?.completedSocialTasks?.includes(task.id));
+    const completedTasks = allTasks.filter(task => userData?.completedSocialTasks?.includes(task.id));
 
     // Pagination for Available Tasks
     const totalAvailablePages = Math.ceil(availableTasks.length / TASKS_PER_PAGE);
@@ -234,14 +199,14 @@ export default function TasksPage() {
                         {paginatedAvailableTasks.length > 0 ? paginatedAvailableTasks.map(task => (
                             <TaskItem
                                 key={task.id}
-                                icon={task.icon}
+                                icon={renderIcon(task.icon, "w-6 h-6")}
                                 title={task.title}
                                 description={task.description}
                                 points={task.points}
                                 link={task.link}
                                 completed={false}
                                 isVerifying={verifyingTaskId === task.id}
-                                onComplete={() => handleTaskComplete(task.id as keyof SocialTasksState, task.link)}
+                                onComplete={() => handleTaskComplete(task)}
                             />
                         )) : (
                            <div className="flex items-center justify-center gap-2 text-green-500 font-semibold p-4 bg-green-500/10 rounded-lg mt-4">
@@ -277,7 +242,7 @@ export default function TasksPage() {
                       {paginatedCompletedTasks.length > 0 ? paginatedCompletedTasks.map(task => (
                           <TaskItem
                               key={task.id}
-                              icon={task.icon}
+                              icon={renderIcon(task.icon, "w-6 h-6")}
                               title={task.title}
                               description={task.description}
                               points={task.points}
@@ -322,4 +287,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
