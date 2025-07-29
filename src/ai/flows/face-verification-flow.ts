@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { detectHumanFace } from './face-detection-flow';
-import { findUserByFace, getUserData } from '@/lib/database';
+import { findUserByFace } from '@/lib/database';
 
 const VerifyHumanFaceInputSchema = z.object({
   photoDataUri: z
@@ -60,18 +60,19 @@ const faceVerificationFlow = ai.defineFlow(
     if (existingUserWithFace && existingUserWithFace.telegramUser) {
         const existingUserId = `user_${existingUserWithFace.telegramUser.id}`;
         // If the face is found and belongs to a DIFFERENT user, it's a duplicate.
+        // This blocks the current verification but does not affect the original account.
         if (existingUserId !== input.userId) {
             return {
                 isHuman: true,
                 isUnique: false,
-                reason: 'This face is already associated with another account. Please continue with that one account.',
+                reason: 'This face is already associated with another account. Please continue with your original account.',
                 faceVerificationUri: input.photoDataUri,
             };
         }
     }
     
     // If we are here, the face is either brand new, or it belongs to the current user re-verifying.
-    // In either case, the check for uniqueness passes.
+    // In either case, the check for uniqueness passes for this user.
     return {
         isHuman: true,
         isUnique: true,
