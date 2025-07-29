@@ -4,7 +4,9 @@
 import { Gift } from 'lucide-react';
 import Footer from '@/components/footer';
 
-export default function WelcomeTasksPage() {
+interface WelcomeTasksPageProps {}
+
+export default function WelcomeTasksPage({}: WelcomeTasksPageProps) {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">

@@ -36,7 +36,9 @@ interface TelegramUser {
     username?: string;
 }
 
-export default function WalletPage() {
+interface WalletPageProps {}
+
+export default function WalletPage({}: WalletPageProps) {
   const [walletAddress, setWalletAddress] = useState('');
   const [savedAddress, setSavedAddress] = useState('');
   const [isClient, setIsClient] = useState(false);

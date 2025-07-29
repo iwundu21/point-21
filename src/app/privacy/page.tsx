@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import Footer from '@/components/footer';
 import { ArrowLeft } from 'lucide-react';
 
-export default function PrivacyPage() {
+interface PrivacyPageProps {}
+
+export default function PrivacyPage({}: PrivacyPageProps) {
   const router = useRouter();
 
   return (

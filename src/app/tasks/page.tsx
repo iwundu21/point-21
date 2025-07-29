@@ -4,7 +4,9 @@
 import { Users } from 'lucide-react';
 import Footer from '@/components/footer';
 
-export default function TasksPage() {
+interface TasksPageProps {}
+
+export default function TasksPage({}: TasksPageProps) {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">

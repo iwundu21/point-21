@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import Footer from '@/components/footer';
 import { ArrowLeft } from 'lucide-react';
 
-export default function TermsPage() {
+interface TermsPageProps {}
+
+export default function TermsPage({}: TermsPageProps) {
   const router = useRouter();
 
   return (

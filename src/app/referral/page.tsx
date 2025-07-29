@@ -25,7 +25,9 @@ const generateReferralCode = () => {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
-export default function ReferralPage() {
+interface ReferralPageProps {}
+
+export default function ReferralPage({}: ReferralPageProps) {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [referralCode, setReferralCode] = useState('');
   const [isClient, setIsClient] = useState(false);
@@ -146,4 +148,3 @@ export default function ReferralPage() {
     </div>
   );
 }
-
