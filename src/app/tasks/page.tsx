@@ -5,10 +5,12 @@ import React, { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
 import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Info } from 'lucide-react';
 import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData } from '@/lib/database';
+import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 declare global {
   interface Window {
@@ -60,6 +62,7 @@ export default function TasksPage() {
     const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
     const [availableCurrentPage, setAvailableCurrentPage] = useState(1);
     const [completedCurrentPage, setCompletedCurrentPage] = useState(1);
+    const { toast } = useToast();
 
     useEffect(() => {
         const init = () => {
@@ -103,33 +106,64 @@ export default function TasksPage() {
         loadTaskData();
     }, [user]);
 
-    const handleTaskComplete = (task: SocialTask) => {
+    const handleTaskComplete = async (task: SocialTask) => {
         if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id)) return;
 
-        window.open(task.link, '_blank');
-        
         setVerifyingTaskId(task.id);
+        
+        let linkUrl = task.link;
+        let isTelegramTask = task.icon === 'TelegramIcon';
+        
+        if (isTelegramTask) {
+             linkUrl = task.link.startsWith('@') ? `https://t.me/${task.link.substring(1)}` : task.link;
+        }
 
-        setTimeout(async () => {
-            const freshUserData = await getUserData(user);
-            const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
-            const updatedBalance = freshUserData.balance + task.points;
-            
-            const updatedData = { 
-                ...freshUserData, 
-                completedSocialTasks: updatedCompletedTasks, 
-                balance: updatedBalance 
-            };
-            
-            await saveUserData(user, { 
-                completedSocialTasks: updatedCompletedTasks, 
-                balance: updatedBalance 
-            });
+        window.open(linkUrl, '_blank');
+        
+        if (isTelegramTask) {
+            try {
+                const result = await verifyTelegramTask({ userId: user.id, chatId: task.link });
+                if (result.isMember) {
+                    // Reward user
+                    const freshUserData = await getUserData(user);
+                    const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
+                    const updatedBalance = freshUserData.balance + task.points;
+                    const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
+                    await saveUserData(user, { completedSocialTasks: updatedCompletedTasks, balance: updatedBalance });
+                    setUserData(updatedData);
+                    toast({ title: "Success!", description: `You've earned ${task.points} E-points.`});
+                } else {
+                    toast({ variant: 'destructive', title: "Verification Failed", description: result.error || "You must join the channel first."});
+                }
+            } catch (e) {
+                console.error(e);
+                toast({ variant: 'destructive', title: "Error", description: "Could not verify task completion."});
+            } finally {
+                setVerifyingTaskId(null);
+            }
+        } else {
+            // Fallback for non-telegram tasks
+            setTimeout(async () => {
+                const freshUserData = await getUserData(user);
+                const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
+                const updatedBalance = freshUserData.balance + task.points;
+                
+                const updatedData = { 
+                    ...freshUserData, 
+                    completedSocialTasks: updatedCompletedTasks, 
+                    balance: updatedBalance 
+                };
+                
+                await saveUserData(user, { 
+                    completedSocialTasks: updatedCompletedTasks, 
+                    balance: updatedBalance 
+                });
 
-            setUserData(updatedData);
-            
-            setVerifyingTaskId(null);
-        }, 9000);
+                setUserData(updatedData);
+                toast({ title: "Success!", description: `You've earned ${task.points} E-points.`});
+                setVerifyingTaskId(null);
+            }, 9000);
+        }
     };
     
     const availableTasks = allTasks.filter(task => !userData?.completedSocialTasks?.includes(task.id));
@@ -288,5 +322,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
-    

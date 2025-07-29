@@ -7,6 +7,8 @@ import { Gift, CheckCircle } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 
 declare global {
   interface Window {
@@ -57,6 +59,7 @@ export default function WelcomeTasksPage() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [verifyingTaskId, setVerifyingTaskId] = useState<keyof WelcomeTasks | null>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         const init = () => {
@@ -98,25 +101,48 @@ export default function WelcomeTasksPage() {
         loadTaskData();
     }, [user]);
 
-    const handleTaskComplete = (taskName: keyof WelcomeTasks, link: string) => {
+    const handleTaskComplete = async (taskName: keyof WelcomeTasks, link: string, chatId?: string) => {
         if (!user || tasks[taskName] || verifyingTaskId) return;
 
         window.open(link, '_blank');
         
         setVerifyingTaskId(taskName);
 
-        setTimeout(async () => {
-             if (user) { // check user again inside timeout
-                const userData = await getUserData(user);
-                const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
-                const updatedBalance = userData.balance + 300;
-                
-                await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
-
-                setTasks(updatedTasks);
+        if (chatId) { // This is a Telegram task
+             try {
+                const result = await verifyTelegramTask({ userId: user.id, chatId: chatId });
+                if (result.isMember) {
+                    const userData = await getUserData(user);
+                    const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
+                    const updatedBalance = userData.balance + 300;
+                    await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+                    setTasks(updatedTasks);
+                    toast({ title: "Success!", description: "You've earned 300 E-points."});
+                } else {
+                    toast({ variant: 'destructive', title: "Verification Failed", description: result.error || "You must join the channel first."});
+                }
+            } catch (e) {
+                console.error(e);
+                toast({ variant: 'destructive', title: "Error", description: "Could not verify task completion."});
+            } finally {
+                setVerifyingTaskId(null);
             }
-            setVerifyingTaskId(null);
-        }, 9000);
+        } else {
+            // Fallback for non-telegram tasks
+            setTimeout(async () => {
+                 if (user) { 
+                    const userData = await getUserData(user);
+                    const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
+                    const updatedBalance = userData.balance + 300;
+                    
+                    await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+
+                    setTasks(updatedTasks);
+                    toast({ title: "Success!", description: "You've earned 300 E-points."});
+                }
+                setVerifyingTaskId(null);
+            }, 9000);
+        }
     };
 
     const allTasksCompleted = Object.values(tasks).every(Boolean);
@@ -178,7 +204,7 @@ export default function WelcomeTasksPage() {
                                 link="https://t.me/Exnusprotocol"
                                 completed={tasks.subscribedOnTelegram}
                                 isVerifying={verifyingTaskId === 'subscribedOnTelegram'}
-                                onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol')}
+                                onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol', '@Exnusprotocol')}
                            />
                            <TaskItem
                                 icon={<DiscordIcon className="w-6 h-6" />}
