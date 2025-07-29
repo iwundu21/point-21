@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy } from 'lucide-react';
 import Footer from '@/components/footer';
 import { getAllUsers, updateUserStatus, deleteUser, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -169,6 +169,13 @@ export default function AdminPage() {
             setAccessCode('');
         }
     }
+    
+    const handleCopy = (textToCopy: string) => {
+        navigator.clipboard.writeText(textToCopy);
+        toast({
+          title: 'Copied to Clipboard!',
+        });
+      };
 
     const renderAdminSkeleton = () => (
         <div className="space-y-2">
@@ -236,6 +243,7 @@ export default function AdminPage() {
                                 <TableRow>
                                     <TableHead>User</TableHead>
                                     <TableHead>Photo</TableHead>
+                                    <TableHead>Wallet</TableHead>
                                     <TableHead>Balance</TableHead>
                                     <TableHead>Referrals</TableHead>
                                     <TableHead>Status</TableHead>
@@ -268,6 +276,18 @@ export default function AdminPage() {
                                                 <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-full">
                                                   <CameraOff className="w-5 h-5 text-muted-foreground" />
                                                 </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {user.walletAddress ? (
+                                                <div className="flex items-center gap-2 font-mono text-xs">
+                                                    <span className="truncate max-w-[120px]">{user.walletAddress}</span>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(user.walletAddress as string)}>
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">N/A</span>
                                             )}
                                         </TableCell>
                                         <TableCell>{user.balance.toLocaleString()}</TableCell>
@@ -322,3 +342,4 @@ export default function AdminPage() {
   );
 }
 
+    
