@@ -69,7 +69,6 @@ export const getUserData = (telegramUser: TelegramUser | null): UserData => {
     return { ...defaultUserData, telegramUser: telegramUserObj };
 };
 
-
 // In a real app, this would save to a remote database.
 export const saveUserData = (telegramUser: TelegramUser | null, data: Partial<UserData>) => {
      if (typeof window === 'undefined' || !telegramUser) return;
@@ -139,6 +138,38 @@ export const applyReferralBonus = (newUser: TelegramUser, referrerCode: string):
 
     return updatedNewUserData;
 };
+
+// In a real app, this would be a database query that returns all users.
+export const getAllUsers = (): UserData[] => {
+    if (typeof window === 'undefined') return [];
+    const users: UserData[] = [];
+     for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('user_')) {
+            try {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const parsedData: Omit<UserData, 'telegramUser'> = JSON.parse(data);
+                    const id = parseInt(key.replace('user_', ''), 10);
+                    // This is a mock reconstruction of the user object.
+                    // A real DB would store and retrieve this properly.
+                    const mockUser: TelegramUser = {
+                        id: id,
+                        first_name: parsedData.telegramUser?.first_name || `User ${id}`,
+                        last_name: parsedData.telegramUser?.last_name,
+                        username: parsedData.telegramUser?.username || `user${id}`,
+                        language_code: parsedData.telegramUser?.language_code || 'en',
+                        photo_url: parsedData.telegramUser?.photo_url,
+                    };
+                    users.push({ ...defaultUserData, ...parsedData, telegramUser: mockUser });
+                }
+            } catch (e) {
+                console.error("Error parsing user data from localStorage", e);
+            }
+        }
+    }
+    return users;
+}
 
 
 // --- Specific Data Functions ---
