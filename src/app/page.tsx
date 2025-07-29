@@ -12,6 +12,7 @@ import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { getUserData, saveUserData } from '@/lib/database';
+import MiningStatusIndicator from '@/components/mining-status-indicator';
 
 declare global {
   interface Window {
@@ -169,9 +170,12 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4">
-        <UserCard 
-            user={user}
-        />
+         <div className="flex justify-between items-start">
+           <UserCard 
+              user={user}
+           />
+           <MiningStatusIndicator isActive={isForgingActive} />
+         </div>
         <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       

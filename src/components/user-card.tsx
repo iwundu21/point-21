@@ -42,7 +42,7 @@ const UserCard: FC<UserCardProps> = ({ user }) => {
   const displayName = `${user.first_name} ${user.last_name || ''}`.trim();
 
   return (
-    <div className="w-full p-4">
+    <div className="w-full">
       <div className="flex items-center space-x-4">
         <Avatar className="w-12 h-12">
             <AvatarImage src={user.photo_url} alt={displayName} />
