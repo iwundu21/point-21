@@ -67,10 +67,6 @@ export default function LeaderboardPage() {
           
           if (telegramUser) {
               setCurrentUser(telegramUser);
-          } else {
-              // Fallback for development
-              const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
-              setCurrentUser(mockUser);
           }
         };
         init();
