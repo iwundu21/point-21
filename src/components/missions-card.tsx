@@ -11,16 +11,18 @@ interface MissionsCardProps {
   rank: number | null;
 }
 
-const getLeagueInfo = (balance: number) => {
-    if (balance < 1000) return { name: "Bronze", progress: (balance / 1000) * 100 };
-    if (balance < 5000) return { name: "Silver", progress: ((balance - 1000) / 4000) * 100 };
-    if (balance < 10000) return { name: "Gold", progress: ((balance - 5000) / 5000) * 100 };
-    if (balance < 50000) return { name: "Platinum", progress: ((balance - 10000) / 40000) * 100 };
-    return { name: "Diamond", progress: 100 };
+const getLeagueInfo = (rank: number | null) => {
+    if (rank === null) return { name: "Unranked", progress: 0 };
+    if (rank <= 10) return { name: "Diamond", progress: 100 };
+    if (rank <= 100) return { name: "Platinum", progress: ((100 - (rank-10)) / 90) * 100 };
+    if (rank <= 1000) return { name: "Gold", progress: ((1000 - (rank-100)) / 900) * 100 };
+    if (rank <= 10000) return { name: "Silver", progress: ((10000 - (rank-1000)) / 9000) * 100 };
+    return { name: "Bronze", progress: 5 };
 }
 
+
 const MissionsCard = ({ streak, balance, rank }: MissionsCardProps) => {
-    const { name: leagueName, progress } = getLeagueInfo(balance);
+    const { name: leagueName, progress } = getLeagueInfo(rank);
 
     const rankDisplay = rank ? `#${rank.toLocaleString()}` : "Unranked";
 
