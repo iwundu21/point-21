@@ -221,15 +221,18 @@ export default function Home({}: {}) {
         </Alert>
         <div className="max-w-sm w-full text-center">
             <h3 className="text-sm font-semibold text-muted-foreground mb-4">If you believe this is an error, please contact support:</h3>
-            <div className="flex justify-center space-x-6">
-                <a href="https://x.com/exnusprotocol" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+            <div className="flex justify-around space-x-4">
+                <a href="https://x.com/exnusprotocol" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
                     <XIcon className="w-6 h-6" />
+                    <span className="text-xs">X / Twitter</span>
                 </a>
-                <a href="https://t.me/exnusprotocol" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="https://t.me/exnusprotocol" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
                     <TelegramIcon className="w-6 h-6" />
+                    <span className="text-xs">Telegram</span>
                 </a>
-                <a href="https://discord.gg/v8MpYYFdP8" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="https://discord.gg/v8MpYYFdP8" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
                     <DiscordIcon className="w-6 h-6" />
+                    <span className="text-xs">Discord</span>
                 </a>
             </div>
         </div>
