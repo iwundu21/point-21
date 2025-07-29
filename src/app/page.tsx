@@ -38,6 +38,7 @@ export default function Home() {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isActivating, setIsActivating] = useState(false);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -130,9 +131,13 @@ export default function Home() {
        });
        return;
     }
-    const endTime = Date.now() + 24 * 60 * 60 * 1000;
-    setIsForgingActive(true);
-    setForgingEndTime(endTime);
+    setIsActivating(true);
+    setTimeout(() => {
+        const endTime = Date.now() + 24 * 60 * 60 * 1000;
+        setIsForgingActive(true);
+        setForgingEndTime(endTime);
+        setIsActivating(false);
+    }, 4000);
   };
 
   const handleSessionEnd = () => {
@@ -178,6 +183,7 @@ export default function Home() {
             onActivate={handleActivateForging}
             onSessionEnd={handleSessionEnd}
             isVerified={isVerified}
+            isActivating={isActivating}
           />
         </div>
 
