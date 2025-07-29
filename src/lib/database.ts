@@ -54,9 +54,42 @@ const defaultUserData: Omit<UserData, 'telegramUser'> = {
     },
 };
 
+const initializeMockUsers = () => {
+    if (typeof window === 'undefined') return;
+
+    // Check if any user data already exists to avoid overwriting real data.
+    const hasUsers = [...Array(localStorage.length).keys()].some(i => localStorage.key(i)?.startsWith('user_'));
+    if (hasUsers) {
+        return;
+    }
+
+    const mockUsers: TelegramUser[] = [
+        { id: 1, first_name: 'Alice', last_name: 'Wonder', username: 'alice', language_code: 'en', photo_url: 'https://placehold.co/128x128/EEDC82/000000?text=A' },
+        { id: 2, first_name: 'Bob', last_name: 'Builder', username: 'bob', language_code: 'en', photo_url: 'https://placehold.co/128x128/90EE90/000000?text=B' },
+        { id: 3, first_name: 'Charlie', last_name: 'Chocolate', username: 'charlie', language_code: 'en', photo_url: 'https://placehold.co/128x128/ADD8E6/000000?text=C' },
+        { id: 4, first_name: 'Diana', last_name: 'Prince', username: 'diana', language_code: 'en', photo_url: 'https://placehold.co/128x128/FFB6C1/000000?text=D' },
+        { id: 5, first_name: 'Ethan', last_name: 'Hunt', username: 'ethan', language_code: 'en', photo_url: 'https://placehold.co/128x128/DDA0DD/000000?text=E' },
+        { id: 6, first_name: 'Fiona', last_name: 'Shrek', username: 'fiona', language_code: 'en', photo_url: 'https://placehold.co/128x128/8FBC8F/000000?text=F' },
+        { id: 7, first_name: 'George', last_name: 'Jungle', username: 'george', language_code: 'en', photo_url: 'https://placehold.co/128x128/F4A460/000000?text=G' },
+        { id: 8, first_name: 'Hannah', last_name: 'Montana', username: 'hannah', language_code: 'en', photo_url: 'https://placehold.co/128x128/B0E0E6/000000?text=H' },
+        { id: 9, first_name: 'Ian', last_name: 'Fleming', username: 'ian', language_code: 'en', photo_url: 'https://placehold.co/128x128/778899/FFFFFF?text=I' },
+        { id: 10, first_name: 'Jane', last_name: 'Doe', username: 'jane', language_code: 'en', photo_url: 'https://placehold.co/128x128/FFC0CB/000000?text=J' },
+        { id: 11, first_name: 'Current', last_name: 'User', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128/E6E6FA/000000?text=CU' },
+    ];
+
+    mockUsers.forEach((user, index) => {
+        saveUserData(user, {
+            balance: 100000 - (index * 5000) - Math.floor(Math.random() * 5000),
+            telegramUser: user
+        });
+    });
+};
+
+
 // In a real app, this would fetch from a remote database.
 export const getUserData = (telegramUser: TelegramUser | null): UserData => {
     if (typeof window === 'undefined') return { ...defaultUserData, telegramUser: null };
+    initializeMockUsers(); // Development only: ensures some data exists
     const userId = getUserId(telegramUser);
     const data = localStorage.getItem(userId);
     if (data) {
@@ -169,3 +202,5 @@ export const saveWalletAddress = (user: TelegramUser | null, address: string) =>
 
 export const getReferralCode = (user: TelegramUser | null) => getUserData(user).referralCode;
 export const saveReferralCode = (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
+
+    
