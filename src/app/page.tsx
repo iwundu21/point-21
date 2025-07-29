@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, getLeaderboardUsers } from '@/lib/database';
+import { getUserData, saveUserData, getLeaderboardUsers, UserData } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan } from 'lucide-react';
@@ -64,6 +64,7 @@ export default function Home({}: {}) {
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
+  const [rank, setRank] = useState<number | null>(null);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -71,7 +72,11 @@ export default function Home({}: {}) {
   const handleInitializeUser = useCallback(async (telegramUser: TelegramUser) => {
     setIsLoading(true);
     try {
-        const freshUserData = await getUserData(telegramUser);
+        const [freshUserData, { users: leaderboard }] = await Promise.all([
+            getUserData(telegramUser),
+            getLeaderboardUsers(),
+        ]);
+        
         setUserData(freshUserData);
         
         if (freshUserData.status === 'banned') {
@@ -81,6 +86,9 @@ export default function Home({}: {}) {
 
         setUser(telegramUser);
         let currentBalance = freshUserData.balance;
+        
+        const currentUserRank = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
+        setRank(currentUserRank !== -1 ? currentUserRank + 1 : null);
         
         if (freshUserData.verificationStatus === 'verified') {
           setIsVerified(true);
@@ -281,7 +289,7 @@ export default function Home({}: {}) {
         <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
         <div className="w-full max-w-sm">
-          <MissionsCard streak={dailyStreak} balance={balance} rank={null} />
+          <MissionsCard streak={dailyStreak} balance={balance} rank={rank} />
         </div>
       </main>
       <Footer />
