@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -64,9 +63,6 @@ export default function AdminPage() {
     const [users, setUsers] = useState<UserData[]>([]);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isFetchingMore, setIsFetchingMore] = useState(false);
-    const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-    const [hasMore, setHasMore] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [accessCode, setAccessCode] = useState('');
     const [codeAuthenticated, setCodeAuthenticated] = useState(false);
@@ -102,15 +98,11 @@ export default function AdminPage() {
     }, []);
     
     const fetchUsers = async () => {
-        if (!hasMore || (!isAdmin && !codeAuthenticated)) return;
+        if (!isAdmin && !codeAuthenticated) return;
         setIsLoading(true);
         try {
-            const { users: newUsers, lastDoc: newLastDoc } = await getAllUsers();
+            const { users: newUsers } = await getAllUsers();
             setUsers(newUsers);
-            setLastDoc(newLastDoc);
-            if (!newLastDoc) {
-                setHasMore(false);
-            }
         } catch (error) {
             console.error("Failed to fetch users:", error);
         } finally {
@@ -125,23 +117,6 @@ export default function AdminPage() {
         setIsLoading(false);
       }
     }, [isAdmin, codeAuthenticated]);
-
-    const handleLoadMore = async () => {
-        if (!lastDoc || isFetchingMore) return;
-        setIsFetchingMore(true);
-        try {
-            const { users: newUsers, lastDoc: newLastDoc } = await getAllUsers(lastDoc);
-            setUsers(prev => [...prev, ...newUsers]);
-            setLastDoc(newLastDoc);
-            if (!newLastDoc) {
-                setHasMore(false);
-            }
-        } catch (error) {
-            console.error("Failed to fetch more users:", error);
-        } finally {
-            setIsFetchingMore(false);
-        }
-    };
 
     const handleUpdateStatus = async (userId: string, status: 'active' | 'banned') => {
         await updateUserStatus(userId, status);
@@ -326,14 +301,6 @@ export default function AdminPage() {
                          </Table>
                         </div>
                       )}
-                       {hasMore && (
-                          <div className="text-center mt-4">
-                              <Button onClick={handleLoadMore} disabled={isFetchingMore}>
-                                  {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                  {isFetchingMore ? 'Loading...' : 'Load More'}
-                              </Button>
-                          </div>
-                      )}
                   </CardContent>
               </Card>
           </div>
@@ -341,5 +308,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

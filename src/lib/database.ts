@@ -177,16 +177,9 @@ export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<Doc
 
 // --- Admin Functions ---
 
-const ADMIN_PAGE_SIZE = 20;
-
-export const getAllUsers = async (lastVisible: QueryDocumentSnapshot<DocumentData> | null = null): Promise<{ users: UserData[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
+export const getAllUsers = async (): Promise<{ users: UserData[] }> => {
     const usersRef = collection(db, 'users');
-    let q;
-    if (lastVisible) {
-        q = query(usersRef, orderBy('telegramUser.id'), startAfter(lastVisible), limit(ADMIN_PAGE_SIZE));
-    } else {
-        q = query(usersRef, orderBy('telegramUser.id'), limit(ADMIN_PAGE_SIZE));
-    }
+    const q = query(usersRef, orderBy('telegramUser.id'));
     
     const querySnapshot = await getDocs(q);
     
@@ -195,9 +188,7 @@ export const getAllUsers = async (lastVisible: QueryDocumentSnapshot<DocumentDat
         users.push({ ...defaultUserData(null), ...(doc.data() as Omit<UserData, 'id'>), id: doc.id });
     });
     
-    const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
-
-    return { users, lastDoc };
+    return { users };
 };
 
 
@@ -239,5 +230,3 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
-
-    
