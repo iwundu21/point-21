@@ -44,6 +44,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { renderIcon } from '@/app/tasks/page';
 import Papa from 'papaparse';
 
@@ -167,6 +168,227 @@ const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
     )
 }
 
+const UserTable = ({
+    users,
+    onUpdateStatus,
+    onDeleteUser,
+    onCopy,
+    totalPoints,
+    isLoading
+}: {
+    users: UserData[],
+    onUpdateStatus: (user: UserData, status: 'active' | 'banned') => void,
+    onDeleteUser: (user: UserData) => void,
+    onCopy: (text: string) => void,
+    totalPoints: number,
+    isLoading: boolean
+}) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    const filteredUsers = useMemo(() => {
+        if (!searchTerm) return users;
+        return users.filter(user => {
+            const term = searchTerm.toLowerCase();
+            const telegramId = user.telegramUser?.id.toString() || '';
+            const walletAddress = user.walletAddress?.toLowerCase() || '';
+            const username = user.telegramUser?.username?.toLowerCase() || '';
+            const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
+            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
+        });
+    }, [users, searchTerm]);
+
+    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+    const paginatedUsers = filteredUsers.slice(
+        (currentPage - 1) * USERS_PER_PAGE,
+        currentPage * USERS_PER_PAGE
+    );
+
+    const renderAdminSkeleton = () => (
+        <div className="space-y-2">
+            {[...Array(8)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 p-2">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-grow space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </div>
+                    <Skeleton className="h-8 w-24 rounded-md" />
+                </div>
+            ))}
+        </div>
+    );
+    
+     const handleExportAirdrop = () => {
+        const airdropData = users
+            .filter(user => user.walletAddress) // Only include users with a wallet address
+            .map(user => {
+                const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                return {
+                    walletAddress: user.walletAddress,
+                    airdropAmount: airdropAmount.toFixed(4) // Adjust precision as needed
+                };
+            });
+
+        const csv = Papa.unparse(airdropData);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `airdrop_distribution_${users[0]?.status || 'users'}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // toast({ title: "Export Successful", description: "Airdrop CSV file has been downloaded." });
+    };
+
+    return (
+        <div>
+           <div className="flex items-center gap-2 py-4">
+              <div className="relative flex-grow">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                      placeholder="Search by ID, Wallet, Username or First Name..."
+                      className="pl-9 w-full sm:w-[300px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+              </div>
+              <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+              </Button>
+            </div>
+             {isLoading && users.length === 0 ? (
+                renderAdminSkeleton()
+            ) : (
+            <>
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Photo</TableHead>
+                            <TableHead>Wallet</TableHead>
+                            <TableHead>Balance</TableHead>
+                            <TableHead>Referrals</TableHead>
+                            <TableHead>Airdrop Allocation</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedUsers.map((user) => {
+                          const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                          return (
+                            <TableRow key={user.id}>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="w-10 h-10">
+                                            <AvatarImage src={user.telegramUser?.photo_url} />
+                                            <AvatarFallback>{getInitials(user)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Anonymous'}</p>
+                                            <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
+                                            <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id}</p>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    {user.faceVerificationUri ? (
+                                        <Avatar className="w-10 h-10 border">
+                                            <AvatarImage src={user.faceVerificationUri} />
+                                            <AvatarFallback><CameraOff className="w-4 h-4 text-muted-foreground" /></AvatarFallback>
+                                        </Avatar>
+                                    ) : (
+                                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-full">
+                                          <CameraOff className="w-5 h-5 text-muted-foreground" />
+                                        </div>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {user.walletAddress ? (
+                                        <div className="flex items-center gap-2 font-mono text-xs">
+                                            <span className="truncate max-w-[120px]">{user.walletAddress}</span>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onCopy(user.walletAddress as string)}>
+                                                <Copy className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">N/A</span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="text-yellow-400 font-bold">{user.balance.toLocaleString()}</TableCell>
+                                <TableCell>{user.referrals}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-1 text-yellow-500">
+                                      <Coins className="w-4 h-4" />
+                                      {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right space-x-2">
+                                    {user.status === 'active' ? (
+                                        <Button variant="destructive" size="icon" onClick={() => onUpdateStatus(user, 'banned')}><UserX className="h-4 w-4"/></Button>
+                                    ) : (
+                                        <Button variant="secondary" size="icon" onClick={() => onUpdateStatus(user, 'active')}><UserCheck className="h-4 w-4"/></Button>
+                                    )}
+
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>This action cannot be undone. This will permanently delete the user and all their data.</AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => onDeleteUser(user)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete User</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                    </TableBody>
+                </Table>
+            </div>
+            <div className="flex items-center justify-between pt-4">
+                <div className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages} ({filteredUsers.length} users)
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
+                        <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
+                        <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+            </>
+            )}
+        </div>
+    );
+};
+
 
 export default function AdminPage() {
     const [allUsers, setAllUsers] = useState<UserData[]>([]);
@@ -175,8 +397,6 @@ export default function AdminPage() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [accessCode, setAccessCode] = useState('');
     const [codeAuthenticated, setCodeAuthenticated] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
     const [socialTasks, setSocialTasks] = useState<SocialTask[]>([]);
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
@@ -212,10 +432,11 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const { users: newUsers } = await getAllUsers();
-            const sortedUsers = newUsers.sort((a, b) => b.balance - a.balance);
-            setAllUsers(sortedUsers);
-            const tasks = await getSocialTasks();
+            const [{ users: newUsers }, tasks] = await Promise.all([
+                getAllUsers(),
+                getSocialTasks()
+            ]);
+            setAllUsers(newUsers);
             setSocialTasks(tasks);
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -232,10 +453,14 @@ export default function AdminPage() {
         setIsLoading(false);
       }
     }, [isAdmin, codeAuthenticated]);
+    
+    const activeUsers = useMemo(() => allUsers.filter(u => u.status === 'active'), [allUsers]);
+    const bannedUsers = useMemo(() => allUsers.filter(u => u.status === 'banned'), [allUsers]);
 
     const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned') => {
         if (!user.telegramUser) return;
         await updateUserStatus(user.telegramUser, status);
+        // This will trigger a re-render and the user will move to the correct list
         setAllUsers(currentUsers =>
             currentUsers.map(u =>
                 u.id === user.id ? { ...u, status: status } : u
@@ -278,55 +503,9 @@ export default function AdminPage() {
         });
       };
 
-    const filteredUsers = useMemo(() => {
-        if (!searchTerm) return allUsers;
-        return allUsers.filter(user => {
-            const term = searchTerm.toLowerCase();
-            const telegramId = user.telegramUser?.id.toString() || '';
-            const walletAddress = user.walletAddress?.toLowerCase() || '';
-            const username = user.telegramUser?.username?.toLowerCase() || '';
-            const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
-            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
-        });
-    }, [allUsers, searchTerm]);
-    
     const totalPoints = useMemo(() => {
         return allUsers.reduce((acc, user) => acc + user.balance, 0);
     }, [allUsers]);
-    
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm]);
-
-    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
-    const paginatedUsers = filteredUsers.slice(
-        (currentPage - 1) * USERS_PER_PAGE,
-        currentPage * USERS_PER_PAGE
-    );
-    
-    const handleExportAirdrop = () => {
-        const airdropData = allUsers
-            .filter(user => user.walletAddress) // Only include users with a wallet address
-            .map(user => {
-                const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
-                return {
-                    walletAddress: user.walletAddress,
-                    airdropAmount: airdropAmount.toFixed(4) // Adjust precision as needed
-                };
-            });
-
-        const csv = Papa.unparse(airdropData);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'airdrop_distribution.csv');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({ title: "Export Successful", description: "Airdrop CSV file has been downloaded." });
-    };
 
     const renderAdminSkeleton = () => (
         <div className="space-y-2">
@@ -469,152 +648,41 @@ export default function AdminPage() {
               </Card>
 
               <Card>
-                  <CardHeader>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                      <CardTitle>User Management</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex-grow">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Search by ID, Wallet, Username or First Name..."
-                                className="pl-9 w-full"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                <CardHeader>
+                    <CardTitle>User Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="active">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="active">Active ({activeUsers.length})</TabsTrigger>
+                            <TabsTrigger value="banned">Banned ({bannedUsers.length})</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="active">
+                            <UserTable
+                                users={activeUsers}
+                                onUpdateStatus={handleUpdateStatus}
+                                onDeleteUser={handleDeleteUser}
+                                onCopy={handleCopy}
+                                totalPoints={totalPoints}
+                                isLoading={isLoading}
                             />
-                        </div>
-                        <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
-                            <Download className="mr-2 h-4 w-4" />
-                            Export Airdrop
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                      {isLoading && allUsers.length === 0 ? (
-                          renderAdminSkeleton()
-                      ) : (
-                        <>
-                        <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                              <TableRow>
-                                  <TableHead>User</TableHead>
-                                  <TableHead>Photo</TableHead>
-                                  <TableHead>Wallet</TableHead>
-                                  <TableHead>Balance</TableHead>
-                                  <TableHead>Referrals</TableHead>
-                                  <TableHead>Airdrop Allocation</TableHead>
-                                  <TableHead>Status</TableHead>
-                                  <TableHead className="text-right">Actions</TableHead>
-                              </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                              {paginatedUsers.map((user) => {
-                                const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
-                                return (
-                                  <TableRow key={user.id}>
-                                      <TableCell>
-                                          <div className="flex items-center gap-3">
-                                              <Avatar className="w-10 h-10">
-                                                  <AvatarImage src={user.telegramUser?.photo_url} />
-                                                  <AvatarFallback>{getInitials(user)}</AvatarFallback>
-                                              </Avatar>
-                                              <div>
-                                                  <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Anonymous'}</p>
-                                                  <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
-                                                  <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id}</p>
-                                              </div>
-                                          </div>
-                                      </TableCell>
-                                      <TableCell>
-                                          {user.faceVerificationUri ? (
-                                              <Avatar className="w-10 h-10 border">
-                                                  <AvatarImage src={user.faceVerificationUri} />
-                                                  <AvatarFallback><CameraOff className="w-4 h-4 text-muted-foreground" /></AvatarFallback>
-                                              </Avatar>
-                                          ) : (
-                                              <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-full">
-                                                <CameraOff className="w-5 h-5 text-muted-foreground" />
-                                              </div>
-                                          )}
-                                      </TableCell>
-                                      <TableCell>
-                                          {user.walletAddress ? (
-                                              <div className="flex items-center gap-2 font-mono text-xs">
-                                                  <span className="truncate max-w-[120px]">{user.walletAddress}</span>
-                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(user.walletAddress as string)}>
-                                                      <Copy className="h-3 w-3" />
-                                                  </Button>
-                                              </div>
-                                          ) : (
-                                              <span className="text-xs text-muted-foreground">N/A</span>
-                                          )}
-                                      </TableCell>
-                                      <TableCell className="text-yellow-400 font-bold">{user.balance.toLocaleString()}</TableCell>
-                                      <TableCell>{user.referrals}</TableCell>
-                                      <TableCell>
-                                        <div className="flex items-center gap-1 text-yellow-500">
-                                            <Coins className="w-4 h-4" />
-                                            {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                                        </div>
-                                      </TableCell>
-                                      <TableCell>
-                                          <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
-                                      </TableCell>
-                                      <TableCell className="text-right space-x-2">
-                                          {user.status === 'active' ? (
-                                              <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(user, 'banned')}><UserX className="h-4 w-4"/></Button>
-                                          ) : (
-                                              <Button variant="secondary" size="icon" onClick={() => handleUpdateStatus(user, 'active')}><UserCheck className="h-4 w-4"/></Button>
-                                          )}
-
-                                          <AlertDialog>
-                                              <AlertDialogTrigger asChild>
-                                                  <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                              </AlertDialogTrigger>
-                                              <AlertDialogContent>
-                                                  <AlertDialogHeader>
-                                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                      <AlertDialogDescription>This action cannot be undone. This will permanently delete the user and all their data.</AlertDialogDescription>
-                                                  </AlertDialogHeader>
-                                                  <AlertDialogFooter>
-                                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                      <AlertDialogAction onClick={() => handleDeleteUser(user)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete User</AlertDialogAction>
-                                                  </AlertDialogFooter>
-                                              </AlertDialogContent>
-                                          </AlertDialog>
-                                      </TableCell>
-                                  </TableRow>
-                                )
-                              })}
-                          </TableBody>
-                         </Table>
-                        </div>
-                        <div className="flex items-center justify-between pt-4">
-                            <div className="text-sm text-muted-foreground">
-                                Page {currentPage} of {totalPages} ({filteredUsers.length} users)
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
-                                    <ChevronsLeft className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
-                                    <ChevronsRight className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                        </>
-                      )}
-                  </CardContent>
+                        </TabsContent>
+                        <TabsContent value="banned">
+                            <UserTable
+                                users={bannedUsers}
+                                onUpdateStatus={handleUpdateStatus}
+                                onDeleteUser={handleDeleteUser}
+                                onCopy={handleCopy}
+                                totalPoints={totalPoints}
+                                isLoading={isLoading}
+                            />
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
               </Card>
           </div>
       </main>
     </div>
   );
 }
+
