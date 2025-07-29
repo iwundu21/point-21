@@ -159,12 +159,12 @@ export default function WalletPage({}: WalletPageProps) {
                 
                  <Card className="w-full bg-primary/5 border-primary/10">
                     <CardHeader className="p-4">
-                        <CardTitle className="text-sm font-medium text-primary/80">Total Balance</CardTitle>
+                        <CardTitle className="text-sm font-medium text-yellow-400/80">Total Balance</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                         <div className="flex items-center space-x-2">
-                            <Coins className="w-6 h-6 text-primary" />
-                            <span className="text-2xl font-bold">{balance.toLocaleString()} E-points</span>
+                            <Coins className="w-6 h-6 text-yellow-400" />
+                            <span className="text-2xl font-bold text-yellow-400">{balance.toLocaleString()} E-points</span>
                         </div>
                     </CardContent>
                 </Card>

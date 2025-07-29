@@ -392,7 +392,7 @@ export default function AdminPage() {
                         <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                         <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-32" /> : totalPoints.toLocaleString()}</div>
+                         <div className="text-2xl font-bold text-yellow-400">{isLoading ? <Skeleton className="h-8 w-32" /> : totalPoints.toLocaleString()}</div>
                     </CardContent>
                 </Card>
                  <Card>
@@ -433,7 +433,7 @@ export default function AdminPage() {
                                        <TableRow key={task.id}>
                                            <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
                                            <TableCell className="font-medium">{task.title}</TableCell>
-                                           <TableCell>{task.points}</TableCell>
+                                           <TableCell className="text-yellow-400">{task.points}</TableCell>
                                            <TableCell>
                                                <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
                                                    {task.link}
@@ -545,11 +545,11 @@ export default function AdminPage() {
                                               <span className="text-xs text-muted-foreground">N/A</span>
                                           )}
                                       </TableCell>
-                                      <TableCell>{user.balance.toLocaleString()}</TableCell>
+                                      <TableCell className="text-yellow-400 font-bold">{user.balance.toLocaleString()}</TableCell>
                                       <TableCell>{user.referrals}</TableCell>
                                       <TableCell>
-                                        <div className="flex items-center gap-1">
-                                            <Coins className="w-4 h-4 text-yellow-500" />
+                                        <div className="flex items-center gap-1 text-yellow-500">
+                                            <Coins className="w-4 h-4" />
                                             {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                         </div>
                                       </TableCell>
@@ -613,7 +613,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-
-    
