@@ -11,15 +11,16 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { detectHumanFace } from './face-detection-flow';
-import { findUserByFace } from '@/lib/database';
+import { findUserByFace, banUser } from '@/lib/database';
 
 const VerifyHumanFaceInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      "A photo of a person's face, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of a person's face, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'.",
     ),
    userId: z.string().describe("A unique identifier for the user."),
+   user: z.any().describe("The user's Telegram object."),
 });
 export type VerifyHumanFaceInput = z.infer<typeof VerifyHumanFaceInputSchema>;
 
@@ -60,12 +61,13 @@ const faceVerificationFlow = ai.defineFlow(
     if (existingUserWithFace && existingUserWithFace.telegramUser) {
         const existingUserId = `user_${existingUserWithFace.telegramUser.id}`;
         // If the face is found and belongs to a DIFFERENT user, it's a duplicate.
-        // This blocks the current verification but does not affect the original account.
         if (existingUserId !== input.userId) {
+            // Ban the current user trying to create a duplicate account.
+            await banUser(input.user);
             return {
                 isHuman: true,
                 isUnique: false,
-                reason: 'This face is already associated with another account. Please continue with your original account.',
+                reason: 'This face is already associated with another account. This account has been banned. Please continue with your original account or contact support.',
                 faceVerificationUri: input.photoDataUri,
             };
         }

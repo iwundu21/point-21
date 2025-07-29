@@ -11,8 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData } from '@/lib/database';
+import { getUserData, saveUserData, UserData } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldBan } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -37,6 +39,7 @@ export default function Home({}: {}) {
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [user, setUser] = useState<TelegramUser | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
@@ -47,26 +50,32 @@ export default function Home({}: {}) {
   const handleInitializeUser = useCallback(async (telegramUser: TelegramUser) => {
     setIsLoading(true);
     try {
-        const userData = await getUserData(telegramUser);
+        const freshUserData = await getUserData(telegramUser);
+        setUserData(freshUserData);
         
+        if (freshUserData.status === 'banned') {
+          setIsLoading(false);
+          return;
+        }
+
         setUser(telegramUser);
-        let currentBalance = userData.balance;
+        let currentBalance = freshUserData.balance;
         
-        if (userData.verificationStatus === 'verified') {
+        if (freshUserData.verificationStatus === 'verified') {
           setIsVerified(true);
         }
 
-        if (userData.forgingEndTime && userData.forgingEndTime > Date.now()) {
+        if (freshUserData.forgingEndTime && freshUserData.forgingEndTime > Date.now()) {
           setIsForgingActive(true);
-          setForgingEndTime(userData.forgingEndTime);
-        } else if (userData.forgingEndTime) {
+          setForgingEndTime(freshUserData.forgingEndTime);
+        } else if (freshUserData.forgingEndTime) {
           // If forging session has ended, award points.
           currentBalance += 1000;
-          userData.forgingEndTime = null; 
+          freshUserData.forgingEndTime = null; 
         }
 
         const today = new Date().toISOString().split('T')[0];
-        let streakData = userData.dailyStreak;
+        let streakData = freshUserData.dailyStreak;
 
         if (streakData.lastLogin !== today) {
           const yesterday = new Date();
@@ -81,14 +90,14 @@ export default function Home({}: {}) {
           currentBalance += 200; // Award points for daily login
           const newStreak = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
-          userData.dailyStreak = newStreak;
+          freshUserData.dailyStreak = newStreak;
         } else {
           setDailyStreak(streakData.count);
         }
         
         setBalance(currentBalance);
-        userData.balance = currentBalance;
-        await saveUserData(telegramUser, userData);
+        freshUserData.balance = currentBalance;
+        await saveUserData(telegramUser, freshUserData);
     } catch (error) {
         console.error("Initialization failed:", error);
         toast({
@@ -116,7 +125,7 @@ export default function Home({}: {}) {
         handleInitializeUser(telegramUser);
       } else {
         // Fallback for development
-        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
+        const mockUser: TelegramUser = { id: 12345, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
         handleInitializeUser(mockUser);
       }
     };
@@ -124,10 +133,10 @@ export default function Home({}: {}) {
   }, [handleInitializeUser]);
 
   useEffect(() => {
-      if (!isLoading && user) {
+      if (!isLoading && user && userData && userData.status === 'active') {
           saveUserData(user, { balance, forgingEndTime });
       }
-  }, [balance, forgingEndTime, isLoading, user]);
+  }, [balance, forgingEndTime, isLoading, user, userData]);
 
   const handleActivateForging = () => {
     if (!isVerified) {
@@ -156,7 +165,7 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
   
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
         <div className="w-full max-w-sm space-y-4">
@@ -173,6 +182,22 @@ export default function Home({}: {}) {
       </div>
     );
   }
+
+  if (userData?.status === 'banned') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+        <Alert variant="destructive" className="max-w-sm">
+          <ShieldBan className="h-5 w-5" />
+          <AlertTitle>Account Blocked</AlertTitle>
+          <AlertDescription>
+            This account has been blocked for violating our terms of service regarding duplicate accounts. If you believe this is an error, please contact support.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!user) return null; // Should not happen if not loading and not banned
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">

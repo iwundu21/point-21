@@ -33,6 +33,7 @@ export interface UserData {
         subscribedOnTelegram: boolean;
         joinedDiscord: boolean;
     };
+    status: 'active' | 'banned';
 }
 
 const generateReferralCode = () => {
@@ -61,6 +62,7 @@ const defaultUserData = (telegramUser: TelegramUser | null): UserData => ({
         subscribedOnTelegram: false,
         joinedDiscord: false,
     },
+    status: 'active',
 });
 
 export const getUserData = async (telegramUser: TelegramUser | null): Promise<UserData> => {
@@ -71,6 +73,11 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
 
     if (userSnap.exists()) {
         const fetchedData = userSnap.data() as Partial<UserData>;
+        // Ensure every existing user has a referral code
+        if (!fetchedData.referralCode) {
+            fetchedData.referralCode = generateReferralCode();
+            await setDoc(userRef, { referralCode: fetchedData.referralCode }, { merge: true });
+        }
         return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser };
     } else {
         const newUser = {
@@ -102,7 +109,7 @@ export const findUserByReferralCode = async (code: string): Promise<UserData | n
 
 export const findUserByFace = async (faceUri: string): Promise<UserData | null> => {
     if (!faceUri) return null;
-    const q = query(collection(db, 'users'), where('faceVerificationUri', '==', faceUri), limit(1));
+    const q = query(collection(db, 'users'), where('faceVerificationUri', '==', faceUri), where('status', '==', 'active'), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
@@ -145,7 +152,6 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
 };
 
 const LEADERBOARD_PAGE_SIZE = 20;
-const LEADERBOARD_TOTAL_LIMIT = 100;
 
 export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<DocumentData> | null = null): Promise<{ users: UserData[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
     const usersRef = collection(db, 'users');
@@ -167,6 +173,13 @@ export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<Doc
 
     return { users, lastDoc };
 }
+
+
+export const banUser = async (telegramUser: TelegramUser | null) => {
+    if (!telegramUser) return;
+    await saveUserData(telegramUser, { status: 'banned' });
+}
+
 
 // --- Specific Data Functions ---
 

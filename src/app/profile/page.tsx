@@ -142,7 +142,8 @@ export default function ProfilePage({}: ProfilePageProps) {
         try {
           const result = await verifyHumanFace({ 
               photoDataUri: imageSrc,
-              userId: `user_${user.id}`
+              userId: `user_${user.id}`,
+              user: user
           });
           
           if (result.isHuman && result.isUnique) {
@@ -245,12 +246,6 @@ export default function ProfilePage({}: ProfilePageProps) {
                 {failureReason}
             </AlertDescription>
             <div className="flex justify-center gap-4 pt-2">
-                <Button onClick={() => {
-                  resetVerification();
-                  handleStartVerification();
-                }} variant="outline" className="w-full">
-                    Try Again
-                </Button>
                  <Button onClick={resetVerification} variant="secondary" className="w-full">
                     Cancel
                 </Button>
