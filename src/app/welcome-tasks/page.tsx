@@ -213,10 +213,10 @@ export default function WelcomeTasksPage() {
                                 title="Join Telegram Community"
                                 description="Chat with other members."
                                 points={300}
-                                link="https://t.me/exnus"
+                                link="https://t.me/exnusprotocolchat"
                                 completed={tasks.joinedTelegramCommunity}
                                 isVerifying={verifyingTaskId === 'joinedTelegramCommunity'}
-                                onComplete={() => handleTaskComplete('joinedTelegramCommunity', 'https://t.me/exnus', '@exnus')}
+                                onComplete={() => handleTaskComplete('joinedTelegramCommunity', 'https://t.me/exnusprotocolchat', '@exnusprotocolchat')}
                            />
                            <TaskItem
                                 icon={<DiscordIcon className="w-6 h-6" />}
@@ -243,5 +243,3 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
-
-    
