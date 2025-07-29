@@ -132,13 +132,7 @@ export default function Home({}: {}) {
     init();
   }, [handleInitializeUser]);
 
-  useEffect(() => {
-      if (!isLoading && user && userData && userData.status === 'active') {
-          saveUserData(user, { balance, forgingEndTime });
-      }
-  }, [balance, forgingEndTime, isLoading, user, userData]);
-
-  const handleActivateForging = () => {
+  const handleActivateForging = async () => {
     if (!isVerified) {
        toast({
         variant: "destructive",
@@ -149,18 +143,25 @@ export default function Home({}: {}) {
        return;
     }
     setIsActivating(true);
+    const endTime = Date.now() + 24 * 60 * 60 * 1000;
+    if (user) {
+        await saveUserData(user, { forgingEndTime: endTime });
+    }
     setTimeout(() => {
-        const endTime = Date.now() + 24 * 60 * 60 * 1000;
         setIsForgingActive(true);
         setForgingEndTime(endTime);
         setIsActivating(false);
     }, 4000);
   };
 
-  const handleSessionEnd = () => {
-    setBalance(prev => prev + 1000);
+  const handleSessionEnd = async () => {
+    const newBalance = balance + 1000;
+    setBalance(newBalance);
     setIsForgingActive(false);
     setForgingEndTime(null);
+    if(user){
+        await saveUserData(user, { balance: newBalance, forgingEndTime: null });
+    }
     setShowPointsAnimation(true);
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
