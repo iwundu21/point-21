@@ -52,7 +52,7 @@ import Papa from 'papaparse';
 const ADMIN_IDS = [123, 12345, 6954452147]; 
 const ADMIN_ACCESS_CODE = '202020';
 const USERS_PER_PAGE = 50;
-const TOTAL_AIRDROP = 100_000_000;
+const TOTAL_AIRDROP = 105_000_000;
 
 
 declare global {
