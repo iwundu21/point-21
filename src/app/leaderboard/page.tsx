@@ -35,6 +35,7 @@ const getInitials = (user: UserData) => {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
 }
 
+const LEADERBOARD_TOTAL_LIMIT = 100;
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
@@ -73,7 +74,7 @@ export default function LeaderboardPage() {
             const { users, lastDoc: newLastDoc } = await getLeaderboardUsers();
             setLeaderboard(users);
             setLastDoc(newLastDoc);
-            if (!newLastDoc) {
+            if (!newLastDoc || users.length >= LEADERBOARD_TOTAL_LIMIT) {
                 setHasMore(false);
             }
         } catch (error) {
@@ -88,14 +89,21 @@ export default function LeaderboardPage() {
     }, []);
 
     const handleLoadMore = async () => {
-        if (!lastDoc || isFetchingMore) return;
+        if (!lastDoc || isFetchingMore || leaderboard.length >= LEADERBOARD_TOTAL_LIMIT) return;
         setIsFetchingMore(true);
         try {
             const { users, lastDoc: newLastDoc } = await getLeaderboardUsers(lastDoc);
-            setLeaderboard(prev => [...prev, ...users]);
-            setLastDoc(newLastDoc);
-            if (!newLastDoc) {
+            const combinedUsers = [...leaderboard, ...users];
+
+            if (combinedUsers.length > LEADERBOARD_TOTAL_LIMIT) {
+                setLeaderboard(combinedUsers.slice(0, LEADERBOARD_TOTAL_LIMIT));
                 setHasMore(false);
+            } else {
+                setLeaderboard(combinedUsers);
+                setLastDoc(newLastDoc);
+                if (!newLastDoc) {
+                    setHasMore(false);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch more leaderboard data:", error);
@@ -171,7 +179,7 @@ export default function LeaderboardPage() {
                        ))}
                     </div>
 
-                    {hasMore && (
+                    {hasMore && leaderboard.length < LEADERBOARD_TOTAL_LIMIT && (
                         <div className="text-center">
                             <Button onClick={handleLoadMore} disabled={isFetchingMore}>
                                 {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
