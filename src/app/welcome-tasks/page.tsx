@@ -174,9 +174,9 @@ export default function WelcomeTasksPage() {
                                 title="Join our Discord"
                                 description="Become a part of our community."
                                 points={300}
-                                link="https://discord.gg/exnus"
+                                link="https://discord.gg/v8MpYYFdP8"
                                 completed={tasks.joinedDiscord}
-                                onComplete={() => handleTaskComplete('joinedDiscord', 'https://discord.gg/exnus')}
+                                onComplete={() => handleTaskComplete('joinedDiscord', 'https://discord.gg/v8MpYYFdP8')}
                            />
                         </div>
 
@@ -193,5 +193,7 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
+
+    
 
     
