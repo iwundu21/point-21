@@ -55,7 +55,11 @@ const faceVerificationFlow = ai.defineFlow(
       };
     }
 
-    // Step 2: Check for uniqueness against the production database.
+    // Step 2: Check for uniqueness against the production database using facial embeddings.
+    // In a real-world, large-scale application, we would generate an embedding (a vector representation)
+    // of the face and compare it against a database of existing embeddings for similarity.
+    // For this prototype, we simulate this by calling `findUserByFace`, which checks for an exact URI match.
+    // This serves as a placeholder for a more robust vector-based search.
     const existingUserWithFace = await findUserByFace(input.photoDataUri);
     
     if (existingUserWithFace && existingUserWithFace.telegramUser) {
