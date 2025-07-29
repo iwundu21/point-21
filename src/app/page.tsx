@@ -73,7 +73,7 @@ export default function Home() {
          newStreakCount = (streakData.count % 7) + 1;
       }
       
-      currentBalance += 200;
+      currentBalance += 200; // Award points for daily login
       const newStreak = { count: newStreakCount, lastLogin: today };
       setDailyStreak(newStreakCount);
       userData.dailyStreak = newStreak;
