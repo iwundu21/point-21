@@ -6,7 +6,7 @@ import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Gift, Copy, MessageSquarePlus, CheckCircle, Loader2 } from 'lucide-react';
-import { getUserData, saveUserData, findUserByReferralCode, applyReferralBonus } from '@/lib/database';
+import { getUserData, saveUserData, applyReferralBonus } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
@@ -35,9 +35,9 @@ interface ReferralPageProps {}
 
 export default function ReferralPage({}: ReferralPageProps) {
   const [user, setUser] = useState<TelegramUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [referralCode, setReferralCode] = useState('');
   const [enteredCode, setEnteredCode] = useState('');
-  const [isClient, setIsClient] = useState(false);
   const [friendsReferred, setFriendsReferred] = useState(0);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [bonusApplied, setBonusApplied] = useState(false);
@@ -48,39 +48,52 @@ export default function ReferralPage({}: ReferralPageProps) {
 
 
   useEffect(() => {
-    setIsClient(true);
-    const init = async () => {
-        let telegramUser: TelegramUser | null = null;
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
+    const init = () => {
+      let telegramUser: TelegramUser | null = null;
+      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        if (tg.initDataUnsafe?.user) {
+            telegramUser = tg.initDataUnsafe.user;
             tg.ready();
-            telegramUser = tg.initDataUnsafe?.user;
         }
-
-        if (telegramUser) {
-            setUser(telegramUser);
-            const userData = await getUserData(telegramUser); 
-            
-            let userReferralCode = userData.referralCode;
-            if (!userReferralCode) {
-                userReferralCode = generateReferralCode();
-                await saveUserData(telegramUser, { ...userData, referralCode: userReferralCode });
-            }
-
-            setReferralCode(userReferralCode);
-            setFriendsReferred(userData.referrals || 0);
-            setBonusApplied(userData.referralBonusApplied);
-        } else {
-             const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-             setUser(mockUser);
-             // In dev, you might want to simulate these values
-             setReferralCode(generateReferralCode());
-             setFriendsReferred(0);
-             setBonusApplied(false);
-        }
-    }
+      }
+      
+      if (telegramUser) {
+        setUser(telegramUser);
+      } else {
+        // Fallback for development
+        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
+        setUser(mockUser);
+      }
+    };
     init();
   }, []);
+
+  useEffect(() => {
+    const loadUserData = async () => {
+        if (user) {
+            setIsLoading(true);
+            try {
+                const userData = await getUserData(user); 
+                
+                let userReferralCode = userData.referralCode;
+                if (!userReferralCode) {
+                    userReferralCode = generateReferralCode();
+                    await saveUserData(user, { ...userData, referralCode: userReferralCode });
+                }
+
+                setReferralCode(userReferralCode);
+                setFriendsReferred(userData.referrals || 0);
+                setBonusApplied(userData.referralBonusApplied);
+            } catch (error) {
+                console.error("Failed to load user data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    }
+    loadUserData();
+  }, [user]);
 
   const handleCopy = (textToCopy: string, successMessage: string) => {
     navigator.clipboard.writeText(textToCopy);
@@ -115,11 +128,11 @@ export default function ReferralPage({}: ReferralPageProps) {
             setBonusApplied(true);
             toast({ title: 'Success!', description: 'You have received a 50 E-point bonus!' });
         } else {
-            toast({ variant: 'destructive', title: 'Invalid Code', description: 'The referral code you entered is not valid.' });
+            toast({ variant: 'destructive', title: 'Invalid Code', description: 'The referral code you entered is not valid or does not exist.' });
         }
     } catch (error) {
         console.error("Redemption error:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred during redemption.' });
     } finally {
         setIsRedeeming(false);
         setEnteredCode('');
@@ -127,7 +140,7 @@ export default function ReferralPage({}: ReferralPageProps) {
   };
 
 
-  if (!isClient || !user) {
+  if (isLoading || !user) {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
             <div className="flex-grow pb-20">

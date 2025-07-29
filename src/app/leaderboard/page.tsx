@@ -39,28 +39,42 @@ export default function LeaderboardPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            let telegramUser: TelegramUser | null = null;
-            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-                const tg = window.Telegram.WebApp;
-                tg.ready();
-                telegramUser = tg.initDataUnsafe?.user;
-            }
-            
-            if (telegramUser) {
-                setCurrentUser(telegramUser);
-            } else {
-                const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
-                setCurrentUser(mockUser);
-            }
-
-            const users = await getLeaderboardUsers();
-            setLeaderboard(users);
-            setIsLoading(false);
+        const init = () => {
+          let telegramUser: TelegramUser | null = null;
+          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+              const tg = window.Telegram.WebApp;
+              if (tg.initDataUnsafe?.user) {
+                  telegramUser = tg.initDataUnsafe.user;
+                  tg.ready();
+              }
+          }
+          
+          if (telegramUser) {
+              setCurrentUser(telegramUser);
+          } else {
+              // Fallback for development
+              const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
+              setCurrentUser(mockUser);
+          }
         };
-        fetchData();
+        init();
     }, []);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        if (!currentUser) return;
+        setIsLoading(true);
+        try {
+          const users = await getLeaderboardUsers();
+          setLeaderboard(users);
+        } catch (error) {
+            console.error("Failed to fetch leaderboard:", error);
+        } finally {
+            setIsLoading(false);
+        }
+      };
+      fetchData();
+    }, [currentUser]);
 
     const currentUserRank = currentUser ? leaderboard.findIndex(u => u.telegramUser?.id === currentUser.id) : -1;
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;

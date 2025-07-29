@@ -58,13 +58,14 @@ export default function WelcomeTasksPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const init = async () => {
-            setIsLoading(true);
+        const init = () => {
             let telegramUser: TelegramUser | null = null;
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
-                tg.ready();
-                telegramUser = tg.initDataUnsafe?.user;
+                 if (tg.initDataUnsafe?.user) {
+                    telegramUser = tg.initDataUnsafe.user;
+                    tg.ready();
+                }
             }
 
             if (telegramUser) {
@@ -80,11 +81,17 @@ export default function WelcomeTasksPage() {
     useEffect(() => {
         const loadTaskData = async () => {
             if (user) {
-                const userData = await getUserData(user);
-                if(userData.welcomeTasks) {
-                    setTasks(userData.welcomeTasks);
+                setIsLoading(true);
+                try {
+                    const userData = await getUserData(user);
+                    if(userData.welcomeTasks) {
+                        setTasks(userData.welcomeTasks);
+                    }
+                } catch(error) {
+                    console.error("Failed to load task data:", error);
+                } finally {
+                    setIsLoading(false);
                 }
-                setIsLoading(false);
             }
         }
         loadTaskData();
@@ -105,7 +112,7 @@ export default function WelcomeTasksPage() {
 
     const allTasksCompleted = Object.values(tasks).every(Boolean);
 
-    if (isLoading) {
+    if (isLoading || !user) {
       return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
             <div className="flex-grow pb-20">

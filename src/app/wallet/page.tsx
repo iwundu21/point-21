@@ -46,7 +46,6 @@ interface WalletPageProps {}
 export default function WalletPage({}: WalletPageProps) {
   const [walletAddress, setWalletAddress] = useState('');
   const [savedAddress, setSavedAddress] = useState('');
-  const [isClient, setIsClient] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [balance, setBalance] = useState(0);
@@ -55,15 +54,14 @@ export default function WalletPage({}: WalletPageProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsClient(true);
-    const init = async () => {
-        setIsLoading(true);
+    const init = () => {
         let telegramUser: TelegramUser | null = null;
-
         if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
             const tg = window.Telegram.WebApp;
-            tg.ready();
-            telegramUser = tg.initDataUnsafe?.user;
+            if (tg.initDataUnsafe?.user) {
+                telegramUser = tg.initDataUnsafe.user;
+                tg.ready();
+            }
         }
 
         if (telegramUser) {
@@ -79,18 +77,22 @@ export default function WalletPage({}: WalletPageProps) {
   useEffect(() => {
     const loadUserData = async () => {
         if (user) {
-            const storedAddress = await getWalletAddress(user);
-            if (storedAddress) {
-                setSavedAddress(storedAddress);
-                setWalletAddress(storedAddress);
+            setIsLoading(true);
+            try {
+                const storedAddress = await getWalletAddress(user);
+                if (storedAddress) {
+                    setSavedAddress(storedAddress);
+                    setWalletAddress(storedAddress);
+                }
+                const verificationStatus = await getVerificationStatus(user);
+                setIsVerified(verificationStatus === 'verified');
+                const userBalance = await getBalance(user);
+                setBalance(userBalance);
+            } catch (error) {
+                console.error("Failed to load user wallet data:", error);
+            } finally {
+                setIsLoading(false);
             }
-            const verificationStatus = await getVerificationStatus(user);
-            if (verificationStatus === 'verified') {
-                setIsVerified(true);
-            }
-            const userBalance = await getBalance(user);
-            setBalance(userBalance);
-            setIsLoading(false);
         }
     }
     loadUserData();
@@ -127,7 +129,7 @@ export default function WalletPage({}: WalletPageProps) {
     return `${address.slice(0, 7)}****${address.slice(-7)}`;
   }
 
-  if (!isClient || isLoading) {
+  if (isLoading || !user) {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
             <div className="flex-grow pb-20 p-4 mt-8 max-w-sm mx-auto w-full">

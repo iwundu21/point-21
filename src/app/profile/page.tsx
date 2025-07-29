@@ -38,7 +38,7 @@ interface ProfilePageProps {}
 
 export default function ProfilePage({}: ProfilePageProps) {
   const [user, setUser] = useState<TelegramUser | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
@@ -53,32 +53,43 @@ export default function ProfilePage({}: ProfilePageProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    setIsClient(true);
-    const init = async () => {
-        let telegramUser: TelegramUser | null = null;
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-          const tg = window.Telegram.WebApp;
-          tg.ready();
-          telegramUser = tg.initDataUnsafe?.user;
+    const init = () => {
+      let telegramUser: TelegramUser | null = null;
+      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        if (tg.initDataUnsafe?.user) {
+            telegramUser = tg.initDataUnsafe.user;
+            tg.ready();
         }
-
-        if (telegramUser) {
-            setUser(telegramUser);
-            const storedStatus = await getVerificationStatus(telegramUser);
-            if (storedStatus === 'verified') {
-                setAccountStatus('verified');
-            }
-        } else {
-           const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
-           setUser(mockUser);
-           const storedStatus = await getVerificationStatus(mockUser);
-           if (storedStatus === 'verified') {
-                setAccountStatus('verified');
-           }
-        }
-    }
+      }
+      
+      if (telegramUser) {
+        setUser(telegramUser);
+      } else {
+        // Fallback for development
+        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
+        setUser(mockUser);
+      }
+    };
     init();
   }, []);
+
+  useEffect(() => {
+    const loadStatus = async () => {
+        if (user) {
+            setIsLoading(true);
+            try {
+                const storedStatus = await getVerificationStatus(user);
+                setAccountStatus(storedStatus);
+            } catch (error) {
+                console.error("Failed to load verification status:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+    loadStatus();
+  }, [user]);
 
   const getInitials = () => {
     if (!user) return '';
@@ -96,9 +107,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 setHasCameraPermission(true);
                 setIsCameraActive(true);
-                if (webcamRef.current?.video) {
-                    webcamRef.current.video.srcObject = stream;
-                }
+                // The stream is automatically handled by the Webcam component
             } catch (error) {
                 console.error("Camera access denied:", error);
                 setHasCameraPermission(false);
@@ -135,6 +144,7 @@ export default function ProfilePage({}: ProfilePageProps) {
               photoDataUri: imageSrc,
               userId: `tg_user_${user.id}`
           });
+          
           if (result.isHuman && result.isUnique) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
@@ -180,7 +190,7 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
 
-  if (!isClient || !user) {
+  if (isLoading || !user) {
     return (
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         <main className="flex-grow flex flex-col items-center justify-center p-4 space-y-8">

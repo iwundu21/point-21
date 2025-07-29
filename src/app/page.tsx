@@ -46,57 +46,70 @@ export default function Home({}: {}) {
 
   const handleInitializeUser = useCallback(async (telegramUser: TelegramUser) => {
     setIsLoading(true);
-    const userData = await getUserData(telegramUser);
-    
-    setUser(telegramUser);
-    let currentBalance = userData.balance;
-    
-    if (userData.verificationStatus === 'verified') {
-      setIsVerified(true);
+    try {
+        const userData = await getUserData(telegramUser);
+        
+        setUser(telegramUser);
+        let currentBalance = userData.balance;
+        
+        if (userData.verificationStatus === 'verified') {
+          setIsVerified(true);
+        }
+
+        if (userData.forgingEndTime && userData.forgingEndTime > Date.now()) {
+          setIsForgingActive(true);
+          setForgingEndTime(userData.forgingEndTime);
+        } else if (userData.forgingEndTime) {
+          // If forging session has ended, award points.
+          currentBalance += 1000;
+          userData.forgingEndTime = null; 
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        let streakData = userData.dailyStreak;
+
+        if (streakData.lastLogin !== today) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+          let newStreakCount = 1;
+          if (streakData.lastLogin === yesterdayStr) {
+             newStreakCount = (streakData.count % 7) + 1;
+          }
+          
+          currentBalance += 200; // Award points for daily login
+          const newStreak = { count: newStreakCount, lastLogin: today };
+          setDailyStreak(newStreakCount);
+          userData.dailyStreak = newStreak;
+        } else {
+          setDailyStreak(streakData.count);
+        }
+        
+        setBalance(currentBalance);
+        userData.balance = currentBalance;
+        await saveUserData(telegramUser, userData);
+    } catch (error) {
+        console.error("Initialization failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not load user data. Please try again later.",
+        });
+    } finally {
+        setIsLoading(false);
     }
-
-    if (userData.forgingEndTime && userData.forgingEndTime > Date.now()) {
-      setIsForgingActive(true);
-      setForgingEndTime(userData.forgingEndTime);
-    } else if (userData.forgingEndTime) {
-      currentBalance += 1000;
-      userData.forgingEndTime = null;
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    let streakData = userData.dailyStreak;
-
-    if (streakData.lastLogin !== today) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-      let newStreakCount = 1;
-      if (streakData.lastLogin === yesterdayStr) {
-         newStreakCount = (streakData.count % 7) + 1;
-      }
-      
-      currentBalance += 200; // Award points for daily login
-      const newStreak = { count: newStreakCount, lastLogin: today };
-      setDailyStreak(newStreakCount);
-      userData.dailyStreak = newStreak;
-    } else {
-      setDailyStreak(streakData.count);
-    }
-    
-    setBalance(currentBalance);
-    userData.balance = currentBalance;
-    await saveUserData(telegramUser, userData);
-    setIsLoading(false);
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     const init = () => {
       let telegramUser: TelegramUser | null = null;
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        telegramUser = tg.initDataUnsafe?.user;
+        if (tg.initDataUnsafe?.user) {
+            telegramUser = tg.initDataUnsafe.user;
+            tg.ready();
+        }
       }
       
       if (telegramUser) {
