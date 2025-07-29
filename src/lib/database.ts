@@ -21,6 +21,7 @@ export interface UserData {
     forgingEndTime: number | null;
     dailyStreak: { count: number; lastLogin: string };
     verificationStatus: 'verified' | 'unverified' | 'failed';
+    faceVerificationUri: string | null;
     walletAddress: string | null;
     telegramUser: TelegramUser | null;
     referralCode: string | null;
@@ -48,6 +49,7 @@ const defaultUserData = (telegramUser: TelegramUser | null): UserData => ({
     forgingEndTime: null,
     dailyStreak: { count: 0, lastLogin: '' },
     verificationStatus: 'unverified',
+    faceVerificationUri: null,
     walletAddress: null,
     telegramUser: telegramUser,
     referralCode: null,
@@ -160,7 +162,13 @@ export const getBalance = async (user: TelegramUser | null) => (await getUserDat
 export const getForgingEndTime = async (user: TelegramUser | null) => (await getUserData(user)).forgingEndTime;
 export const getDailyStreak = async (user: TelegramUser | null) => (await getUserData(user)).dailyStreak;
 export const getVerificationStatus = async (user: TelegramUser | null) => (await getUserData(user)).verificationStatus;
-export const saveVerificationStatus = async (user: TelegramUser | null, status: 'verified' | 'unverified' | 'failed') => saveUserData(user, { verificationStatus: status });
+export const saveVerificationStatus = async (user: TelegramUser | null, status: 'verified' | 'unverified' | 'failed', imageUri?: string | null) => {
+    const data: Partial<UserData> = { verificationStatus: status };
+    if (status === 'verified' && imageUri) {
+        data.faceVerificationUri = imageUri;
+    }
+    saveUserData(user, data);
+}
 export const getWalletAddress = async (user: TelegramUser | null) => (await getUserData(user)).walletAddress;
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;

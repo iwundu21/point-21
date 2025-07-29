@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A face verification AI agent that checks for uniqueness.
@@ -29,6 +30,7 @@ const VerifyHumanFaceOutputSchema = z.object({
   isHuman: z.boolean().describe('Whether the image contains a real human face and not an avatar, cartoon, or object.'),
   isUnique: z.boolean().describe('Whether the face is unique and not already registered.'),
   reason: z.string().describe('The reason for the determination.'),
+  faceVerificationUri: z.string().optional().describe('The data URI of the captured face image.'),
 });
 export type VerifyHumanFaceOutput = z.infer<typeof VerifyHumanFaceOutputSchema>;
 
@@ -59,7 +61,7 @@ const faceVerificationFlow = ai.defineFlow(
     
     // Check if this specific user has already been verified.
     if (verifiedFaces.has(input.userId)) {
-        return { isHuman: true, isUnique: true, reason: 'Account already verified.' };
+        return { isHuman: true, isUnique: true, reason: 'Account already verified.', faceVerificationUri: input.photoDataUri };
     }
 
     // Simulate checking if this face is registered with another account.
@@ -82,6 +84,7 @@ const faceVerificationFlow = ai.defineFlow(
         isHuman: true,
         isUnique: true,
         reason: 'Verification successful. Your account is now verified.',
+        faceVerificationUri: input.photoDataUri,
     };
   }
 );
