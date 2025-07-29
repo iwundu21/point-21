@@ -139,12 +139,28 @@ export const findUserByReferralCode = async (code: string): Promise<UserData | n
 
 export const findUserByFace = async (faceUri: string): Promise<UserData | null> => {
     if (!faceUri) return null;
-    const q = query(collection(db, 'users'), where('faceVerificationUri', '==', faceUri), where('status', '==', 'active'), limit(1));
+    // This is a simplified lookup. A real implementation would use a vector database
+    // to find similar faces. For now, we'll assume a user might try to re-verify
+    // and we can find them by a previously stored URI if it's an exact match.
+    // A more robust check might involve querying by other user properties if a
+    // duplicate is suspected, but that logic lives in the faceVerificationFlow.
+    const q = query(collection(db, 'users'), where('faceVerificationUri', '!=', null), where('status', '==', 'active'));
     const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
+    
+    // In a real-world scenario with a proper ML model, you would get an embedding
+    // from the faceUri and query a vector database to find the closest matches.
+    // Since we don't have that, this function will have limited effectiveness against
+    // slightly different photos of the same person. It will only catch exact re-uploads.
+    for (const userDoc of querySnapshot.docs) {
+        // This is a placeholder for a more complex comparison.
+        // For now, we'll just check if any user has a verification URI.
+        // The core logic is in the flow, this function is just a data-layer hook.
+        // A simple (but inefficient) text-based comparison for demo purposes:
+        if (userDoc.data().faceVerificationUri === faceUri) {
+             return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
+        }
     }
+
     return null;
 }
 
