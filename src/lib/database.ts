@@ -103,26 +103,30 @@ export const findUserByReferralCode = (code: string): UserData | null => {
 }
 
 // In a real app, this would be a transactional update in a database.
-export const applyReferralBonus = (newUser: TelegramUser, referrerCode: string): UserData => {
-    if (typeof window === 'undefined') return getUserData(newUser);
-    
-    // Find the referrer
-    const referrerData = findUserByReferralCode(referrerCode);
-    if (referrerData && referrerData.telegramUser) {
-        // Award the referrer
-        const newReferrerBalance = (referrerData.balance || 0) + 200;
-        const newReferralsCount = (referrerData.referrals || 0) + 1;
-        saveUserData(referrerData.telegramUser, { balance: newReferrerBalance, referrals: newReferralsCount });
+export const applyReferralBonus = (newUser: TelegramUser, referrerCode: string): UserData | null => {
+    if (typeof window === 'undefined') return null;
+
+    const referrer = findUserByReferralCode(referrerCode);
+    if (referrer?.telegramUser) {
+        const referrerData = getUserData(referrer.telegramUser);
+        const newReferrerData = {
+            ...referrerData,
+            balance: referrerData.balance + 200,
+            referrals: (referrerData.referrals || 0) + 1,
+        };
+        saveUserData(referrer.telegramUser, newReferrerData);
     }
-
-    // Award the new user
+    
     const newUserData = getUserData(newUser);
-    newUserData.balance += 50;
-    newUserData.referralBonusApplied = true;
-    newUserData.referredBy = referrerData?.telegramUser?.id.toString() || null;
-    saveUserData(newUser, newUserData);
+    const updatedNewUserData = {
+        ...newUserData,
+        balance: newUserData.balance + 50,
+        referralBonusApplied: true,
+        referredBy: referrer?.telegramUser?.id.toString() ?? null,
+    };
+    saveUserData(newUser, updatedNewUserData);
 
-    return newUserData;
+    return updatedNewUserData;
 };
 
 
