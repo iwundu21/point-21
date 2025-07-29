@@ -30,7 +30,7 @@ interface TelegramUser {
     photo_url?: string;
 }
 
-export default function Home() {
+export default function Home({}: {}) {
   const [balance, setBalance] = useState(0);
   const [isForgingActive, setIsForgingActive] = useState(false);
   const [forgingEndTime, setForgingEndTime] = useState<number | null>(null);
