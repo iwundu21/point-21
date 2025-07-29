@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -75,6 +75,72 @@ const getInitials = (user: UserData) => {
     const firstNameInitial = user.telegramUser.first_name ? user.telegramUser.first_name[0] : '';
     const lastNameInitial = user.telegramUser.last_name ? user.telegramUser.last_name[0] : '';
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
+}
+
+const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalanceUpdated: (userId: string, newBalance: number) => void }) => {
+    const [newBalance, setNewBalance] = useState(user.balance.toString());
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        if (!user.telegramUser) return;
+        
+        const balanceValue = parseInt(newBalance, 10);
+        if (isNaN(balanceValue) || balanceValue < 0) {
+            toast({ variant: 'destructive', title: 'Invalid Balance', description: 'Please enter a valid positive number.' });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await updateUserBalance(user.telegramUser, balanceValue);
+            onBalanceUpdated(user.id, balanceValue);
+            toast({ title: 'Balance Updated', description: `${user.telegramUser.first_name}'s balance has been updated.` });
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Failed to update balance:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the balance.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Pencil className="h-3 w-3" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Edit Balance for {user.telegramUser?.first_name}</DialogTitle>
+                    <DialogDescription>
+                        Set a new point balance for this user.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="balance" className="text-right">Balance</Label>
+                        <Input 
+                            id="balance" 
+                            type="number" 
+                            value={newBalance} 
+                            onChange={e => setNewBalance(e.target.value)} 
+                            className="col-span-3"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                     <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Changes
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 
@@ -174,14 +240,16 @@ const UserTable = ({
     onDeleteUser,
     onCopy,
     totalPoints,
-    isLoading
+    isLoading,
+    onBalanceUpdated
 }: {
     users: UserData[],
     onUpdateStatus: (user: UserData, status: 'active' | 'banned') => void,
     onDeleteUser: (user: UserData) => void,
     onCopy: (text: string) => void,
     totalPoints: number,
-    isLoading: boolean
+    isLoading: boolean,
+    onBalanceUpdated: (userId: string, newBalance: number) => void
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -324,7 +392,12 @@ const UserTable = ({
                                         <span className="text-xs text-muted-foreground">N/A</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-yellow-400 font-bold">{user.balance.toLocaleString()}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-yellow-400 font-bold">{user.balance.toLocaleString()}</span>
+                                        <EditBalanceDialog user={user} onBalanceUpdated={onBalanceUpdated} />
+                                    </div>
+                                </TableCell>
                                 <TableCell>{user.referrals}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1 text-yellow-500">
@@ -468,6 +541,16 @@ export default function AdminPage() {
         );
         toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
     }
+
+    const handleBalanceUpdated = (userId: string, newBalance: number) => {
+        setAllUsers(currentUsers => {
+            const updatedUsers = currentUsers.map(u =>
+                u.id === userId ? { ...u, balance: newBalance } : u
+            );
+            // Re-sort users based on the new balance
+            return updatedUsers.sort((a, b) => b.balance - a.balance);
+        });
+    };
 
     const handleDeleteUser = async (user: UserData) => {
         if (!user.telegramUser) return;
@@ -665,6 +748,7 @@ export default function AdminPage() {
                                 onCopy={handleCopy}
                                 totalPoints={totalPoints}
                                 isLoading={isLoading}
+                                onBalanceUpdated={handleBalanceUpdated}
                             />
                         </TabsContent>
                         <TabsContent value="banned">
@@ -675,6 +759,7 @@ export default function AdminPage() {
                                 onCopy={handleCopy}
                                 totalPoints={totalPoints}
                                 isLoading={isLoading}
+                                onBalanceUpdated={handleBalanceUpdated}
                             />
                         </TabsContent>
                     </Tabs>
@@ -685,4 +770,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
 
