@@ -2,13 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock } from 'lucide-react';
 import Footer from '@/components/footer';
 import { getAllUsers, updateUserStatus, deleteUser, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import {
@@ -32,9 +33,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { buttonVariants } from '@/components/ui/button';
+
 
 // NOTE: Add your Telegram user ID here for admin access
 const ADMIN_IDS = [123, 12345, 6954452147]; 
+const ADMIN_ACCESS_CODE = '202020';
 
 declare global {
   interface Window {
@@ -65,6 +69,8 @@ export default function AdminPage() {
     const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [accessCode, setAccessCode] = useState('');
+    const [codeAuthenticated, setCodeAuthenticated] = useState(false);
 
     const { toast } = useToast();
 
@@ -81,19 +87,23 @@ export default function AdminPage() {
           
           if (telegramUser) {
               setCurrentUser(telegramUser);
-              setIsAdmin(ADMIN_IDS.includes(telegramUser.id));
+              if (ADMIN_IDS.includes(telegramUser.id)) {
+                setIsAdmin(true);
+              }
           } else {
               // Fallback for development
               const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
               setCurrentUser(mockUser);
-              setIsAdmin(ADMIN_IDS.includes(mockUser.id));
+              if (ADMIN_IDS.includes(mockUser.id)) {
+                setIsAdmin(true);
+              }
           }
         };
         init();
     }, []);
     
     const fetchUsers = async () => {
-        if (!hasMore || !isAdmin) return;
+        if (!hasMore || (!isAdmin && !codeAuthenticated)) return;
         setIsLoading(true);
         try {
             const { users: newUsers, lastDoc: newLastDoc } = await getAllUsers();
@@ -110,12 +120,12 @@ export default function AdminPage() {
     };
     
     useEffect(() => {
-      if(isAdmin) {
+      if(isAdmin || codeAuthenticated) {
         fetchUsers();
       } else {
         setIsLoading(false);
       }
-    }, [isAdmin]);
+    }, [isAdmin, codeAuthenticated]);
 
     const handleLoadMore = async () => {
         if (!lastDoc || isFetchingMore) return;
@@ -145,6 +155,20 @@ export default function AdminPage() {
         setUsers(users.filter(u => u.id !== userId));
         toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
     }
+    
+    const handleCodeSubmit = () => {
+        if (accessCode === ADMIN_ACCESS_CODE) {
+            setCodeAuthenticated(true);
+            setIsLoading(true);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Access Denied',
+                description: 'The access code is incorrect.',
+            });
+            setAccessCode('');
+        }
+    }
 
     const renderAdminSkeleton = () => (
         <div className="space-y-2">
@@ -161,15 +185,25 @@ export default function AdminPage() {
         </div>
     );
     
-    if (!isAdmin) {
+    if (!isAdmin && !codeAuthenticated) {
         return (
              <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-                <Card className="max-w-sm">
+                <Card className="max-w-sm w-full">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Shield className="w-6 h-6 text-destructive"/> Access Denied</CardTitle>
+                        <CardTitle className="flex items-center justify-center gap-2"><Lock className="w-6 h-6"/> Admin Access</CardTitle>
+                        <CardDescription>Enter the access code to continue.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+                    <CardContent className="space-y-4">
+                       <Input 
+                            type="password"
+                            placeholder="Enter access code"
+                            value={accessCode}
+                            onChange={(e) => setAccessCode(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
+                        />
+                       <Button onClick={handleCodeSubmit} className="w-full">
+                           Submit
+                       </Button>
                     </CardContent>
                 </Card>
             </div>
