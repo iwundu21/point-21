@@ -34,7 +34,9 @@ interface TelegramUser {
 
 type VerificationStatus = 'unverified' | 'detecting' | 'verified' | 'failed';
 
-export default function ProfilePage() {
+interface ProfilePageProps {}
+
+export default function ProfilePage({}: ProfilePageProps) {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -203,7 +205,7 @@ export default function ProfilePage() {
         case 'detecting':
             return (
                 <span className="text-yellow-500 font-bold flex items-center text-sm">
-                    <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Verification detection...
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Verification in Progress...
                 </span>
             );
         case 'failed':
@@ -396,5 +398,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
