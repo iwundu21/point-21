@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Trophy, Loader2 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Trophy, Loader2, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import Footer from '@/components/footer';
 import { getLeaderboardUsers, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,16 +44,14 @@ const getLeagueInfo = (rank: number) => {
 };
 
 
-const LEADERBOARD_TOTAL_LIMIT = 100;
+const USERS_PER_PAGE = 50;
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isFetchingMore, setIsFetchingMore] = useState(false);
-    const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-    const [hasMore, setHasMore] = useState(true);
-
+    const [currentPage, setCurrentPage] = useState(1);
+    
     useEffect(() => {
         const init = () => {
           let telegramUser: TelegramUser | null = null;
@@ -73,15 +71,21 @@ export default function LeaderboardPage() {
     }, []);
     
     const fetchLeaderboard = async () => {
-        if (!hasMore) return;
         setIsLoading(true);
+        let allUsers: UserData[] = [];
+        let lastDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+        let hasMore = true;
+
         try {
-            const { users, lastDoc: newLastDoc } = await getLeaderboardUsers();
-            setLeaderboard(users);
-            setLastDoc(newLastDoc);
-            if (!newLastDoc || users.length >= LEADERBOARD_TOTAL_LIMIT) {
-                setHasMore(false);
+            while (hasMore) {
+                const { users, lastDoc: newLastDoc } = await getLeaderboardUsers(lastDoc);
+                allUsers = [...allUsers, ...users];
+                lastDoc = newLastDoc;
+                if (!newLastDoc) {
+                    hasMore = false;
+                }
             }
+            setLeaderboard(allUsers);
         } catch (error) {
             console.error("Failed to fetch leaderboard:", error);
         } finally {
@@ -92,31 +96,13 @@ export default function LeaderboardPage() {
     useEffect(() => {
       fetchLeaderboard();
     }, []);
-
-    const handleLoadMore = async () => {
-        if (!lastDoc || isFetchingMore || leaderboard.length >= LEADERBOARD_TOTAL_LIMIT) return;
-        setIsFetchingMore(true);
-        try {
-            const { users, lastDoc: newLastDoc } = await getLeaderboardUsers(lastDoc);
-            const combinedUsers = [...leaderboard, ...users];
-
-            if (combinedUsers.length > LEADERBOARD_TOTAL_LIMIT) {
-                setLeaderboard(combinedUsers.slice(0, LEADERBOARD_TOTAL_LIMIT));
-                setHasMore(false);
-            } else {
-                setLeaderboard(combinedUsers);
-                setLastDoc(newLastDoc);
-                if (!newLastDoc) {
-                    setHasMore(false);
-                }
-            }
-        } catch (error) {
-            console.error("Failed to fetch more leaderboard data:", error);
-        } finally {
-            setIsFetchingMore(false);
-        }
-    };
-
+    
+    const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
+    const paginatedUsers = leaderboard.slice(
+        (currentPage - 1) * USERS_PER_PAGE,
+        currentPage * USERS_PER_PAGE
+    );
+    
     const currentUserRank = currentUser ? leaderboard.findIndex(u => u.telegramUser?.id === currentUser.id) : -1;
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
 
@@ -161,39 +147,56 @@ export default function LeaderboardPage() {
                 ) : (
                   <>
                     <div className="space-y-2">
-                       {leaderboard.map((user, index) => (
-                           <Card key={user.telegramUser?.id || index} className={cn("transition-all", currentUser?.id === user.telegramUser?.id && "border-primary ring-2 ring-primary")}>
-                               <CardContent className="p-3 flex items-center space-x-4">
-                                   <div className="flex items-center justify-center w-6">
-                                       {getMedal(index)}
-                                   </div>
-                                   <Avatar className="w-10 h-10">
-                                       <AvatarImage src={user.telegramUser?.photo_url} />
-                                       <AvatarFallback>{getInitials(user)}</AvatarFallback>
-                                   </Avatar>
-                                   <div className="flex-grow">
-                                       <p className="font-semibold truncate">{user.telegramUser?.first_name || 'Anonymous'}</p>
-                                       <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
-                                   </div>
-                                   <div className="text-right">
-                                       <p className="font-bold text-primary">{user.balance.toLocaleString()}</p>
-                                       <p className="text-xs text-muted-foreground">{getLeagueInfo(index + 1).name} League</p>
-                                   </div>
-                               </CardContent>
-                           </Card>
-                       ))}
+                       {paginatedUsers.map((user, index) => {
+                           const rank = (currentPage - 1) * USERS_PER_PAGE + index;
+                           return (
+                               <Card key={user.telegramUser?.id || rank} className={cn("transition-all", currentUser?.id === user.telegramUser?.id && "border-primary ring-2 ring-primary")}>
+                                   <CardContent className="p-3 flex items-center space-x-4">
+                                       <div className="flex items-center justify-center w-6">
+                                           {getMedal(rank)}
+                                       </div>
+                                       <Avatar className="w-10 h-10">
+                                           <AvatarImage src={user.telegramUser?.photo_url} />
+                                           <AvatarFallback>{getInitials(user)}</AvatarFallback>
+                                       </Avatar>
+                                       <div className="flex-grow">
+                                           <p className="font-semibold truncate">{user.telegramUser?.first_name || 'Anonymous'}</p>
+                                           <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
+                                       </div>
+                                       <div className="text-right">
+                                           <p className="font-bold text-primary">{user.balance.toLocaleString()}</p>
+                                           <p className="text-xs text-muted-foreground">{getLeagueInfo(rank + 1).name} League</p>
+                                       </div>
+                                   </CardContent>
+                               </Card>
+                           )
+                       })}
                     </div>
 
-                    {hasMore && leaderboard.length < LEADERBOARD_TOTAL_LIMIT && (
-                        <div className="text-center">
-                            <Button onClick={handleLoadMore} disabled={isFetchingMore}>
-                                {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                {isFetchingMore ? 'Loading...' : 'Load More'}
-                            </Button>
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between pt-4">
+                            <div className="text-sm text-muted-foreground">
+                                Page {currentPage} of {totalPages}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                     )}
 
-                    {currentUserData && currentUserRank >= leaderboard.length && (
+
+                    {currentUserData && (currentPage * USERS_PER_PAGE) < currentUserRank + 1 && (
                         <>
                             <Separator />
                             <Card className="border-primary ring-2 ring-primary">
