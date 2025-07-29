@@ -44,7 +44,7 @@ const getLeagueInfo = (rank: number) => {
 };
 
 
-const USERS_PER_PAGE = 50;
+const USERS_PER_PAGE = 10;
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
@@ -72,20 +72,9 @@ export default function LeaderboardPage() {
     
     const fetchLeaderboard = async () => {
         setIsLoading(true);
-        let allUsers: UserData[] = [];
-        let lastDoc: QueryDocumentSnapshot<DocumentData> | null = null;
-        let hasMore = true;
-
         try {
-            while (hasMore) {
-                const { users, lastDoc: newLastDoc } = await getLeaderboardUsers(lastDoc);
-                allUsers = [...allUsers, ...users];
-                lastDoc = newLastDoc;
-                if (!newLastDoc) {
-                    hasMore = false;
-                }
-            }
-            setLeaderboard(allUsers);
+            const { users } = await getLeaderboardUsers();
+            setLeaderboard(users);
         } catch (error) {
             console.error("Failed to fetch leaderboard:", error);
         } finally {

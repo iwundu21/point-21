@@ -179,7 +179,7 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
     return null; // Referrer not found
 };
 
-const LEADERBOARD_PAGE_SIZE = 20;
+const LEADERBOARD_PAGE_SIZE = 100;
 
 export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<DocumentData> | null = null): Promise<{ users: UserData[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
     const usersRef = collection(db, 'users');
