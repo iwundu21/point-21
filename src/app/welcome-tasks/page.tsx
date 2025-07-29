@@ -56,6 +56,7 @@ export default function WelcomeTasksPage() {
         joinedDiscord: false,
     });
     const [isLoading, setIsLoading] = useState(true);
+    const [verifyingTaskId, setVerifyingTaskId] = useState<keyof WelcomeTasks | null>(null);
 
     useEffect(() => {
         const init = () => {
@@ -97,17 +98,25 @@ export default function WelcomeTasksPage() {
         loadTaskData();
     }, [user]);
 
-    const handleTaskComplete = async (taskName: keyof WelcomeTasks, link: string) => {
-        if (!user || tasks[taskName]) return;
-
-        const userData = await getUserData(user);
-        const updatedTasks = { ...tasks, [taskName]: true };
-        const updatedBalance = userData.balance + 300;
-        
-        setTasks(updatedTasks);
-        await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+    const handleTaskComplete = (taskName: keyof WelcomeTasks, link: string) => {
+        if (!user || tasks[taskName] || verifyingTaskId) return;
 
         window.open(link, '_blank');
+        
+        setVerifyingTaskId(taskName);
+
+        setTimeout(async () => {
+             if (user) { // check user again inside timeout
+                const userData = await getUserData(user);
+                const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
+                const updatedBalance = userData.balance + 300;
+                
+                await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+
+                setTasks(updatedTasks);
+            }
+            setVerifyingTaskId(null);
+        }, 9000);
     };
 
     const allTasksCompleted = Object.values(tasks).every(Boolean);
@@ -158,6 +167,7 @@ export default function WelcomeTasksPage() {
                                 points={300}
                                 link="https://x.com/exnusprotocol"
                                 completed={tasks.followedOnX}
+                                isVerifying={verifyingTaskId === 'followedOnX'}
                                 onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol')}
                            />
                            <TaskItem
@@ -167,6 +177,7 @@ export default function WelcomeTasksPage() {
                                 points={300}
                                 link="https://t.me/Exnusprotocol"
                                 completed={tasks.subscribedOnTelegram}
+                                isVerifying={verifyingTaskId === 'subscribedOnTelegram'}
                                 onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol')}
                            />
                            <TaskItem
@@ -176,6 +187,7 @@ export default function WelcomeTasksPage() {
                                 points={300}
                                 link="https://discord.gg/v8MpYYFdP8"
                                 completed={tasks.joinedDiscord}
+                                isVerifying={verifyingTaskId === 'joinedDiscord'}
                                 onComplete={() => handleTaskComplete('joinedDiscord', 'https://discord.gg/v8MpYYFdP8')}
                            />
                         </div>
