@@ -156,18 +156,18 @@ export default function WelcomeTasksPage() {
                                 title="Follow on X"
                                 description="Stay up-to-date with our latest news."
                                 points={300}
-                                link="https://x.com/exnusprotocol"
+                                link="https://x.com/exnusprotocol?t=jzAMlELcvgngFCp1BAaZPg&s=09"
                                 completed={tasks.followedOnX}
-                                onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol')}
+                                onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol?t=jzAMlELcvgngFCp1BAaZPg&s=09')}
                            />
                            <TaskItem
                                 icon={<TelegramIcon className="w-6 h-6" />}
                                 title="Subscribe on Telegram"
                                 description="Get announcements directly from the source."
                                 points={300}
-                                link="https://t.me/Exnus_EXN"
+                                link="https://t.me/Exnusprotocol"
                                 completed={tasks.subscribedOnTelegram}
-                                onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnus_EXN')}
+                                onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol')}
                            />
                            <TaskItem
                                 icon={<DiscordIcon className="w-6 h-6" />}
@@ -193,3 +193,5 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
+
+    
