@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Wallet, Gift, Users, Handshake } from 'lucide-react';
+import { Home, User, Wallet, Gift, Users, Handshake, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Footer = () => {
@@ -14,6 +14,7 @@ const Footer = () => {
     { href: '/tasks', label: 'Social', icon: Users },
     { href: '/referral', label: 'Ref', icon: Handshake },
     { href: '/welcome-tasks', label: 'Wel', icon: Gift },
+    { href: '/leaderboard', label: 'Leader', icon: Trophy },
     { href: '/wallet', label: 'Wallet', icon: Wallet },
     { href: '/profile', label: 'Profile', icon: User },
   ];
@@ -24,9 +25,9 @@ const Footer = () => {
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center text-sm w-full">
+            <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center text-sm w-full p-1">
               <item.icon className={cn("w-6 h-6 mb-1", isActive ? 'text-primary' : 'text-muted-foreground')} />
-              <span className={cn(isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>
+              <span className={cn("text-xs", isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>
                 {item.label}
               </span>
             </Link>
