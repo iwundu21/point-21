@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,6 +45,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { renderIcon } from '@/app/tasks/page';
+import Papa from 'papaparse';
 
 
 // NOTE: Add your Telegram user ID here for admin access
@@ -300,6 +301,30 @@ export default function AdminPage() {
         (currentPage - 1) * USERS_PER_PAGE,
         currentPage * USERS_PER_PAGE
     );
+    
+    const handleExportAirdrop = () => {
+        const airdropData = allUsers
+            .filter(user => user.walletAddress) // Only include users with a wallet address
+            .map(user => {
+                const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                return {
+                    walletAddress: user.walletAddress,
+                    airdropAmount: airdropAmount.toFixed(4) // Adjust precision as needed
+                };
+            });
+
+        const csv = Papa.unparse(airdropData);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'airdrop_distribution.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({ title: "Export Successful", description: "Airdrop CSV file has been downloaded." });
+    };
 
     const renderAdminSkeleton = () => (
         <div className="space-y-2">
@@ -443,7 +468,13 @@ export default function AdminPage() {
 
               <Card>
                   <CardHeader>
+                    <div className="flex justify-between items-center">
                       <CardTitle>User Management</CardTitle>
+                      <Button onClick={handleExportAirdrop} variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Export Airdrop List
+                      </Button>
+                    </div>
                       <div className="relative pt-2">
                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                          <Input 
