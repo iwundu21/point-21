@@ -146,6 +146,7 @@ export default function TasksPage() {
         const task = socialTasksList.find(t => t.id === taskName);
         if (!task) return;
 
+        window.open(link, '_blank');
         setVerifyingTaskId(task.id);
 
         setTimeout(async () => {
@@ -156,7 +157,6 @@ export default function TasksPage() {
             setTasks(updatedTasks);
             await saveUserData(user, { ...userData, socialTasks: updatedTasks, balance: updatedBalance });
             
-            window.open(link, '_blank');
             setVerifyingTaskId(null);
         }, 9000);
     };
