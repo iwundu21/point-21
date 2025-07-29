@@ -143,8 +143,11 @@ export default function TasksPage() {
         if (!user || tasks[taskName]) return;
 
         const userData = await getUserData(user);
+        const task = socialTasksList.find(t => t.id === taskName);
+        if (!task) return;
+
         const updatedTasks = { ...tasks, [taskName]: true };
-        const updatedBalance = userData.balance + 100; // Award 100 points for each social task
+        const updatedBalance = userData.balance + task.points;
         
         setTasks(updatedTasks);
         await saveUserData(user, { socialTasks: updatedTasks, balance: updatedBalance });
@@ -154,7 +157,6 @@ export default function TasksPage() {
     
     const availableTasks = socialTasksList.filter(task => !tasks[task.id as keyof SocialTasksState]);
     const completedTasks = socialTasksList.filter(task => tasks[task.id as keyof SocialTasksState]);
-    const allTasksCompleted = availableTasks.length === 0;
 
     if (isLoading || !user) {
       return (
