@@ -1,33 +1,12 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the user is the owner of the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    match /users/{userId} {
-      // Allow any authenticated user to create their own document
-      allow create: if isAuthenticated() && isOwner(userId);
-      // Allow any authenticated user to read any user's profile (for leaderboard/admin)
-      allow read: if isAuthenticated();
-      // Only allow a user to update their own document
-      allow update, delete: if isAuthenticated() && isOwner(userId);
-    }
-    
-    match /socialTasks/{taskId} {
-      // Allow any authenticated user to read social tasks
-      allow read: if isAuthenticated();
-      // Disallow client-side writes to social tasks for security
-      allow write: if false; 
+    // Allow read and write access to all documents
+    // for simplicity during development and for apps without
+    // strict user data privacy requirements.
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
