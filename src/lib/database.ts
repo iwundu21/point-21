@@ -219,13 +219,15 @@ export const getAllUsers = async (): Promise<{ users: UserData[] }> => {
 };
 
 
-export const updateUserStatus = async (userId: string, status: 'active' | 'banned') => {
+export const updateUserStatus = async (telegramUser: TelegramUser, status: 'active' | 'banned') => {
+    const userId = getUserId(telegramUser);
     if (!userId) return;
     const userRef = doc(db, 'users', userId);
     await setDoc(userRef, { status }, { merge: true });
 };
 
-export const deleteUser = async (userId: string) => {
+export const deleteUser = async (telegramUser: TelegramUser) => {
+    const userId = getUserId(telegramUser);
     if (!userId) return;
     const userRef = doc(db, 'users', userId);
     await deleteDoc(userRef);
@@ -284,3 +286,5 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
+
+    

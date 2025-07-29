@@ -232,19 +232,21 @@ export default function AdminPage() {
       }
     }, [isAdmin, codeAuthenticated]);
 
-    const handleUpdateStatus = async (userId: string, status: 'active' | 'banned') => {
-        await updateUserStatus(userId, status);
+    const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned') => {
+        if (!user.telegramUser) return;
+        await updateUserStatus(user.telegramUser, status);
         setAllUsers(currentUsers =>
-            currentUsers.map(user =>
-                user.id === userId ? { ...user, status: status } : user
+            currentUsers.map(u =>
+                u.id === user.id ? { ...u, status: status } : u
             )
         );
         toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
     }
 
-    const handleDeleteUser = async (userId: string) => {
-        await deleteUser(userId);
-        setAllUsers(allUsers.filter(u => u.id !== userId));
+    const handleDeleteUser = async (user: UserData) => {
+        if (!user.telegramUser) return;
+        await deleteUser(user.telegramUser);
+        setAllUsers(allUsers.filter(u => u.id !== user.id));
         toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
     }
 
@@ -556,9 +558,9 @@ export default function AdminPage() {
                                       </TableCell>
                                       <TableCell className="text-right space-x-2">
                                           {user.status === 'active' ? (
-                                              <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(user.id, 'banned')}><UserX className="h-4 w-4"/></Button>
+                                              <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(user, 'banned')}><UserX className="h-4 w-4"/></Button>
                                           ) : (
-                                              <Button variant="secondary" size="icon" onClick={() => handleUpdateStatus(user.id, 'active')}><UserCheck className="h-4 w-4"/></Button>
+                                              <Button variant="secondary" size="icon" onClick={() => handleUpdateStatus(user, 'active')}><UserCheck className="h-4 w-4"/></Button>
                                           )}
 
                                           <AlertDialog>
@@ -572,7 +574,7 @@ export default function AdminPage() {
                                                   </AlertDialogHeader>
                                                   <AlertDialogFooter>
                                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                      <AlertDialogAction onClick={() => handleDeleteUser(user.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete User</AlertDialogAction>
+                                                      <AlertDialogAction onClick={() => handleDeleteUser(user)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete User</AlertDialogAction>
                                                   </AlertDialogFooter>
                                               </AlertDialogContent>
                                           </AlertDialog>
@@ -611,5 +613,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
