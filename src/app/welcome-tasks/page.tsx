@@ -30,6 +30,7 @@ type WelcomeTasks = {
     followedOnX: boolean;
     subscribedOnTelegram: boolean;
     joinedDiscord: boolean;
+    joinedTelegramCommunity: boolean;
 };
 
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -56,6 +57,7 @@ export default function WelcomeTasksPage() {
         followedOnX: false,
         subscribedOnTelegram: false,
         joinedDiscord: false,
+        joinedTelegramCommunity: false,
     });
     const [isLoading, setIsLoading] = useState(true);
     const [verifyingTaskId, setVerifyingTaskId] = useState<keyof WelcomeTasks | null>(null);
@@ -206,6 +208,16 @@ export default function WelcomeTasksPage() {
                                 isVerifying={verifyingTaskId === 'subscribedOnTelegram'}
                                 onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol', '@Exnusprotocol')}
                            />
+                            <TaskItem
+                                icon={<TelegramIcon className="w-6 h-6" />}
+                                title="Join Telegram Community"
+                                description="Chat with other members."
+                                points={300}
+                                link="https://t.me/exnus"
+                                completed={tasks.joinedTelegramCommunity}
+                                isVerifying={verifyingTaskId === 'joinedTelegramCommunity'}
+                                onComplete={() => handleTaskComplete('joinedTelegramCommunity', 'https://t.me/exnus', '@exnus')}
+                           />
                            <TaskItem
                                 icon={<DiscordIcon className="w-6 h-6" />}
                                 title="Join our Discord"
@@ -231,3 +243,5 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
+
+    

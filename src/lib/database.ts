@@ -44,6 +44,7 @@ export interface UserData {
         followedOnX: boolean;
         subscribedOnTelegram: boolean;
         joinedDiscord: boolean;
+        joinedTelegramCommunity: boolean;
     };
     socialTasks: { // Kept for backward compatibility, new tasks use completedSocialTasks
         commentedOnX: boolean;
@@ -81,6 +82,7 @@ const defaultUserData = (telegramUser: TelegramUser | null): Omit<UserData, 'id'
         followedOnX: false,
         subscribedOnTelegram: false,
         joinedDiscord: false,
+        joinedTelegramCommunity: false,
     },
     socialTasks: {
         commentedOnX: false,
@@ -286,5 +288,7 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
+
+    
 
     
