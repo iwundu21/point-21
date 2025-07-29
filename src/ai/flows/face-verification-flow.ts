@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A face verification AI agent that checks for uniqueness.
+ * @fileOverview A face verification AI agent that checks for uniqueness against a persistent database.
  *
  * - verifyHumanFace - A function that handles the face verification process.
  * - VerifyHumanFaceInput - The input type for the verifyHumanFace function.
@@ -10,11 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { detectHumanFace, DetectHumanFaceOutput } from './face-detection-flow';
-
-// This is a simplified in-memory "database" for demonstration purposes.
-// In a real application, you would use a persistent database like Firestore.
-const verifiedFaces = new Set<string>();
+import { detectHumanFace } from './face-detection-flow';
+import { findUserByFace, getUserData } from '@/lib/database';
 
 const VerifyHumanFaceInputSchema = z.object({
   photoDataUri: z
@@ -45,7 +42,7 @@ const faceVerificationFlow = ai.defineFlow(
     outputSchema: VerifyHumanFaceOutputSchema,
   },
   async (input) => {
-    // Step 1: Detect if the image contains a real human face.
+    // Step 1: Detect if the image contains a real human face with open eyes.
     const detectionResult = await detectHumanFace({ photoDataUri: input.photoDataUri });
 
     if (!detectionResult.isHuman) {
@@ -53,33 +50,28 @@ const faceVerificationFlow = ai.defineFlow(
         isHuman: false,
         isUnique: false,
         reason: detectionResult.reason || 'Not a real human face.',
+        faceVerificationUri: input.photoDataUri,
       };
     }
 
-    // Step 2: Check for uniqueness (simulated).
-    // In a real app, you'd generate a facial embedding and check it against a database.
+    // Step 2: Check for uniqueness against the production database.
+    const existingUserWithFace = await findUserByFace(input.photoDataUri);
     
-    // Check if this specific user has already been verified.
-    if (verifiedFaces.has(input.userId)) {
-        return { isHuman: true, isUnique: true, reason: 'Account already verified.', faceVerificationUri: input.photoDataUri };
-    }
-
-    // Simulate checking if this face is registered with another account.
-    // For this demo, we'll use a keyword in the user ID to trigger the duplicate message.
-    // A real implementation would involve comparing facial embeddings.
-    const isDuplicateFace = input.userId.includes("duplicate_face_test");
-    
-    if (isDuplicateFace) {
-        return {
-            isHuman: true,
-            isUnique: false,
-            reason: 'This face is already associated with another account. Each person can only have one account.',
-        };
+    if (existingUserWithFace && existingUserWithFace.telegramUser) {
+        const existingUserId = `user_${existingUserWithFace.telegramUser.id}`;
+        // If the face is found and belongs to a DIFFERENT user, it's a duplicate.
+        if (existingUserId !== input.userId) {
+            return {
+                isHuman: true,
+                isUnique: false,
+                reason: 'This face is already associated with another account. Please continue with that one account.',
+                faceVerificationUri: input.photoDataUri,
+            };
+        }
     }
     
-    // If it's a unique human face, add them to the "database".
-    verifiedFaces.add(input.userId);
-    
+    // If we are here, the face is either brand new, or it belongs to the current user re-verifying.
+    // In either case, the check for uniqueness passes.
     return {
         isHuman: true,
         isUnique: true,

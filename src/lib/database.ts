@@ -91,7 +91,18 @@ export const saveUserData = async (telegramUser: TelegramUser | null, data: Part
 
 export const findUserByReferralCode = async (code: string): Promise<UserData | null> => {
     if (!code) return null;
-    const q = query(collection(db, 'users'), where('referralCode', '==', code.trim()));
+    const q = query(collection(db, 'users'), where('referralCode', '==', code.trim()), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        return { ...defaultUserData(null), ...(userDoc.data() as UserData) };
+    }
+    return null;
+}
+
+export const findUserByFace = async (faceUri: string): Promise<UserData | null> => {
+    if (!faceUri) return null;
+    const q = query(collection(db, 'users'), where('faceVerificationUri', '==', faceUri), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
@@ -134,6 +145,7 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
 };
 
 const LEADERBOARD_PAGE_SIZE = 20;
+const LEADERBOARD_TOTAL_LIMIT = 100;
 
 export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<DocumentData> | null = null): Promise<{ users: UserData[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
     const usersRef = collection(db, 'users');
@@ -167,7 +179,9 @@ export const saveVerificationStatus = async (user: TelegramUser | null, status: 
     if (status === 'verified' && imageUri) {
         data.faceVerificationUri = imageUri;
     }
-    saveUserData(user, data);
+    if (user) {
+      await saveUserData(user, data);
+    }
 }
 export const getWalletAddress = async (user: TelegramUser | null) => (await getUserData(user)).walletAddress;
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });

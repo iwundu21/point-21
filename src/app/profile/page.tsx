@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { verifyHumanFace } from '@/ai/flows/face-verification-flow';
 import { Toaster } from '@/components/ui/toaster';
-import { getVerificationStatus, saveVerificationStatus } from '@/lib/database';
+import { getVerificationStatus, saveVerificationStatus, UserData } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 
 declare global {
@@ -142,7 +142,7 @@ export default function ProfilePage({}: ProfilePageProps) {
         try {
           const result = await verifyHumanFace({ 
               photoDataUri: imageSrc,
-              userId: `tg_user_${user.id}`
+              userId: `user_${user.id}`
           });
           
           if (result.isHuman && result.isUnique) {
