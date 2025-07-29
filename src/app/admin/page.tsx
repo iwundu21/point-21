@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -51,6 +51,7 @@ import { renderIcon } from '@/app/tasks/page';
 const ADMIN_IDS = [123, 12345, 6954452147]; 
 const ADMIN_ACCESS_CODE = '202020';
 const USERS_PER_PAGE = 50;
+const TOTAL_AIRDROP = 100_000_000;
 
 
 declare global {
@@ -286,6 +287,10 @@ export default function AdminPage() {
         });
     }, [allUsers, searchTerm]);
     
+    const totalPoints = useMemo(() => {
+        return allUsers.reduce((acc, user) => acc + user.balance, 0);
+    }, [allUsers]);
+    
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm]);
@@ -433,12 +438,15 @@ export default function AdminPage() {
                                   <TableHead>Wallet</TableHead>
                                   <TableHead>Balance</TableHead>
                                   <TableHead>Referrals</TableHead>
+                                  <TableHead>Airdrop Allocation</TableHead>
                                   <TableHead>Status</TableHead>
                                   <TableHead className="text-right">Actions</TableHead>
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {paginatedUsers.map((user) => (
+                              {paginatedUsers.map((user) => {
+                                const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                                return (
                                   <TableRow key={user.id}>
                                       <TableCell>
                                           <div className="flex items-center gap-3">
@@ -480,6 +488,12 @@ export default function AdminPage() {
                                       <TableCell>{user.balance.toLocaleString()}</TableCell>
                                       <TableCell>{user.referrals}</TableCell>
                                       <TableCell>
+                                        <div className="flex items-center gap-1">
+                                            <Coins className="w-4 h-4 text-yellow-500" />
+                                            {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
                                           <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
                                       </TableCell>
                                       <TableCell className="text-right space-x-2">
@@ -506,7 +520,8 @@ export default function AdminPage() {
                                           </AlertDialog>
                                       </TableCell>
                                   </TableRow>
-                              ))}
+                                )
+                              })}
                           </TableBody>
                          </Table>
                         </div>
@@ -538,4 +553,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
