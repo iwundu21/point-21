@@ -7,6 +7,7 @@ import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle } from 'lucide-reac
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 declare global {
   interface Window {
@@ -24,7 +25,7 @@ interface TelegramUser {
   photo_url?: string;
 }
 
-type SocialTasks = {
+type SocialTasksState = {
     commentedOnX: boolean;
     likedOnX: boolean;
     retweetedOnX: boolean;
@@ -44,10 +45,52 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+const socialTasksList = [
+    {
+        id: 'commentedOnX',
+        icon: <MessageCircle className="w-6 h-6" />,
+        title: "Comment on X",
+        description: "Leave a comment on our latest post.",
+        points: 100,
+        link: "https://x.com/exnusprotocol/status/1815814524223225916",
+    },
+    {
+        id: 'likedOnX',
+        icon: <ThumbsUp className="w-6 h-6" />,
+        title: "Like on X",
+        description: "Show your support by liking our post.",
+        points: 100,
+        link: "https://x.com/exnusprotocol/status/1815814524223225916",
+    },
+    {
+        id: 'retweetedOnX',
+        icon: <Repeat className="w-6 h-6" />,
+        title: "Retweet on X",
+        description: "Share our post with your followers.",
+        points: 100,
+        link: "https://x.com/exnusprotocol/status/1815814524223225916",
+    },
+    {
+        id: 'followedOnX',
+        icon: <XIcon className="w-6 h-6" />,
+        title: "Follow on X",
+        description: "Stay up-to-date with our latest news.",
+        points: 100,
+        link: "https://x.com/exnusprotocol",
+    },
+    {
+        id: 'subscribedOnTelegram',
+        icon: <TelegramIcon className="w-6 h-6" />,
+        title: "Subscribe on Telegram",
+        description: "Get announcements directly from the source.",
+        points: 100,
+        link: "https://t.me/Exnusprotocol",
+    },
+];
 
 export default function TasksPage() {
     const [user, setUser] = useState<TelegramUser | null>(null);
-    const [tasks, setTasks] = useState<SocialTasks>({
+    const [tasks, setTasks] = useState<SocialTasksState>({
         commentedOnX: false,
         likedOnX: false,
         retweetedOnX: false,
@@ -96,7 +139,7 @@ export default function TasksPage() {
         loadTaskData();
     }, [user]);
 
-    const handleTaskComplete = async (taskName: keyof SocialTasks, link: string) => {
+    const handleTaskComplete = async (taskName: keyof SocialTasksState, link: string) => {
         if (!user || tasks[taskName]) return;
 
         const userData = await getUserData(user);
@@ -109,7 +152,9 @@ export default function TasksPage() {
         window.open(link, '_blank');
     };
     
-    const allTasksCompleted = Object.values(tasks).every(Boolean);
+    const availableTasks = socialTasksList.filter(task => !tasks[task.id as keyof SocialTasksState]);
+    const completedTasks = socialTasksList.filter(task => tasks[task.id as keyof SocialTasksState]);
+    const allTasksCompleted = availableTasks.length === 0;
 
     if (isLoading || !user) {
       return (
@@ -152,57 +197,44 @@ export default function TasksPage() {
                 </div>
 
                 <div className="space-y-4">
-                    <TaskItem
-                        icon={<MessageCircle className="w-6 h-6" />}
-                        title="Comment on X"
-                        description="Leave a comment on our latest post."
-                        points={100}
-                        link="https://x.com/exnusprotocol/status/1815814524223225916" // Replace with actual post URL
-                        completed={tasks.commentedOnX}
-                        onComplete={() => handleTaskComplete('commentedOnX', 'https://x.com/exnusprotocol/status/1815814524223225916')}
-                    />
-                    <TaskItem
-                        icon={<ThumbsUp className="w-6 h-6" />}
-                        title="Like on X"
-                        description="Show your support by liking our post."
-                        points={100}
-                        link="https://x.com/exnusprotocol/status/1815814524223225916" // Replace with actual post URL
-                        completed={tasks.likedOnX}
-                        onComplete={() => handleTaskComplete('likedOnX', 'https://x.com/exnusprotocol/status/1815814524223225916')}
-                    />
-                    <TaskItem
-                        icon={<Repeat className="w-6 h-6" />}
-                        title="Retweet on X"
-                        description="Share our post with your followers."
-                        points={100}
-                        link="https://x.com/exnusprotocol/status/1815814524223225916" // Replace with actual post URL
-                        completed={tasks.retweetedOnX}
-                        onComplete={() => handleTaskComplete('retweetedOnX', 'https://x.com/exnusprotocol/status/1815814524223225916')}
-                    />
-                    <TaskItem
-                        icon={<XIcon className="w-6 h-6" />}
-                        title="Follow on X"
-                        description="Stay up-to-date with our latest news."
-                        points={100}
-                        link="https://x.com/exnusprotocol"
-                        completed={tasks.followedOnX}
-                        onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol')}
-                    />
-                    <TaskItem
-                        icon={<TelegramIcon className="w-6 h-6" />}
-                        title="Subscribe on Telegram"
-                        description="Get announcements directly from the source."
-                        points={100}
-                        link="https://t.me/Exnusprotocol"
-                        completed={tasks.subscribedOnTelegram}
-                        onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol')}
-                    />
+                    {availableTasks.map(task => (
+                        <TaskItem
+                            key={task.id}
+                            icon={task.icon}
+                            title={task.title}
+                            description={task.description}
+                            points={task.points}
+                            link={task.link}
+                            completed={false}
+                            onComplete={() => handleTaskComplete(task.id as keyof SocialTasksState, task.link)}
+                        />
+                    ))}
                 </div>
+
                  {allTasksCompleted && (
                    <div className="flex items-center justify-center gap-2 text-green-500 font-semibold p-4 bg-green-500/10 rounded-lg">
                         <CheckCircle className="w-6 h-6" />
-                        <span>All social tasks completed!</span>
+                        <span>All social tasks completed! Great job!</span>
                    </div>
+                )}
+
+                {completedTasks.length > 0 && (
+                    <div className="space-y-4">
+                        <Separator />
+                        <h2 className="text-lg font-semibold text-center text-muted-foreground">Completed Tasks</h2>
+                        {completedTasks.map(task => (
+                            <TaskItem
+                                key={task.id}
+                                icon={task.icon}
+                                title={task.title}
+                                description={task.description}
+                                points={task.points}
+                                link={task.link}
+                                completed={true}
+                                onComplete={() => {}}
+                            />
+                        ))}
+                    </div>
                 )}
             </div>
         </main>
@@ -211,4 +243,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
