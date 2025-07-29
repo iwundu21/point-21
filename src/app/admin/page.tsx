@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -75,6 +75,71 @@ const getInitials = (user: UserData) => {
     const firstNameInitial = user.telegramUser.first_name ? user.telegramUser.first_name[0] : '';
     const lastNameInitial = user.telegramUser.last_name ? user.telegramUser.last_name[0] : '';
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
+}
+
+const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletUpdated: (userId: string, newAddress: string) => void }) => {
+    const [newAddress, setNewAddress] = useState(user.walletAddress || '');
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        if (!user.telegramUser) return;
+        
+        if (!newAddress.trim()) {
+            toast({ variant: 'destructive', title: 'Invalid Address', description: 'Wallet address cannot be empty.' });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await saveWalletAddress(user.telegramUser, newAddress.trim());
+            onWalletUpdated(user.id, newAddress.trim());
+            toast({ title: 'Wallet Updated', description: `${user.telegramUser.first_name}'s wallet address has been updated.` });
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Failed to update wallet address:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the wallet address.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                 <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Pencil className="h-3 w-3" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Edit Wallet for {user.telegramUser?.first_name}</DialogTitle>
+                    <DialogDescription>
+                        Set a new Solana wallet address for this user. This action should be used with caution.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="wallet" className="text-right">Wallet</Label>
+                        <Input 
+                            id="wallet" 
+                            value={newAddress} 
+                            onChange={e => setNewAddress(e.target.value)} 
+                            className="col-span-3"
+                            placeholder="Enter Solana wallet address"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                     <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Changes
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalanceUpdated: (userId: string, newBalance: number) => void }) => {
@@ -241,7 +306,8 @@ const UserTable = ({
     onCopy,
     totalPoints,
     isLoading,
-    onBalanceUpdated
+    onBalanceUpdated,
+    onWalletUpdated
 }: {
     users: UserData[],
     onUpdateStatus: (user: UserData, status: 'active' | 'banned') => void,
@@ -249,7 +315,8 @@ const UserTable = ({
     onCopy: (text: string) => void,
     totalPoints: number,
     isLoading: boolean,
-    onBalanceUpdated: (userId: string, newBalance: number) => void
+    onBalanceUpdated: (userId: string, newBalance: number) => void,
+    onWalletUpdated: (userId: string, newAddress: string) => void
 }) => {
     const [currentPage, setCurrentPage] = useState(1);
     
@@ -326,14 +393,19 @@ const UserTable = ({
                                 </TableCell>
                                 <TableCell>
                                     {user.walletAddress ? (
-                                        <div className="flex items-center gap-2 font-mono text-xs">
-                                            <span className="truncate max-w-[120px]">{user.walletAddress}</span>
+                                        <div className="flex items-center gap-1 font-mono text-xs">
+                                            <Wallet className="w-4 h-4 mr-1 text-muted-foreground" />
+                                            <span className="truncate max-w-[100px]">{user.walletAddress}</span>
                                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onCopy(user.walletAddress as string)}>
                                                 <Copy className="h-3 w-3" />
                                             </Button>
+                                            <EditWalletDialog user={user} onWalletUpdated={onWalletUpdated} />
                                         </div>
                                     ) : (
-                                        <span className="text-xs text-muted-foreground">N/A</span>
+                                         <div className="flex items-center gap-1">
+                                            <span className="text-xs text-muted-foreground">N/A</span>
+                                            <EditWalletDialog user={user} onWalletUpdated={onWalletUpdated} />
+                                        </div>
                                     )}
                                 </TableCell>
                                 <TableCell>
@@ -507,6 +579,14 @@ export default function AdminPage() {
             // Re-sort users based on the new balance
             return updatedUsers.sort((a, b) => b.balance - a.balance);
         });
+    };
+
+    const handleWalletUpdated = (userId: string, newAddress: string) => {
+        setAllUsers(currentUsers =>
+            currentUsers.map(u =>
+                u.id === userId ? { ...u, walletAddress: newAddress } : u
+            )
+        );
     };
 
     const handleDeleteUser = async (user: UserData) => {
@@ -747,6 +827,7 @@ export default function AdminPage() {
                                 totalPoints={totalPoints}
                                 isLoading={isLoading}
                                 onBalanceUpdated={handleBalanceUpdated}
+                                onWalletUpdated={handleWalletUpdated}
                             />
                         </TabsContent>
                         <TabsContent value="banned" className="mt-4">
@@ -758,6 +839,7 @@ export default function AdminPage() {
                                 totalPoints={totalPoints}
                                 isLoading={isLoading}
                                 onBalanceUpdated={handleBalanceUpdated}
+                                onWalletUpdated={handleWalletUpdated}
                             />
                         </TabsContent>
                     </Tabs>
@@ -768,3 +850,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
