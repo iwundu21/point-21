@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,6 +37,8 @@ import { buttonVariants } from '@/components/ui/button';
 // NOTE: Add your Telegram user ID here for admin access
 const ADMIN_IDS = [123, 12345, 6954452147]; 
 const ADMIN_ACCESS_CODE = '202020';
+const USERS_PER_PAGE = 50;
+
 
 declare global {
   interface Window {
@@ -60,12 +62,14 @@ const getInitials = (user: UserData) => {
 }
 
 export default function AdminPage() {
-    const [users, setUsers] = useState<UserData[]>([]);
+    const [allUsers, setAllUsers] = useState<UserData[]>([]);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [accessCode, setAccessCode] = useState('');
     const [codeAuthenticated, setCodeAuthenticated] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const { toast } = useToast();
 
@@ -102,7 +106,7 @@ export default function AdminPage() {
         setIsLoading(true);
         try {
             const { users: newUsers } = await getAllUsers();
-            setUsers(newUsers);
+            setAllUsers(newUsers);
         } catch (error) {
             console.error("Failed to fetch users:", error);
         } finally {
@@ -120,7 +124,7 @@ export default function AdminPage() {
 
     const handleUpdateStatus = async (userId: string, status: 'active' | 'banned') => {
         await updateUserStatus(userId, status);
-        setUsers(currentUsers =>
+        setAllUsers(currentUsers =>
             currentUsers.map(user =>
                 user.id === userId ? { ...user, status: status } : user
             )
@@ -130,7 +134,7 @@ export default function AdminPage() {
 
     const handleDeleteUser = async (userId: string) => {
         await deleteUser(userId);
-        setUsers(users.filter(u => u.id !== userId));
+        setAllUsers(allUsers.filter(u => u.id !== userId));
         toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
     }
     
@@ -154,6 +158,26 @@ export default function AdminPage() {
           title: 'Copied to Clipboard!',
         });
       };
+
+    const filteredUsers = useMemo(() => {
+        if (!searchTerm) return allUsers;
+        return allUsers.filter(user => {
+            const term = searchTerm.toLowerCase();
+            const telegramId = user.telegramUser?.id.toString() || '';
+            const walletAddress = user.walletAddress?.toLowerCase() || '';
+            return telegramId.includes(term) || walletAddress.includes(term);
+        });
+    }, [allUsers, searchTerm]);
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+    const paginatedUsers = filteredUsers.slice(
+        (currentPage - 1) * USERS_PER_PAGE,
+        currentPage * USERS_PER_PAGE
+    );
 
     const renderAdminSkeleton = () => (
         <div className="space-y-2">
@@ -209,11 +233,21 @@ export default function AdminPage() {
               <Card>
                   <CardHeader>
                       <CardTitle>User Management</CardTitle>
+                      <div className="relative pt-2">
+                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                         <Input 
+                            placeholder="Search by Telegram ID or Wallet Address..."
+                            className="pl-9"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                         />
+                      </div>
                   </CardHeader>
                   <CardContent>
-                      {isLoading && users.length === 0 ? (
+                      {isLoading && allUsers.length === 0 ? (
                           renderAdminSkeleton()
                       ) : (
+                        <>
                         <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
@@ -228,7 +262,7 @@ export default function AdminPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {users.map((user) => (
+                              {paginatedUsers.map((user) => (
                                   <TableRow key={user.id}>
                                       <TableCell>
                                           <div className="flex items-center gap-3">
@@ -300,6 +334,26 @@ export default function AdminPage() {
                           </TableBody>
                          </Table>
                         </div>
+                        <div className="flex items-center justify-between pt-4">
+                            <div className="text-sm text-muted-foreground">
+                                Page {currentPage} of {totalPages} ({filteredUsers.length} users)
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        </>
                       )}
                   </CardContent>
               </Card>
