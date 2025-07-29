@@ -13,13 +13,13 @@ import { z } from 'genkit';
 import { getChatMember } from '@/lib/telegram';
 import { getUserData, saveUserData } from '@/lib/database';
 
-export const VerifyTelegramTaskInputSchema = z.object({
+const VerifyTelegramTaskInputSchema = z.object({
   userId: z.number().describe('The Telegram user ID.'),
   chatId: z.string().describe('The Telegram channel username (e.g., @channelname).'),
 });
 export type VerifyTelegramTaskInput = z.infer<typeof VerifyTelegramTaskInputSchema>;
 
-export const VerifyTelegramTaskOutputSchema = z.object({
+const VerifyTelegramTaskOutputSchema = z.object({
   isMember: z.boolean().describe('Whether the user is a member of the channel.'),
   error: z.string().optional().describe('An error message if verification failed.'),
 });
