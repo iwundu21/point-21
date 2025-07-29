@@ -5,10 +5,11 @@ import { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Gift, Copy, MessageSquarePlus } from 'lucide-react';
-import { getUserData, saveUserData } from '@/lib/database';
+import { Gift, Copy, MessageSquarePlus, CheckCircle, Loader2 } from 'lucide-react';
+import { getUserData, saveUserData, findUserByReferralCode, applyReferralBonus } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 
 declare global {
   interface Window {
@@ -30,8 +31,11 @@ interface ReferralPageProps {}
 export default function ReferralPage({}: ReferralPageProps) {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [referralCode, setReferralCode] = useState('');
+  const [enteredCode, setEnteredCode] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [friendsReferred, setFriendsReferred] = useState(0);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [bonusApplied, setBonusApplied] = useState(false);
   const { toast } = useToast();
 
   const botUrl = "https://t.me/Exnuspoint_bot";
@@ -51,11 +55,12 @@ export default function ReferralPage({}: ReferralPageProps) {
             let userReferralCode = userData.referralCode;
             if (!userReferralCode) {
                 userReferralCode = generateReferralCode();
-                saveUserData(telegramUser, { referralCode: userReferralCode });
+                saveUserData(telegramUser, { ...userData, referralCode: userReferralCode });
             }
 
             setReferralCode(userReferralCode);
             setFriendsReferred(userData.referrals || 0);
+            setBonusApplied(userData.referralBonusApplied);
         }
     }
   }, []);
@@ -67,6 +72,41 @@ export default function ReferralPage({}: ReferralPageProps) {
       description: successMessage,
     });
   };
+
+  const handleRedeemCode = () => {
+    if (!user || !enteredCode.trim()) return;
+
+    setIsRedeeming(true);
+
+    setTimeout(() => {
+        const currentUserData = getUserData(user);
+        if (currentUserData.referralBonusApplied) {
+            toast({ variant: 'destructive', title: 'Bonus Already Applied', description: 'You have already redeemed a referral bonus.' });
+            setIsRedeeming(false);
+            return;
+        }
+
+        if(currentUserData.referralCode?.toLowerCase() === enteredCode.trim().toLowerCase()){
+            toast({ variant: 'destructive', title: 'Invalid Code', description: 'You cannot use your own referral code.' });
+            setIsRedeeming(false);
+            return;
+        }
+
+        const referrer = findUserByReferralCode(enteredCode.trim());
+
+        if (referrer) {
+            applyReferralBonus(user, enteredCode.trim());
+            setBonusApplied(true);
+            toast({ title: 'Success!', description: 'You have received a 50 E-point bonus!' });
+        } else {
+            toast({ variant: 'destructive', title: 'Invalid Code', description: 'The referral code you entered is not valid.' });
+        }
+
+        setIsRedeeming(false);
+        setEnteredCode('');
+    }, 1500);
+  };
+
 
   if (!isClient || !user) {
     return (
@@ -98,6 +138,37 @@ export default function ReferralPage({}: ReferralPageProps) {
                         Referral Program
                     </h1>
                 </div>
+
+                { !bonusApplied && (
+                    <>
+                    <div className="space-y-4 text-center">
+                        <h2 className="text-xl font-semibold">Have a referral code?</h2>
+                        <p className="text-sm text-muted-foreground">
+                            Enter the code from your friend to get a <strong>50 E-point</strong> bonus.
+                        </p>
+                        <div className="flex w-full max-w-sm items-center space-x-2">
+                           <Input
+                                type="text"
+                                placeholder="Enter code"
+                                value={enteredCode}
+                                onChange={(e) => setEnteredCode(e.target.value)}
+                                disabled={isRedeeming}
+                            />
+                            <Button type="submit" onClick={handleRedeemCode} disabled={isRedeeming || !enteredCode.trim()}>
+                                {isRedeeming ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Redeem'}
+                            </Button>
+                        </div>
+                    </div>
+                    <Separator className="w-full" />
+                    </>
+                )}
+
+                { bonusApplied && (
+                    <div className="p-4 bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg flex items-center justify-center gap-2">
+                       <CheckCircle className="w-5 h-5" />
+                       <p className="font-semibold text-sm">Referral bonus successfully applied!</p>
+                    </div>
+                )}
 
                 <div className="space-y-4 text-center">
                   <h2 className="text-xl font-semibold">Invite Friends, Earn E-points</h2>
