@@ -33,11 +33,14 @@ const prompt = ai.definePrompt({
   name: 'faceDetectionPrompt',
   input: {schema: DetectHumanFaceInputSchema},
   output: {schema: DetectHumanFaceOutputSchema},
-  prompt: `You are a system that determines if an image contains a real human face. Your response must be in JSON format.
+  prompt: `You are a system that determines if an image contains a real, live human face. Your response must be in JSON format.
 
-  Analyze the provided image and determine if it's a real human face. It should not be a cartoon, avatar, drawing, or a picture of an object.
+  Analyze the provided image with high scrutiny. Your task is to determine if it's a real human face.
+  - The face must be of a real person, not a photo of a photo, a doll, a statue, a drawing, an avatar, or any other non-human representation.
+  - Crucially, the person's eyes must be clearly visible and open. If the eyes are closed, obscured, or not visible, you must fail the verification.
   
-  Set the 'isHuman' field to true if a real human face is detected, and false otherwise. Provide a brief reason for your decision in the 'reason' field.
+  Set the 'isHuman' field to true only if a real human face with visible, open eyes is detected. Otherwise, set it to false.
+  Provide a clear and concise reason for your decision in the 'reason' field, for example, "No human face detected" or "Eyes are not visible in the image."
   
   Image: {{media url=photoDataUri}}`,
 });
