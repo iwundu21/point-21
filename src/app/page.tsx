@@ -73,8 +73,7 @@ export default function Home({}: {}) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleInitializeUser = useCallback(async (telegramUser: TelegramUser) => {
-    setIsLoading(true);
+  const handleInitializeUser = useCallback(async (telegramUser: TelegramUser, today: string) => {
     try {
         const [freshUserData, { users: leaderboard }] = await Promise.all([
             getUserData(telegramUser),
@@ -110,13 +109,13 @@ export default function Home({}: {}) {
           freshUserData.forgingEndTime = null; 
         }
 
-        const today = new Date().toISOString().split('T')[0];
         let streakData = freshUserData.dailyStreak;
 
         if (streakData.lastLogin !== today) {
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          // 'en-CA' format is 'YYYY-MM-DD'
+          const yesterdayStr = yesterday.toLocaleDateString('en-CA');
 
           let newStreakCount = 1;
           if (streakData.lastLogin === yesterdayStr) {
@@ -159,7 +158,9 @@ export default function Home({}: {}) {
       }
       
       if (telegramUser) {
-        handleInitializeUser(telegramUser);
+        // Use client's local date. 'en-CA' gives YYYY-MM-DD format.
+        const today = new Date().toLocaleDateString('en-CA');
+        handleInitializeUser(telegramUser, today);
       } else {
         // Fallback for development should not create a user
         setIsLoading(false);
@@ -324,5 +325,7 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
 
     
