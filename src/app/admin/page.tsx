@@ -213,7 +213,8 @@ export default function AdminPage() {
         setIsLoadingTasks(true);
         try {
             const { users: newUsers } = await getAllUsers();
-            setAllUsers(newUsers);
+            const sortedUsers = newUsers.sort((a, b) => b.balance - a.balance);
+            setAllUsers(sortedUsers);
             const tasks = await getSocialTasks();
             setSocialTasks(tasks);
         } catch (error) {
@@ -469,22 +470,24 @@ export default function AdminPage() {
 
               <Card>
                   <CardHeader>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                       <CardTitle>User Management</CardTitle>
-                      <Button onClick={handleExportAirdrop} variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
-                        Export Airdrop List
-                      </Button>
-                    </div>
-                      <div className="relative pt-2">
-                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                         <Input 
-                            placeholder="Search by ID, Wallet, Username or First Name..."
-                            className="pl-9"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                         />
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-grow">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search by ID, Wallet, Username or First Name..."
+                                className="pl-9 w-full"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export Airdrop
+                        </Button>
                       </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                       {isLoading && allUsers.length === 0 ? (

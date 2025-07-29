@@ -83,7 +83,7 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
         disabled={isActive || isActivating}
         aria-label={isActive ? `Mining session active, time left: ${formatTime(timeLeft)}` : 'Activate Mining'}
         className={cn(
-          'relative w-64 h-64 rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out disabled:cursor-not-allowed',
+          'relative w-56 h-56 sm:w-64 sm:h-64 rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out disabled:cursor-not-allowed',
           'bg-transparent border-4 text-foreground backdrop-blur-sm',
            isActive ? 'shadow-primary/20 border-primary/50' :
            isActivating ? 'border-primary/30' :
@@ -94,27 +94,27 @@ const MiningCircle: FC<MiningCircleProps> = ({ isActive, endTime, onActivate, on
           className="absolute inset-0 rounded-full transition-all duration-1000 ease-linear"
           style={isActive && isVerified ? conicGradientStyle : {}}
         ></div>
-        <div className="relative w-56 h-56 rounded-full bg-card/90 flex flex-col items-center justify-center">
+        <div className="relative w-[13rem] h-[13rem] sm:w-56 sm:h-56 rounded-full bg-card/90 flex flex-col items-center justify-center">
             {isActivating ? (
-              <Loader2 className="w-16 h-16 text-primary animate-spin" />
+              <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-spin" />
             ) : isVerified ? (
-              <Zap className={cn("w-16 h-16 transition-all duration-500", isActive ? "text-primary" : "text-yellow-400/70")} />
+              <Zap className={cn("w-12 h-12 sm:w-16 sm:h-16 transition-all duration-500", isActive ? "text-primary" : "text-yellow-400/70")} />
             ) : (
-               <ShieldAlert className="w-16 h-16 text-destructive" />
+               <ShieldAlert className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />
             )}
 
             {isActivating ? (
-               <p className="mt-4 text-xl font-semibold text-primary/80">Activating...</p>
+               <p className="mt-4 text-lg sm:text-xl font-semibold text-primary/80">Activating...</p>
             ) : isActive && isVerified ? (
               <div className="mt-2 text-center">
-                 <p className="text-2xl font-bold tracking-tighter">{earnedPoints}/{TOTAL_POINTS}</p>
-                 <p className="text-2xl font-mono font-bold tracking-wider">{formatTime(timeLeft)}</p>
+                 <p className="text-xl sm:text-2xl font-bold tracking-tighter">{earnedPoints}/{TOTAL_POINTS}</p>
+                 <p className="text-xl sm:text-2xl font-mono font-bold tracking-wider">{formatTime(timeLeft)}</p>
               </div>
             ) : (
               isVerified ? (
-                <p className="mt-4 text-xl font-semibold">Activate Mining</p>
+                <p className="mt-4 text-lg sm:text-xl font-semibold">Activate Mining</p>
               ) : (
-                <p className="mt-4 text-xl font-semibold text-destructive">Verification Needed</p>
+                <p className="mt-4 text-lg sm:text-xl font-semibold text-destructive text-center">Verification Needed</p>
               )
             )}
         </div>
