@@ -5,12 +5,12 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDKSKvPjSbb4pQU5nTJm19SlswElgLcxuM",
+  authDomain: "exnus-points-eccnf.firebaseapp.com",
+  projectId: "exnus-points-eccnf",
+  storageBucket: "exnus-points-eccnf.appspot.com",
+  messagingSenderId: "981614065888",
+  appId: "1:981614065888:web:3f5a73f90ad4169172b885"
 };
 
 // Initialize Firebase
