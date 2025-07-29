@@ -34,6 +34,13 @@ export interface UserData {
         subscribedOnTelegram: boolean;
         joinedDiscord: boolean;
     };
+    socialTasks: {
+        commentedOnX: boolean;
+        likedOnX: boolean;
+        retweetedOnX: boolean;
+        followedOnX: boolean;
+        subscribedOnTelegram: boolean;
+    };
     status: 'active' | 'banned';
 }
 
@@ -62,6 +69,13 @@ const defaultUserData = (telegramUser: TelegramUser | null): Omit<UserData, 'id'
         followedOnX: false,
         subscribedOnTelegram: false,
         joinedDiscord: false,
+    },
+    socialTasks: {
+        commentedOnX: false,
+        likedOnX: false,
+        retweetedOnX: false,
+        followedOnX: false,
+        subscribedOnTelegram: false,
     },
     status: 'active',
 });
@@ -230,3 +244,4 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
+

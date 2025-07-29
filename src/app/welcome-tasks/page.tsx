@@ -156,9 +156,9 @@ export default function WelcomeTasksPage() {
                                 title="Follow on X"
                                 description="Stay up-to-date with our latest news."
                                 points={300}
-                                link="https://x.com/exnusprotocol?t=jzAMlELcvgngFCp1BAaZPg&s=09"
+                                link="https://x.com/exnusprotocol"
                                 completed={tasks.followedOnX}
-                                onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol?t=jzAMlELcvgngFCp1BAaZPg&s=09')}
+                                onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol')}
                            />
                            <TaskItem
                                 icon={<TelegramIcon className="w-6 h-6" />}
@@ -193,7 +193,3 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
-
-    
-
-    
