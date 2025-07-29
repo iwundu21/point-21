@@ -2,14 +2,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy } from 'lucide-react';
+import { Trophy, Loader2 } from 'lucide-react';
 import Footer from '@/components/footer';
 import { getLeaderboardUsers, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+
 
 declare global {
   interface Window {
@@ -37,6 +40,9 @@ export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+    const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
         const init = () => {
@@ -59,22 +65,44 @@ export default function LeaderboardPage() {
         };
         init();
     }, []);
-
-    useEffect(() => {
-      const fetchData = async () => {
-        if (!currentUser) return;
+    
+    const fetchLeaderboard = async () => {
+        if (!hasMore) return;
         setIsLoading(true);
         try {
-          const users = await getLeaderboardUsers();
-          setLeaderboard(users);
+            const { users, lastDoc: newLastDoc } = await getLeaderboardUsers();
+            setLeaderboard(users);
+            setLastDoc(newLastDoc);
+            if (!newLastDoc) {
+                setHasMore(false);
+            }
         } catch (error) {
             console.error("Failed to fetch leaderboard:", error);
         } finally {
             setIsLoading(false);
         }
-      };
-      fetchData();
-    }, [currentUser]);
+    };
+    
+    useEffect(() => {
+      fetchLeaderboard();
+    }, []);
+
+    const handleLoadMore = async () => {
+        if (!lastDoc || isFetchingMore) return;
+        setIsFetchingMore(true);
+        try {
+            const { users, lastDoc: newLastDoc } = await getLeaderboardUsers(lastDoc);
+            setLeaderboard(prev => [...prev, ...users]);
+            setLastDoc(newLastDoc);
+            if (!newLastDoc) {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error("Failed to fetch more leaderboard data:", error);
+        } finally {
+            setIsFetchingMore(false);
+        }
+    };
 
     const currentUserRank = currentUser ? leaderboard.findIndex(u => u.telegramUser?.id === currentUser.id) : -1;
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
@@ -115,12 +143,12 @@ export default function LeaderboardPage() {
                     </h1>
                 </div>
 
-                {isLoading ? (
+                {isLoading && leaderboard.length === 0 ? (
                     renderLeaderboardSkeleton()
                 ) : (
                   <>
                     <div className="space-y-2">
-                       {leaderboard.slice(0, 10).map((user, index) => (
+                       {leaderboard.map((user, index) => (
                            <Card key={user.telegramUser?.id || index} className={cn("transition-all", currentUser?.id === user.telegramUser?.id && "border-primary ring-2 ring-primary")}>
                                <CardContent className="p-3 flex items-center space-x-4">
                                    <div className="flex items-center justify-center w-6">
@@ -143,7 +171,16 @@ export default function LeaderboardPage() {
                        ))}
                     </div>
 
-                    {currentUserData && currentUserRank >= 10 && (
+                    {hasMore && (
+                        <div className="text-center">
+                            <Button onClick={handleLoadMore} disabled={isFetchingMore}>
+                                {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {isFetchingMore ? 'Loading...' : 'Load More'}
+                            </Button>
+                        </div>
+                    )}
+
+                    {currentUserData && currentUserRank >= leaderboard.length && (
                         <>
                             <Separator />
                             <Card className="border-primary ring-2 ring-primary">

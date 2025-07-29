@@ -2,7 +2,7 @@
 'use client';
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
 
@@ -131,10 +131,17 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
     return null; // Referrer not found
 };
 
+const LEADERBOARD_PAGE_SIZE = 20;
 
-export const getLeaderboardUsers = async (): Promise<UserData[]> => {
+export const getLeaderboardUsers = async (lastVisible: QueryDocumentSnapshot<DocumentData> | null = null): Promise<{ users: UserData[], lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, orderBy('balance', 'desc'), limit(100));
+    let q;
+    if (lastVisible) {
+        q = query(usersRef, orderBy('balance', 'desc'), startAfter(lastVisible), limit(LEADERBOARD_PAGE_SIZE));
+    } else {
+        q = query(usersRef, orderBy('balance', 'desc'), limit(LEADERBOARD_PAGE_SIZE));
+    }
+    
     const querySnapshot = await getDocs(q);
     
     const users: UserData[] = [];
@@ -142,7 +149,9 @@ export const getLeaderboardUsers = async (): Promise<UserData[]> => {
         users.push({ ...defaultUserData(null), ...(doc.data() as UserData) });
     });
     
-    return users;
+    const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+
+    return { users, lastDoc };
 }
 
 // --- Specific Data Functions ---
