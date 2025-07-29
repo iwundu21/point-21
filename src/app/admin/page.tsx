@@ -197,14 +197,11 @@ export default function AdminPage() {
               setCurrentUser(telegramUser);
               if (ADMIN_IDS.includes(telegramUser.id)) {
                 setIsAdmin(true);
+              } else {
+                setIsLoading(false);
               }
           } else {
-              // Fallback for development
-              const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', photo_url: 'https://placehold.co/128x128.png' };
-              setCurrentUser(mockUser);
-              if (ADMIN_IDS.includes(mockUser.id)) {
-                setIsAdmin(true);
-              }
+             setIsLoading(false);
           }
         };
         init();
@@ -614,3 +611,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
