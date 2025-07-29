@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy } from 'lucide-react';
-import Footer from '@/components/footer';
 import { getAllUsers, updateUserStatus, deleteUser, UserData } from '@/lib/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -219,125 +218,122 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-       <div className="flex-grow pb-24">
-        <main className="flex-grow flex flex-col p-4 mt-8">
-             <div className="w-full max-w-6xl mx-auto space-y-6">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Shield className="w-8 h-8 text-primary" />
-                        Admin Dashboard
-                    </h1>
-                </div>
+      <main className="flex-grow flex flex-col p-4 mt-8">
+           <div className="w-full max-w-6xl mx-auto space-y-6">
+              <div className="text-center">
+                  <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+                      <Shield className="w-8 h-8 text-primary" />
+                      Admin Dashboard
+                  </h1>
+              </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>User Management</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading && users.length === 0 ? (
-                            renderAdminSkeleton()
-                        ) : (
-                          <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>User</TableHead>
-                                    <TableHead>Photo</TableHead>
-                                    <TableHead>Wallet</TableHead>
-                                    <TableHead>Balance</TableHead>
-                                    <TableHead>Referrals</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {users.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <Avatar className="w-10 h-10">
-                                                    <AvatarImage src={user.telegramUser?.photo_url} />
-                                                    <AvatarFallback>{getInitials(user)}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Anonymous'}</p>
-                                                    <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
-                                                    <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id}</p>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.faceVerificationUri ? (
-                                                <Avatar className="w-10 h-10 border">
-                                                    <AvatarImage src={user.faceVerificationUri} />
-                                                    <AvatarFallback><CameraOff className="w-4 h-4 text-muted-foreground" /></AvatarFallback>
-                                                </Avatar>
-                                            ) : (
-                                                <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-full">
-                                                  <CameraOff className="w-5 h-5 text-muted-foreground" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.walletAddress ? (
-                                                <div className="flex items-center gap-2 font-mono text-xs">
-                                                    <span className="truncate max-w-[120px]">{user.walletAddress}</span>
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(user.walletAddress as string)}>
-                                                        <Copy className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">N/A</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{user.balance.toLocaleString()}</TableCell>
-                                        <TableCell>{user.referrals}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            {user.status === 'active' ? (
-                                                <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(user.id, 'banned')}><UserX className="h-4 w-4"/></Button>
-                                            ) : (
-                                                <Button variant="secondary" size="icon" onClick={() => handleUpdateStatus(user.id, 'active')}><UserCheck className="h-4 w-4"/></Button>
-                                            )}
+              <Card>
+                  <CardHeader>
+                      <CardTitle>User Management</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      {isLoading && users.length === 0 ? (
+                          renderAdminSkeleton()
+                      ) : (
+                        <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                              <TableRow>
+                                  <TableHead>User</TableHead>
+                                  <TableHead>Photo</TableHead>
+                                  <TableHead>Wallet</TableHead>
+                                  <TableHead>Balance</TableHead>
+                                  <TableHead>Referrals</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                              {users.map((user) => (
+                                  <TableRow key={user.id}>
+                                      <TableCell>
+                                          <div className="flex items-center gap-3">
+                                              <Avatar className="w-10 h-10">
+                                                  <AvatarImage src={user.telegramUser?.photo_url} />
+                                                  <AvatarFallback>{getInitials(user)}</AvatarFallback>
+                                              </Avatar>
+                                              <div>
+                                                  <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Anonymous'}</p>
+                                                  <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
+                                                  <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id}</p>
+                                              </div>
+                                          </div>
+                                      </TableCell>
+                                      <TableCell>
+                                          {user.faceVerificationUri ? (
+                                              <Avatar className="w-10 h-10 border">
+                                                  <AvatarImage src={user.faceVerificationUri} />
+                                                  <AvatarFallback><CameraOff className="w-4 h-4 text-muted-foreground" /></AvatarFallback>
+                                              </Avatar>
+                                          ) : (
+                                              <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-full">
+                                                <CameraOff className="w-5 h-5 text-muted-foreground" />
+                                              </div>
+                                          )}
+                                      </TableCell>
+                                      <TableCell>
+                                          {user.walletAddress ? (
+                                              <div className="flex items-center gap-2 font-mono text-xs">
+                                                  <span className="truncate max-w-[120px]">{user.walletAddress}</span>
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(user.walletAddress as string)}>
+                                                      <Copy className="h-3 w-3" />
+                                                  </Button>
+                                              </div>
+                                          ) : (
+                                              <span className="text-xs text-muted-foreground">N/A</span>
+                                          )}
+                                      </TableCell>
+                                      <TableCell>{user.balance.toLocaleString()}</TableCell>
+                                      <TableCell>{user.referrals}</TableCell>
+                                      <TableCell>
+                                          <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
+                                      </TableCell>
+                                      <TableCell className="text-right space-x-2">
+                                          {user.status === 'active' ? (
+                                              <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(user.id, 'banned')}><UserX className="h-4 w-4"/></Button>
+                                          ) : (
+                                              <Button variant="secondary" size="icon" onClick={() => handleUpdateStatus(user.id, 'active')}><UserCheck className="h-4 w-4"/></Button>
+                                          )}
 
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This action cannot be undone. This will permanently delete the user and all their data.</AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeleteUser(user.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete User</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                           </Table>
+                                          <AlertDialog>
+                                              <AlertDialogTrigger asChild>
+                                                  <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                              </AlertDialogTrigger>
+                                              <AlertDialogContent>
+                                                  <AlertDialogHeader>
+                                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                      <AlertDialogDescription>This action cannot be undone. This will permanently delete the user and all their data.</AlertDialogDescription>
+                                                  </AlertDialogHeader>
+                                                  <AlertDialogFooter>
+                                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                      <AlertDialogAction onClick={() => handleDeleteUser(user.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete User</AlertDialogAction>
+                                                  </AlertDialogFooter>
+                                              </AlertDialogContent>
+                                          </AlertDialog>
+                                      </TableCell>
+                                  </TableRow>
+                              ))}
+                          </TableBody>
+                         </Table>
+                        </div>
+                      )}
+                       {hasMore && (
+                          <div className="text-center mt-4">
+                              <Button onClick={handleLoadMore} disabled={isFetchingMore}>
+                                  {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  {isFetchingMore ? 'Loading...' : 'Load More'}
+                              </Button>
                           </div>
-                        )}
-                         {hasMore && (
-                            <div className="text-center mt-4">
-                                <Button onClick={handleLoadMore} disabled={isFetchingMore}>
-                                    {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {isFetchingMore ? 'Loading...' : 'Load More'}
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        </main>
-       </div>
-      <Footer />
+                      )}
+                  </CardContent>
+              </Card>
+          </div>
+      </main>
     </div>
   );
 }
