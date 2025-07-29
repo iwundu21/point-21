@@ -25,6 +25,11 @@ export interface UserData {
     referredBy: string | null;
     referralBonusApplied: boolean;
     referrals: number;
+    welcomeTasks: {
+        followedOnX: boolean;
+        subscribedOnTelegram: boolean;
+        joinedDiscord: boolean;
+    };
 }
 
 const getUserId = (telegramUser: TelegramUser | null) => {
@@ -42,6 +47,11 @@ const defaultUserData: Omit<UserData, 'telegramUser'> = {
     referredBy: null,
     referralBonusApplied: false,
     referrals: 0,
+    welcomeTasks: {
+        followedOnX: false,
+        subscribedOnTelegram: false,
+        joinedDiscord: false,
+    },
 };
 
 // In a real app, this would fetch from a remote database.
@@ -52,6 +62,7 @@ export const getUserData = (telegramUser: TelegramUser | null): UserData => {
     if (data) {
         const parsedData = JSON.parse(data);
         const telegramUserObj = telegramUser ? { id: telegramUser.id, first_name: telegramUser.first_name, last_name: telegramUser.last_name, username: telegramUser.username, language_code: telegramUser.language_code, is_premium: telegramUser.is_premium, photo_url: telegramUser.photo_url } : null;
+        // Merge with defaults to ensure new fields are present
         return { ...defaultUserData, ...parsedData, telegramUser: telegramUserObj };
     }
     const telegramUserObj = telegramUser ? { id: telegramUser.id, first_name: telegramUser.first_name, last_name: telegramUser.last_name, username: telegramUser.username, language_code: telegramUser.language_code, is_premium: telegramUser.is_premium, photo_url: telegramUser.photo_url } : null;
