@@ -222,11 +222,18 @@ export const getAllUsers = async (): Promise<{ users: UserData[] }> => {
 };
 
 
-export const updateUserStatus = async (telegramUser: TelegramUser, status: 'active' | 'banned') => {
+export const updateUserStatus = async (telegramUser: TelegramUser, status: 'active' | 'banned', reason?: string) => {
     const userId = getUserId(telegramUser);
     if (!userId) return;
     const userRef = doc(db, 'users', userId);
-    await setDoc(userRef, { status }, { merge: true });
+    const dataToUpdate: Partial<UserData> = { status };
+    if (status === 'banned' && reason) {
+        dataToUpdate.banReason = reason;
+    } else if (status === 'active') {
+        // When unbanning, clear the reason
+        dataToUpdate.banReason = '';
+    }
+    await setDoc(userRef, dataToUpdate, { merge: true });
 };
 
 export const updateUserBalance = async (telegramUser: TelegramUser, newBalance: number) => {

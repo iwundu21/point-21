@@ -307,7 +307,7 @@ const UserTable = ({
     onWalletUpdated
 }: {
     users: UserData[],
-    onUpdateStatus: (user: UserData, status: 'active' | 'banned') => void,
+    onUpdateStatus: (user: UserData, status: 'active' | 'banned', reason?: string) => void,
     onDeleteUser: (user: UserData) => void,
     onCopy: (text: string) => void,
     totalPoints: number,
@@ -403,7 +403,7 @@ const UserTable = ({
                                 </TableCell>
                                 <TableCell className="text-right space-x-2">
                                     {user.status === 'active' ? (
-                                        <Button variant="destructive" size="icon" onClick={() => onUpdateStatus(user, 'banned')}><UserX className="h-4 w-4"/></Button>
+                                        <Button variant="destructive" size="icon" onClick={() => onUpdateStatus(user, 'banned', 'This account has been suspended by an administrator.')}><UserX className="h-4 w-4"/></Button>
                                     ) : (
                                         <Button variant="secondary" size="icon" onClick={() => onUpdateStatus(user, 'active')}><UserCheck className="h-4 w-4"/></Button>
                                     )}
@@ -484,7 +484,6 @@ export default function AdminPage() {
                 setIsAdmin(true);
               }
           }
-          setIsLoading(false);
         };
         init();
     }, []);
@@ -511,6 +510,8 @@ export default function AdminPage() {
     useEffect(() => {
       if(isAdmin || codeAuthenticated) {
         fetchAdminData();
+      } else {
+        setIsLoading(false);
       }
     }, [isAdmin, codeAuthenticated]);
     
@@ -529,13 +530,13 @@ export default function AdminPage() {
     const activeUsers = useMemo(() => filteredUsers.filter(u => u.status === 'active'), [filteredUsers]);
     const bannedUsers = useMemo(() => filteredUsers.filter(u => u.status === 'banned'), [filteredUsers]);
 
-    const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned') => {
+    const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned', reason?: string) => {
         if (!user.telegramUser) return;
-        await updateUserStatus(user.telegramUser, status);
+        await updateUserStatus(user.telegramUser, status, reason);
         // This will trigger a re-render and the user will move to the correct list
         setAllUsers(currentUsers =>
             currentUsers.map(u =>
-                u.id === user.id ? { ...u, status: status } : u
+                u.id === user.id ? { ...u, status: status, banReason: reason } : u
             )
         );
         toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
