@@ -55,8 +55,8 @@ body {
     --secondary-foreground: 48 83% 97%;
     --muted: 220 100% 12%;
     --muted-foreground: 48 83% 85%;
-    --accent: 48 83% 97%; /* Off-white for accents */
-    --accent-foreground: 220 100% 7%;
+    --accent: 197 71% 73%; /* Light Sky Blue */
+    --accent-foreground: 225 73% 15%; /* Darker color for text on accent */
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     --border: 220 100% 15%;
