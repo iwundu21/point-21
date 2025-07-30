@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Users } from 'lucide-react';
 import Footer from '@/components/footer';
-import { getLeaderboardUsers, UserData } from '@/lib/database';
+import { getLeaderboardUsers, getAllUsers, UserData } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -45,6 +45,7 @@ const USERS_PER_PAGE = 10;
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
+    const [totalUsers, setTotalUsers] = useState(0);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -63,24 +64,27 @@ export default function LeaderboardPage() {
           if (telegramUser) {
               setCurrentUser(telegramUser);
           }
-          // No need to setIsLoading(false) here, fetchLeaderboard will do it.
         };
         init();
     }, []);
     
     useEffect(() => {
-        const fetchLeaderboard = async () => {
+        const fetchLeaderboardData = async () => {
             setIsLoading(true);
             try {
-                const { users } = await getLeaderboardUsers();
-                setLeaderboard(users);
+                const [{ users: leaderboardUsers }, { users: allUsers }] = await Promise.all([
+                    getLeaderboardUsers(),
+                    getAllUsers()
+                ]);
+                setLeaderboard(leaderboardUsers);
+                setTotalUsers(allUsers.length);
             } catch (error) {
-                console.error("Failed to fetch leaderboard:", error);
+                console.error("Failed to fetch leaderboard data:", error);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchLeaderboard();
+        fetchLeaderboardData();
     }, []);
     
     const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
@@ -111,6 +115,10 @@ export default function LeaderboardPage() {
                         <Trophy className="w-8 h-8 text-primary" />
                         Leaderboard
                     </h1>
+                     <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5 mt-2">
+                        <Users className="w-4 h-4" />
+                        {totalUsers.toLocaleString()} Total Players
+                    </p>
                 </div>
 
                 <div className="space-y-2">
