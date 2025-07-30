@@ -657,42 +657,13 @@ export default function AdminPage() {
                 </h1>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                    <Users className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{allUsers.length.toLocaleString()}</div>
-                </CardContent>
-            </Card>
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
-                    <Star className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                        <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
-                </CardContent>
-            </Card>
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
-                        <Coins className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                        <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
-                </CardContent>
-            </Card>
-            </div>
-
             <Card>
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Social Task Management</CardTitle>
                     <AddTaskDialog onTaskAdded={fetchAdminData} />
                 </div>
+                <CardDescription>Create and manage social engagement tasks for users.</CardDescription>
             </CardHeader>
             <CardContent>
                 {isLoadingTasks ? (
@@ -754,6 +725,35 @@ export default function AdminPage() {
                 <CardDescription>
                     Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop.
                 </CardDescription>
+                <div className="grid gap-4 md:grid-cols-3 pt-4">
+                    <Card className="bg-primary/5">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                            <Users className="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{allUsers.length.toLocaleString()}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-primary/5">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
+                            <Star className="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                                <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-primary/5">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
+                                <Coins className="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                                <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
+                        </CardContent>
+                    </Card>
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center gap-2 py-4">
