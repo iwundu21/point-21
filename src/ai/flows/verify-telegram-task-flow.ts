@@ -12,6 +12,10 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getChatMember } from '@/lib/telegram';
 import { getUserData, saveUserData } from '@/lib/database';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
 
 const VerifyTelegramTaskInputSchema = z.object({
   userId: z.number().describe('The Telegram user ID.'),
