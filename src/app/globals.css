@@ -43,11 +43,11 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 4%; /* Near-black */
+    --background: 235 21% 12%; /* #181725 */
     --foreground: 0 0% 98%; /* Off-white */
-    --card: 0 0% 7%;
+    --card: 235 21% 12% / 0.6; /* Semi-transparent for glass effect */
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 4%;
+    --popover: 235 21% 12%;
     --popover-foreground: 0 0% 98%;
     --primary: 197 71% 73%; /* Light Sky Blue */
     --primary-foreground: 225 73% 15%;
@@ -91,10 +91,10 @@ body {
 @layer components {
     .dark {
         .glass-card {
-            @apply bg-card/60 border border-white/10 backdrop-blur-lg;
+            @apply bg-card border border-white/10 backdrop-blur-lg;
         }
         body {
-            @apply bg-black;
+            @apply bg-background;
         }
     }
 }
