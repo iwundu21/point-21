@@ -11,10 +11,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getCountFromServer } from 'firebase/firestore';
-import dotenv from 'dotenv';
-
-// Explicitly load environment variables at the start of the file
-dotenv.config();
 
 const UpdateBotProfileOutputSchema = z.object({
   success: z.boolean().describe('Whether the profile was updated successfully.'),
@@ -75,8 +71,8 @@ const updateBotProfileFlow = ai.defineFlow(
       }
 
     } catch (error: any) {
-      console.error("An error occurred while executing the function:", error);
-      return { success: false, userCount: 0, error: error.message || "An unexpected error occurred." };
+      console.error("An error occurred in updateBotProfileFlow:", error.message || error);
+      return { success: false, userCount: 0, error: "An unexpected error occurred while updating the bot profile." };
     }
   }
 );
