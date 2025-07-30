@@ -34,7 +34,7 @@ const MissionsCard = ({ streak, balance, rank }: MissionsCardProps) => {
             <div className="space-y-4">
                 <DailyStreak streak={streak} />
                 <StatCard 
-                    icon={<Crown className="w-10 h-10 text-yellow-400" />}
+                    icon={<Crown className="w-10 h-10 text-muted-foreground" />}
                     title="Current Rank"
                     value={`${rankDisplay} (${leagueName})`}
                     progress={progress}
@@ -45,3 +45,5 @@ const MissionsCard = ({ streak, balance, rank }: MissionsCardProps) => {
 }
 
 export default MissionsCard;
+
+    

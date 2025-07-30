@@ -112,7 +112,7 @@ export default function LeaderboardPage() {
     );
     
     const getMedal = (rank: number) => {
-        if (rank === 0) return <Trophy className="w-5 h-5 text-yellow-400" />;
+        if (rank === 0) return <Trophy className="w-5 h-5 text-muted-foreground" />;
         if (rank === 1) return <Trophy className="w-5 h-5 text-gray-400" />;
         if (rank === 2) return <Trophy className="w-5 h-5 text-orange-400" />;
         return <span className="text-sm font-semibold w-5 text-center">{rank + 1}</span>;
@@ -153,7 +153,7 @@ export default function LeaderboardPage() {
                                            <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
                                        </div>
                                        <div className="text-right">
-                                           <p className="font-bold text-yellow-400">{user.balance.toLocaleString()}</p>
+                                           <p className="font-bold text-muted-foreground">{user.balance.toLocaleString()}</p>
                                            <p className="text-xs text-muted-foreground">{getLeagueInfo(rank + 1).name} League</p>
                                        </div>
                                    </CardContent>
@@ -205,7 +205,7 @@ export default function LeaderboardPage() {
                                        <p className="text-xs text-muted-foreground">@{currentUserData.telegramUser?.username || 'N/A'}</p>
                                    </div>
                                    <div className="text-right">
-                                       <p className="font-bold text-yellow-400">{currentUserData.balance.toLocaleString()}</p>
+                                       <p className="font-bold text-muted-foreground">{currentUserData.balance.toLocaleString()}</p>
                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1).name} League</p>
                                    </div>
                                 </CardContent>
@@ -221,3 +221,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    

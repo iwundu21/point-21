@@ -15,16 +15,16 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
   return (
     <Card className="w-full bg-transparent backdrop-blur-sm border-0 shadow-none rounded-none">
       <CardHeader className="p-2">
-        <CardTitle className="text-center text-yellow-400/80 font-normal text-sm">E-point</CardTitle>
+        <CardTitle className="text-center text-muted-foreground font-normal text-sm">E-point</CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-center space-x-2 p-2">
-        <Coins className="w-6 h-6 text-yellow-400/80" />
+        <Coins className="w-6 h-6 text-muted-foreground" />
         <div className="relative">
-          <span className="text-2xl sm:text-3xl font-normal tracking-tight text-yellow-400">
+          <span className="text-2xl sm:text-3xl font-normal tracking-tight text-muted-foreground">
             {balance.toLocaleString()}
           </span>
           <span className={cn(
-            "absolute -top-6 right-0 text-lg sm:text-xl font-medium text-yellow-400 transition-all duration-1000 ease-out",
+            "absolute -top-6 right-0 text-lg sm:text-xl font-medium text-muted-foreground transition-all duration-1000 ease-out",
             animating ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
           )}>
             +1000
@@ -36,3 +36,5 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
 };
 
 export default BalanceCard;
+
+    
