@@ -78,9 +78,8 @@ export default function Home({}: {}) {
             getLeaderboardUsers(),
         ]);
         
-        setUserData(freshUserData);
-        
         if (freshUserData.status === 'banned') {
+          setUserData(freshUserData);
           setIsLoading(false);
           return;
         }
@@ -112,7 +111,6 @@ export default function Home({}: {}) {
         if (streakData.lastLogin !== today) {
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
-          // 'en-CA' format is 'YYYY-MM-DD'
           const yesterdayStr = yesterday.toLocaleDateString('en-CA');
 
           let newStreakCount = 1;
@@ -124,13 +122,14 @@ export default function Home({}: {}) {
           const newStreak = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
           freshUserData.dailyStreak = newStreak;
+          // Only save when streak is updated to prevent multiple writes
+          await saveUserData(telegramUser, { balance: currentBalance, dailyStreak: newStreak });
         } else {
           setDailyStreak(streakData.count);
         }
         
         setBalance(currentBalance);
-        freshUserData.balance = currentBalance;
-        await saveUserData(telegramUser, freshUserData);
+        setUserData(freshUserData);
 
     } catch (error) {
         console.error("Initialization failed:", error);
