@@ -148,7 +148,7 @@ export default function ProfilePage({}: ProfilePageProps) {
           if (result.isHuman && result.isUnique) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
-            await saveVerificationStatus(user, 'verified', imageSrc);
+            await saveVerificationStatus(user, 'verified', imageSrc, result.faceFingerprint);
              toast({
               title: 'Verification Successful',
               description: 'Your account has been verified.',

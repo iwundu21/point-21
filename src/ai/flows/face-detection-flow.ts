@@ -22,6 +22,7 @@ export type DetectHumanFaceInput = z.infer<typeof DetectHumanFaceInputSchema>;
 const DetectHumanFaceOutputSchema = z.object({
   isHuman: z.boolean().describe('Whether the image contains a real human face and not an avatar, cartoon, or object.'),
   reason: z.string().describe('The reason for the determination.'),
+  faceFingerprint: z.string().optional().describe('A unique, consistent, and concise textual identifier representing the key facial features. This should be consistent for the same person across different images.'),
 });
 export type DetectHumanFaceOutput = z.infer<typeof DetectHumanFaceOutputSchema>;
 
@@ -33,14 +34,16 @@ const prompt = ai.definePrompt({
   name: 'faceDetectionPrompt',
   input: {schema: DetectHumanFaceInputSchema},
   output: {schema: DetectHumanFaceOutputSchema},
-  prompt: `You are a system that determines if an image contains a real, live human face. Your response must be in JSON format.
+  prompt: `You are a system that determines if an image contains a real, live human face and creates a unique fingerprint for it. Your response must be in JSON format.
 
   Analyze the provided image with high scrutiny. Your task is to determine if it's a real human face.
   - The face must be of a real person, not a photo of a photo, a doll, a statue, a drawing, an avatar, or any other non-human representation.
   - Crucially, the person's eyes must be clearly visible and open. If the eyes are closed, obscured, or not visible, you must fail the verification.
   
   Set the 'isHuman' field to true only if a real human face with visible, open eyes is detected. Otherwise, set it to false.
-  Provide a clear and concise reason for your decision in the 'reason' field, for example, "No human face detected" or "Eyes are not visible in the image."
+  Provide a clear and concise reason for your decision in the 'reason' field.
+
+  If 'isHuman' is true, generate a unique and consistent textual identifier for the face based on its key features in the 'faceFingerprint' field. This fingerprint should be a concise string that you can reliably reproduce for the same person even in slightly different images.
   
   Image: {{media url=photoDataUri}}`,
 });

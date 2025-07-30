@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { detectHumanFace } from './face-detection-flow';
-import { getUserData, banUser } from '@/lib/database';
+import { getUserData, banUser, findUserByFaceFingerprint } from '@/lib/database';
 
 const VerifyHumanFaceInputSchema = z.object({
   photoDataUri: z
@@ -29,6 +29,7 @@ const VerifyHumanFaceOutputSchema = z.object({
   isUnique: z.boolean().describe('Whether the face is unique and not already registered.'),
   reason: z.string().describe('The reason for the determination.'),
   faceVerificationUri: z.string().optional().describe('The data URI of the captured face image.'),
+  faceFingerprint: z.string().optional().describe('The unique fingerprint of the face.'),
 });
 export type VerifyHumanFaceOutput = z.infer<typeof VerifyHumanFaceOutputSchema>;
 
@@ -43,10 +44,10 @@ const faceVerificationFlow = ai.defineFlow(
     outputSchema: VerifyHumanFaceOutputSchema,
   },
   async (input) => {
-    // Step 1: Detect if the image contains a real human face with open eyes.
+    // Step 1: Detect if the image contains a real human face with open eyes and get its fingerprint.
     const detectionResult = await detectHumanFace({ photoDataUri: input.photoDataUri });
 
-    if (!detectionResult.isHuman) {
+    if (!detectionResult.isHuman || !detectionResult.faceFingerprint) {
       return {
         isHuman: false,
         isUnique: false,
@@ -56,8 +57,6 @@ const faceVerificationFlow = ai.defineFlow(
     }
 
     // Step 2: Check if the current user is already verified to prevent re-verification.
-    // This is a simplified check for this prototype. A full implementation would use
-    // vector embeddings to find if the face exists across *any* account.
     const currentUserData = await getUserData(input.user);
     if (currentUserData.verificationStatus === 'verified') {
         return {
@@ -67,13 +66,27 @@ const faceVerificationFlow = ai.defineFlow(
             faceVerificationUri: currentUserData.faceVerificationUri || input.photoDataUri,
         };
     }
+
+    // Step 3: Check if the face fingerprint already exists for another user.
+    const existingUser = await findUserByFaceFingerprint(detectionResult.faceFingerprint);
+    if (existingUser && existingUser.id !== `user_${input.user.id}`) {
+        // This face is already registered to another user. Ban the current user.
+        await banUser(input.user, 'This face is already associated with another account.');
+        return {
+            isHuman: true,
+            isUnique: false,
+            reason: 'This face is already associated with another account. This account has been blocked.',
+            faceVerificationUri: input.photoDataUri,
+        };
+    }
     
-    // If we are here, the face is considered unique for this user, as they haven't been verified before.
+    // If we are here, the face is considered unique.
     return {
         isHuman: true,
         isUnique: true,
         reason: 'Verification successful. Your account is now verified.',
         faceVerificationUri: input.photoDataUri,
+        faceFingerprint: detectionResult.faceFingerprint,
     };
   }
 );
