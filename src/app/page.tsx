@@ -229,7 +229,7 @@ export default function Home({}: {}) {
     return null; 
   }
   
-  if (!user) {
+  if (!user && !isLoading) {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
             <Alert variant="destructive" className="max-w-sm">
