@@ -94,6 +94,10 @@ export default {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.7' },
         },
+        'heartbeat': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.05)' },
+        },
         'fade-in': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
@@ -103,6 +107,7 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fast-pulse': 'fast-pulse 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1)',
+        'heartbeat': 'heartbeat 1.5s infinite ease-in-out',
         'fade-in': 'fade-in 0.5s ease-in-out',
       },
     },
