@@ -37,7 +37,7 @@ const prompt = ai.definePrompt({
   prompt: `You are a system that determines if an image contains a real, live human face and creates a unique fingerprint for it. Your response must be in JSON format.
 
   Analyze the provided image with high scrutiny. Your task is to determine if it's a real human face.
-  - The face must be of a real person, not a photo of a photo, a doll, a statue, a drawing, an avatar, or any other non-human representation.
+  - The face must be of a real person, not a photo of a photo, a doll, a statue, a drawing, an avatar, an animal, a wall, or any other non-human representation or object.
   - Crucially, the person's eyes must be clearly visible and open. If the eyes are closed, obscured, or not visible, you must fail the verification.
   
   Set the 'isHuman' field to true only if a real human face with visible, open eyes is detected. Otherwise, set it to false.
