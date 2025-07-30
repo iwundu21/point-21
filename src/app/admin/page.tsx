@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress } from '@/lib/database';
-import { Skeleton } from '@/components/ui/skeleton';
+import FullScreenLoader from '@/components/full-screen-loader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -305,7 +305,6 @@ const UserTable = ({
     onDeleteUser,
     onCopy,
     totalPoints,
-    isLoading,
     onBalanceUpdated,
     onWalletUpdated
 }: {
@@ -314,7 +313,6 @@ const UserTable = ({
     onDeleteUser: (user: UserData) => void,
     onCopy: (text: string) => void,
     totalPoints: number,
-    isLoading: boolean,
     onBalanceUpdated: (userId: string, newBalance: number) => void,
     onWalletUpdated: (userId: string, newAddress: string) => void
 }) => {
@@ -326,27 +324,8 @@ const UserTable = ({
         currentPage * USERS_PER_PAGE
     );
 
-    const renderAdminSkeleton = () => (
-        <div className="space-y-2">
-            {[...Array(8)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 p-2">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-grow space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                    </div>
-                    <Skeleton className="h-8 w-24 rounded-md" />
-                </div>
-            ))}
-        </div>
-    );
-    
     return (
         <div>
-            {isLoading && users.length === 0 ? (
-                renderAdminSkeleton()
-            ) : (
-            <>
             <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
@@ -472,8 +451,6 @@ const UserTable = ({
                     </Button>
                 </div>
             </div>
-            </>
-            )}
         </div>
     );
 };
@@ -650,21 +627,10 @@ export default function AdminPage() {
         document.body.removeChild(link);
     };
 
-    const renderAdminSkeleton = () => (
-        <div className="space-y-2">
-            {[...Array(8)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 p-2">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-grow space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                    </div>
-                    <Skeleton className="h-8 w-24 rounded-md" />
-                </div>
-            ))}
-        </div>
-    );
-    
+    if (isLoading) {
+        return <FullScreenLoader />;
+    }
+
     if (!isAdmin && !codeAuthenticated) {
         return (
              <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -708,7 +674,7 @@ export default function AdminPage() {
                         <Users className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-24" /> : allUsers.length.toLocaleString()}</div>
+                        <div className="text-2xl font-bold">{allUsers.length.toLocaleString()}</div>
                     </CardContent>
                 </Card>
                  <Card>
@@ -717,7 +683,7 @@ export default function AdminPage() {
                         <Star className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                         <div className="text-2xl font-bold text-gray-400">{isLoading ? <Skeleton className="h-8 w-32" /> : totalPoints.toLocaleString()}</div>
+                         <div className="text-2xl font-bold text-gray-400">{totalPoints.toLocaleString()}</div>
                     </CardContent>
                 </Card>
                  <Card>
@@ -740,7 +706,9 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                     {isLoadingTasks ? (
-                        renderAdminSkeleton()
+                        <div className="flex justify-center items-center h-24">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        </div>
                     ) : (
                         <div className="overflow-x-auto">
                            <Table>
@@ -825,7 +793,6 @@ export default function AdminPage() {
                                 onDeleteUser={handleDeleteUser}
                                 onCopy={handleCopy}
                                 totalPoints={totalPoints}
-                                isLoading={isLoading}
                                 onBalanceUpdated={handleBalanceUpdated}
                                 onWalletUpdated={handleWalletUpdated}
                             />
@@ -837,7 +804,6 @@ export default function AdminPage() {
                                 onDeleteUser={handleDeleteUser}
                                 onCopy={handleCopy}
                                 totalPoints={totalPoints}
-                                isLoading={isLoading}
                                 onBalanceUpdated={handleBalanceUpdated}
                                 onWalletUpdated={handleWalletUpdated}
                             />

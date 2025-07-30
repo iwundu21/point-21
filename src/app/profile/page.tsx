@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
+import FullScreenLoader from '@/components/full-screen-loader';
 import { Button } from '@/components/ui/button';
 import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Webcam from "react-webcam";
@@ -192,15 +192,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
 
   if (isLoading || !user) {
-    return (
-      <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-        <main className="flex-grow flex flex-col items-center justify-center p-4 space-y-8">
-          <Skeleton className="w-full max-w-sm h-48" />
-          <Skeleton className="w-full max-w-sm h-64" />
-        </main>
-        <Footer />
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   const renderAccountStatus = () => {

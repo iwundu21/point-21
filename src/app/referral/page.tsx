@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Gift, Copy, MessageSquarePlus, CheckCircle, Loader2 } from 'lucide-react';
 import { getUserData, saveUserData, applyReferralBonus } from '@/lib/database';
-import { Skeleton } from '@/components/ui/skeleton';
+import FullScreenLoader from '@/components/full-screen-loader';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 
@@ -130,22 +130,7 @@ export default function ReferralPage({}: ReferralPageProps) {
 
 
   if (isLoading || !user) {
-    return (
-        <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-            <div className="flex-grow pb-20">
-              <main className="flex-grow flex flex-col p-4 mt-8">
-                <div className="w-full max-w-sm mx-auto space-y-6">
-                    <div className="text-center">
-                        <Skeleton className="h-8 w-32 mx-auto" />
-                    </div>
-                     <Skeleton className="h-48 w-full" />
-                     <Skeleton className="h-32 w-full" />
-                </div>
-              </main>
-            </div>
-            <Footer />
-        </div>
-    )
+    return <FullScreenLoader />;
   }
 
   return (

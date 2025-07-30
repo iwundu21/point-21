@@ -23,7 +23,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getVerificationStatus, getWalletAddress, saveWalletAddress, getBalance } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
+import FullScreenLoader from '@/components/full-screen-loader';
 
 declare global {
   interface Window {
@@ -130,19 +130,7 @@ export default function WalletPage({}: WalletPageProps) {
   }
 
   if (isLoading || !user) {
-    return (
-        <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-            <div className="flex-grow pb-20 p-4 mt-8 max-w-sm mx-auto w-full">
-                <div className="space-y-6">
-                    <Skeleton className="h-8 w-24 mx-auto" />
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-1" />
-                    <Skeleton className="h-40 w-full" />
-                </div>
-            </div>
-            <Footer />
-        </div>
-    )
+    return <FullScreenLoader />;
   }
 
   return (
