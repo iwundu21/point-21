@@ -121,7 +121,6 @@ export default function Home({}: {}) {
           currentBalance += 200; // Award points for daily login
           streakData = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
-          setBalance(currentBalance); // Update balance in state
           shouldSave = true;
         } else {
           setDailyStreak(streakData.count);
@@ -225,22 +224,8 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return null; 
-  }
-  
-  if (!user && !isLoading) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-            <Alert variant="destructive" className="max-w-sm">
-                <ShieldBan className="h-5 w-5" />
-                <AlertTitle>Access Denied</AlertTitle>
-                <AlertDescription>
-                   This application is only accessible via Telegram.
-                </AlertDescription>
-            </Alert>
-        </div>
-    );
   }
 
   if (userData?.status === 'banned') {
