@@ -183,15 +183,12 @@ export default function TasksPage() {
         completedCurrentPage * TASKS_PER_PAGE
     );
 
-    if (isLoading || !user) {
-      return <FullScreenLoader />;
-    }
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">
-        <main className="flex-grow flex flex-col p-4 mt-8">
-             <div className="w-full max-w-sm mx-auto space-y-8">
+        <main className="flex-grow flex flex-col p-4 mt-8 relative">
+          {isLoading ? <FullScreenLoader /> : (
+            <div className="w-full max-w-sm mx-auto space-y-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
                         <Users className="w-8 h-8 text-primary" />
@@ -295,9 +292,12 @@ export default function TasksPage() {
                   </TabsContent>
                 </Tabs>
             </div>
+          )}
         </main>
        </div>
       <Footer />
     </div>
   );
 }
+
+    

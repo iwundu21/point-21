@@ -628,11 +628,7 @@ export default function AdminPage() {
         document.body.removeChild(link);
     };
 
-    if (isLoading) {
-        return <FullScreenLoader />;
-    }
-
-    if (!isAdmin && !codeAuthenticated) {
+    if (!isAdmin && !codeAuthenticated && !isLoading) {
         return (
              <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
                 <Card className="max-w-sm w-full">
@@ -659,16 +655,17 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-      <main className="flex-grow flex flex-col p-4 mt-8">
-           <div className="w-full max-w-6xl mx-auto space-y-6">
-              <div className="text-center">
-                  <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                      <Shield className="w-8 h-8 text-primary" />
-                      Admin Dashboard
-                  </h1>
-              </div>
+      <main className="flex-grow flex flex-col p-4 mt-8 relative">
+           {isLoading ? <FullScreenLoader /> : (
+            <div className="w-full max-w-6xl mx-auto space-y-6">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+                        <Shield className="w-8 h-8 text-primary" />
+                        Admin Dashboard
+                    </h1>
+                </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -678,27 +675,27 @@ export default function AdminPage() {
                         <div className="text-2xl font-bold">{allUsers.length.toLocaleString()}</div>
                     </CardContent>
                 </Card>
-                 <Card>
+                    <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
                         <Star className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                         <div className="text-2xl font-bold text-gray-400">{totalPoints.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-gray-400">{totalPoints.toLocaleString()}</div>
                     </CardContent>
                 </Card>
-                 <Card>
+                    <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
-                         <Coins className="h-4 w-4 text-primary" />
+                            <Coins className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                         <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
                     </CardContent>
                 </Card>
-              </div>
+                </div>
 
-              <Card>
+                <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
                         <CardTitle>Social Task Management</CardTitle>
@@ -712,29 +709,29 @@ export default function AdminPage() {
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                           <Table>
-                               <TableHeader>
-                                   <TableRow>
-                                       <TableHead>Icon</TableHead>
-                                       <TableHead>Title</TableHead>
-                                       <TableHead>Points</TableHead>
-                                       <TableHead>Link</TableHead>
-                                       <TableHead className="text-right">Actions</TableHead>
-                                   </TableRow>
-                               </TableHeader>
-                               <TableBody>
-                                   {socialTasks.map((task) => (
-                                       <TableRow key={task.id}>
-                                           <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
-                                           <TableCell className="font-medium">{task.title}</TableCell>
-                                           <TableCell className="text-gray-400">{task.points}</TableCell>
-                                           <TableCell>
-                                               <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
-                                                   {task.link}
-                                               </a>
-                                           </TableCell>
-                                           <TableCell className="text-right">
-                                               <AlertDialog>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Icon</TableHead>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Points</TableHead>
+                                        <TableHead>Link</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {socialTasks.map((task) => (
+                                        <TableRow key={task.id}>
+                                            <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
+                                            <TableCell className="font-medium">{task.title}</TableCell>
+                                            <TableCell className="text-gray-400">{task.points}</TableCell>
+                                            <TableCell>
+                                                <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
+                                                    {task.link}
+                                                </a>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <AlertDialog>
                                                     <AlertDialogTrigger asChild>
                                                         <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                                     </AlertDialogTrigger>
@@ -749,38 +746,38 @@ export default function AdminPage() {
                                                         </AlertDialogFooter>
                                                     </AlertDialogContent>
                                                 </AlertDialog>
-                                           </TableCell>
-                                       </TableRow>
-                                   ))}
-                               </TableBody>
-                           </Table>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </div>
                     )}
                 </CardContent>
-              </Card>
+                </Card>
 
-              <Card>
+                <Card>
                 <CardHeader>
                     <CardTitle>User Management</CardTitle>
                     <CardDescription>
-                      Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop.
+                        Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center gap-2 py-4">
-                      <div className="relative flex-grow">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                              placeholder="Search by ID, Wallet, Username or First Name..."
-                              className="pl-9 w-full"
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                          />
-                      </div>
-                      <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
-                          <Download className="mr-2 h-4 w-4" />
-                          Export Airdrop List
-                      </Button>
+                        <div className="relative flex-grow">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search by ID, Wallet, Username or First Name..."
+                                className="pl-9 w-full"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export Airdrop List
+                        </Button>
                     </div>
                     <Tabs defaultValue="active">
                         <TabsList className="grid w-full grid-cols-2">
@@ -811,9 +808,12 @@ export default function AdminPage() {
                         </TabsContent>
                     </Tabs>
                 </CardContent>
-              </Card>
-          </div>
+                </Card>
+            </div>
+           )}
       </main>
     </div>
   );
 }
+
+    

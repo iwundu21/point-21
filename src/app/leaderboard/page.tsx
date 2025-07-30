@@ -93,10 +93,6 @@ export default function LeaderboardPage() {
     const currentUserRank = currentUser ? leaderboard.findIndex(u => u.telegramUser?.id === currentUser.id) : -1;
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
 
-    if (isLoading) {
-        return <FullScreenLoader />;
-    }
-
     const getMedal = (rank: number) => {
         if (rank === 0) return <Trophy className="w-5 h-5 text-gray-400" />;
         if (rank === 1) return <Trophy className="w-5 h-5 text-gray-400" />;
@@ -108,7 +104,8 @@ export default function LeaderboardPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-24">
-        <main className="flex-grow flex flex-col p-4 mt-8">
+        <main className="flex-grow flex flex-col p-4 mt-8 relative">
+          {isLoading ? <FullScreenLoader /> : (
              <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
@@ -195,9 +192,12 @@ export default function LeaderboardPage() {
                     </>
                 )}
             </div>
+          )}
         </main>
        </div>
       <Footer />
     </div>
   );
 }
+
+    

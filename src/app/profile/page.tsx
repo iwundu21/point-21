@@ -191,10 +191,6 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
 
-  if (isLoading || !user) {
-    return <FullScreenLoader />;
-  }
-
   const renderAccountStatus = () => {
     switch (accountStatus) {
         case 'verified':
@@ -329,17 +325,17 @@ export default function ProfilePage({}: ProfilePageProps) {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Toaster />
       <div className="flex-grow pb-32">
-        {isVerificationInProgress ? renderVerificationContent() : (
+        {isLoading ? <FullScreenLoader /> : isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
             <div className="w-full max-w-sm flex flex-col items-center text-center space-y-4">
                 <Avatar className="w-24 h-24 border-4 border-primary">
-                    <AvatarImage src={user.photo_url} alt={displayName} />
+                    <AvatarImage src={user?.photo_url} alt={displayName} />
                     <AvatarFallback className="text-3xl">{getInitials()}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col space-y-1">
                     <h2 className="text-2xl font-bold">{displayName}</h2>
-                    <p className="text-sm text-muted-foreground">@{user.username || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground pt-2">ID: {user.id}</p>
+                    <p className="text-sm text-muted-foreground">@{user?.username || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground pt-2">ID: {user?.id}</p>
                     <div className="flex items-center justify-center pt-2">
                         <p className="text-sm font-semibold mr-2">Status:</p>
                         {renderAccountStatus()}
@@ -393,3 +389,5 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
+
+    

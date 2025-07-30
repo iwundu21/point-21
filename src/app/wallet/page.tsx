@@ -129,14 +129,11 @@ export default function WalletPage({}: WalletPageProps) {
     return `${address.slice(0, 7)}****${address.slice(-7)}`;
   }
 
-  if (isLoading || !user) {
-    return <FullScreenLoader />;
-  }
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">
-        <main className="flex-grow flex flex-col p-4 mt-8">
+        <main className="flex-grow flex flex-col p-4 mt-8 relative">
+          {isLoading ? <FullScreenLoader /> : (
              <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
@@ -224,9 +221,12 @@ export default function WalletPage({}: WalletPageProps) {
                     </Alert>
                 </div>
             </div>
+          )}
         </main>
        </div>
       <Footer />
     </div>
   );
 }
+
+    
