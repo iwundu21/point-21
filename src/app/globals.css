@@ -43,24 +43,24 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 225 41% 19%; /* #1D2545 */
+    --background: 220 100% 7%; /* #000C24 */
     --foreground: 48 83% 97%; /* Off-white */
-    --card: 225 41% 22%;
+    --card: 220 100% 10%;
     --card-foreground: 48 83% 97%;
-    --popover: 225 41% 19%;
+    --popover: 220 100% 7%;
     --popover-foreground: 48 83% 97%;
     --primary: 197 71% 73%; /* Light Sky Blue */
     --primary-foreground: 225 73% 15%;
-    --secondary: 225 41% 24%;
+    --secondary: 220 100% 12%;
     --secondary-foreground: 48 83% 97%;
-    --muted: 225 41% 24%;
+    --muted: 220 100% 12%;
     --muted-foreground: 48 83% 85%;
     --accent: 48 83% 97%; /* Off-white for accents */
-    --accent-foreground: 225 41% 19%;
+    --accent-foreground: 220 100% 7%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 225 41% 25%;
-    --input: 225 41% 22%;
+    --border: 220 100% 15%;
+    --input: 220 100% 10%;
     --ring: 197 71% 73%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
