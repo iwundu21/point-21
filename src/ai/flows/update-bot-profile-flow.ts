@@ -32,7 +32,7 @@ const updateBotProfileFlow = ai.defineFlow(
   async () => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
-    if (!botToken) {
+    if (!botToken || botToken === 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
       console.error("TELEGRAM_BOT_TOKEN is not set in environment variables.");
       return { success: false, userCount: 0, error: "Server configuration error: Bot token not found." };
     }

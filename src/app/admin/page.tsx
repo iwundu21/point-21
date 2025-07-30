@@ -543,7 +543,7 @@ export default function AdminPage() {
         // Trigger bot profile update when an admin loads the page
         updateBotProfile().then(result => {
             if (result.success) {
-                toast({ title: "Bot profile updated", description: "The bot's user count has been synced."});
+                toast({ title: "Bot profile updated", description: `User count set to ${result.userCount}.`});
             } else {
                 toast({ variant: 'destructive', title: "Bot update failed", description: result.error });
             }
