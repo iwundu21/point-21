@@ -75,7 +75,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
   }, [isActive, endTime, onSessionEnd]);
 
   const conicGradientStyle = {
-    background: `conic-gradient(hsl(var(--gold)) ${progress}%, hsl(var(--card)) ${progress}%)`,
+    background: `conic-gradient(hsla(var(--gold), 0.5) ${progress}%, hsl(var(--card)) ${progress}%)`,
   };
 
   const handleClick = () => {
@@ -98,8 +98,8 @@ const MiningCircle: FC<MiningCircleProps> = ({
   };
 
   const getButtonState = () => {
-    if (isActivating) return { disabled: true, text: 'Activating...', icon: <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-gold animate-spin" />, className: 'border-gold/30' };
-    if (isActive) return { disabled: true, text: 'Mining Active', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-gold animate-fast-pulse" />, className: 'shadow-gold/20 border-gold/50' };
+    if (isActivating) return { disabled: true, text: 'Activating...', icon: <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-gold/70 animate-spin" />, className: 'border-gold/30' };
+    if (isActive) return { disabled: true, text: 'Mining Active', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-gold/70 animate-fast-pulse" />, className: 'shadow-gold/10 border-gold/30' };
 
     if (!hasRedeemedReferral) {
       return { disabled: false, text: 'Redeem Code', icon: <Handshake className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
