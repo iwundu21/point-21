@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -78,13 +79,13 @@ export default function Home({}: {}) {
         ]);
         
         setUserData(freshUserData);
+        setUser(telegramUser);
         
         if (freshUserData.status === 'banned') {
           setIsLoading(false);
           return;
         }
 
-        setUser(telegramUser);
         let currentBalance = freshUserData.balance;
         let streakData = freshUserData.dailyStreak;
         let shouldSave = false;
@@ -118,10 +119,17 @@ export default function Home({}: {}) {
              newStreakCount = (streakData.count % 7) + 1;
           }
           
-          currentBalance += 200; // Award points for daily login
+          const dailyBonus = 200;
+          currentBalance += dailyBonus;
           streakData = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
-          shouldSave = true;
+          
+          await saveUserData(telegramUser, { 
+            balance: currentBalance, 
+            dailyStreak: streakData, 
+            forgingEndTime: freshUserData.forgingEndTime 
+          });
+          
         } else {
           setDailyStreak(streakData.count);
         }
@@ -131,7 +139,6 @@ export default function Home({}: {}) {
         if (shouldSave) {
           await saveUserData(telegramUser, { 
             balance: currentBalance, 
-            dailyStreak: streakData, 
             forgingEndTime: freshUserData.forgingEndTime 
           });
         }
@@ -163,7 +170,15 @@ export default function Home({}: {}) {
         const today = new Date().toLocaleDateString('en-CA');
         handleInitializeUser(telegramUser, today);
       } else {
-        setIsLoading(false);
+        // Handle non-telegram environment or delay in API ready
+        setTimeout(() => {
+            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                 const today = new Date().toLocaleDateString('en-CA');
+                 handleInitializeUser(window.Telegram.WebApp.initDataUnsafe.user, today);
+            } else {
+                setIsLoading(false); // Stop loading if user is truly not available
+            }
+        }, 1000); // Wait 1 sec for TG to initialize
       }
     };
     init();
@@ -224,7 +239,7 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return null; 
   }
 
@@ -258,6 +273,11 @@ export default function Home({}: {}) {
       </div>
     );
   }
+
+  if (!user) {
+      return null; // Or a more specific message for non-telegram users if needed
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -295,3 +315,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
