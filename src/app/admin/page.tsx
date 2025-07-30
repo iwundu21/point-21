@@ -332,7 +332,6 @@ const UserTable = ({
                             <TableHead>User</TableHead>
                             <TableHead>Photo</TableHead>
                             <TableHead>Wallet</TableHead>
-                            <TableHead>Last IP</TableHead>
                             <TableHead>Balance</TableHead>
                             <TableHead>Referrals</TableHead>
                             <TableHead>Airdrop Allocation</TableHead>
@@ -386,12 +385,6 @@ const UserTable = ({
                                             <EditWalletDialog user={user} onWalletUpdated={onWalletUpdated} />
                                         </div>
                                     )}
-                                </TableCell>
-                                <TableCell>
-                                     <div className="flex items-center gap-1 font-mono text-xs">
-                                        <Server className="w-4 h-4 text-muted-foreground" />
-                                        <span>{user.ipAddress || 'N/A'}</span>
-                                    </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
@@ -547,8 +540,7 @@ export default function AdminPage() {
             const walletAddress = user.walletAddress?.toLowerCase() || '';
             const username = user.telegramUser?.username?.toLowerCase() || '';
             const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
-            const ipAddress = user.ipAddress?.toLowerCase() || '';
-            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term) || ipAddress.includes(term);
+            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
         });
     }, [allUsers, searchTerm]);
     
@@ -790,7 +782,7 @@ export default function AdminPage() {
                     <div className="relative flex-grow">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="Search by ID, Wallet, Username, First Name, or IP..."
+                            placeholder="Search by ID, Wallet, Username, or First Name..."
                             className="pl-9 w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
