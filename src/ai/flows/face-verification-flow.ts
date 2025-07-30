@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { detectHumanFace } from './face-detection-flow';
-import { findUserByFace, banUser } from '@/lib/database';
+import { getUserData, banUser } from '@/lib/database';
 
 const VerifyHumanFaceInputSchema = z.object({
   photoDataUri: z
@@ -55,31 +55,20 @@ const faceVerificationFlow = ai.defineFlow(
       };
     }
 
-    // Step 2: Check for uniqueness against the production database using facial embeddings.
-    // In a real-world, large-scale application, we would generate an embedding (a vector representation)
-    // of the face and compare it against a database of existing embeddings for similarity.
-    // For this prototype, we simulate this by calling `findUserByFace`, which checks for an exact URI match.
-    // This serves as a placeholder for a more robust vector-based search.
-    const existingUserWithFace = await findUserByFace(input.photoDataUri);
-    
-    if (existingUserWithFace && existingUserWithFace.telegramUser) {
-        const existingUserId = `user_${existingUserWithFace.telegramUser.id}`;
-        // If the face is found and belongs to a DIFFERENT user, it's a duplicate.
-        if (existingUserId !== input.userId) {
-            const banReason = 'This face is already associated with another account. This account has been banned. Please continue with your original account or contact support.';
-            // Ban the current user trying to create a duplicate account.
-            await banUser(input.user, banReason);
-            return {
-                isHuman: true,
-                isUnique: false,
-                reason: banReason,
-                faceVerificationUri: input.photoDataUri,
-            };
-        }
+    // Step 2: Check if the current user is already verified to prevent re-verification.
+    // This is a simplified check for this prototype. A full implementation would use
+    // vector embeddings to find if the face exists across *any* account.
+    const currentUserData = await getUserData(input.user);
+    if (currentUserData.verificationStatus === 'verified') {
+        return {
+            isHuman: true,
+            isUnique: false,
+            reason: "This account has already been verified.",
+            faceVerificationUri: currentUserData.faceVerificationUri || input.photoDataUri,
+        };
     }
     
-    // If we are here, the face is either brand new, or it belongs to the current user re-verifying.
-    // In either case, the check for uniqueness passes for this user.
+    // If we are here, the face is considered unique for this user, as they haven't been verified before.
     return {
         isHuman: true,
         isUnique: true,
