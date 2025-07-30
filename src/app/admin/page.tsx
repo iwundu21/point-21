@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -629,6 +630,9 @@ export default function AdminPage() {
                         <CardDescription>Enter the access code to continue.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground text-center px-2">
+                           This is the central hub for managing the Exnus Points application. From here, you can oversee user activity, manage the airdrop, create new social engagement tasks, and ensure the overall health of the ecosystem.
+                        </p>
                        <Input 
                             type="password"
                             placeholder="Enter access code"
@@ -807,3 +811,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
