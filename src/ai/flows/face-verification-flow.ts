@@ -53,23 +53,11 @@ const faceVerificationFlow = ai.defineFlow(
         isUnique: false,
         reason: detectionResult.reason || 'Not a real human face.',
         faceVerificationUri: input.photoDataUri,
-        faceFingerprint: null,
+        faceFingerprint: undefined,
       };
     }
 
-    // Step 2: Check if the current user is already verified to prevent re-verification.
-    const currentUserData = await getUserData(input.user);
-    if (currentUserData.verificationStatus === 'verified') {
-        return {
-            isHuman: true,
-            isUnique: false,
-            reason: "This account has already been verified.",
-            faceVerificationUri: currentUserData.faceVerificationUri || input.photoDataUri,
-            faceFingerprint: currentUserData.faceFingerprint,
-        };
-    }
-
-    // Step 3: Check if the face fingerprint already exists for another user.
+    // Step 2: CRITICAL - Check if the face fingerprint already exists for ANOTHER user first.
     const existingUser = await findUserByFaceFingerprint(detectionResult.faceFingerprint);
     if (existingUser && existingUser.id !== input.userId) {
         // This face is already registered to another user. Ban the current user.
@@ -80,6 +68,18 @@ const faceVerificationFlow = ai.defineFlow(
             reason: 'This face is already associated with another account. This account has been blocked.',
             faceVerificationUri: input.photoDataUri,
             faceFingerprint: detectionResult.faceFingerprint,
+        };
+    }
+
+    // Step 3: Check if the current user's account is already verified to prevent re-verification.
+    const currentUserData = await getUserData(input.user);
+    if (currentUserData.verificationStatus === 'verified') {
+        return {
+            isHuman: true,
+            isUnique: false,
+            reason: "This account has already been verified.",
+            faceVerificationUri: currentUserData.faceVerificationUri || input.photoDataUri,
+            faceFingerprint: currentUserData.faceFingerprint,
         };
     }
     
