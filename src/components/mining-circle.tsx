@@ -75,7 +75,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
   }, [isActive, endTime, onSessionEnd]);
 
   const conicGradientStyle = {
-    background: `conic-gradient(hsla(var(--gold), 0.5) ${progress}%, hsl(var(--card)) ${progress}%)`,
+    background: `conic-gradient(hsla(var(--gold), 0.5) ${progress}%, transparent ${progress}%)`,
   };
 
   const handleClick = () => {
@@ -137,7 +137,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
         )}
       >
         <div 
-          className="absolute inset-0 rounded-full transition-all duration-1000 ease-linear"
+          className="absolute inset-[-2px] rounded-full transition-all duration-1000 ease-linear"
           style={isActive || isActivating ? conicGradientStyle : {}}
         ></div>
         <div className="relative w-[13rem] h-[13rem] sm:w-56 sm:h-56 rounded-full bg-card/90 flex flex-col items-center justify-center text-center">
