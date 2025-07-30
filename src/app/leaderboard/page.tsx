@@ -42,6 +42,7 @@ const getLeagueInfo = (rank: number) => {
 
 
 const USERS_PER_PAGE = 10;
+const LEADERBOARD_LIMIT = 100;
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
@@ -73,10 +74,10 @@ export default function LeaderboardPage() {
             setIsLoading(true);
             try {
                 const [{ users: leaderboardUsers }, { users: allUsers }] = await Promise.all([
-                    getLeaderboardUsers(),
+                    getLeaderboardUsers(), // This fetches the top 100 users.
                     getAllUsers()
                 ]);
-                setLeaderboard(leaderboardUsers);
+                setLeaderboard(leaderboardUsers); // Contains max 100 users
                 setTotalUsers(allUsers.length);
             } catch (error) {
                 console.error("Failed to fetch leaderboard data:", error);
@@ -87,7 +88,9 @@ export default function LeaderboardPage() {
         fetchLeaderboardData();
     }, []);
     
+    // The total number of pages is based on the limited leaderboard size (100), not all users.
     const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
+    
     const paginatedUsers = leaderboard.slice(
         (currentPage - 1) * USERS_PER_PAGE,
         currentPage * USERS_PER_PAGE
