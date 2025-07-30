@@ -102,13 +102,13 @@ const MiningCircle: FC<MiningCircleProps> = ({
     if (isActive) return { disabled: true, text: 'Mining Active', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-gold animate-fast-pulse" />, className: 'shadow-gold/20 border-gold/70' };
 
     if (!hasRedeemedReferral) {
-      return { disabled: false, text: 'Redeem Code', icon: <Handshake className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
+      return { disabled: false, text: 'Redeem Code', icon: <Handshake className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50 animate-heartbeat' };
     }
     if (!hasCompletedWelcomeTasks) {
-      return { disabled: false, text: 'Complete Tasks', icon: <Gift className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
+      return { disabled: false, text: 'Complete Tasks', icon: <Gift className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50 animate-heartbeat' };
     }
     if (!isVerified) {
-      return { disabled: false, text: 'Verification Needed', icon: <ShieldAlert className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
+      return { disabled: false, text: 'Verification Needed', icon: <ShieldAlert className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50 animate-heartbeat' };
     }
     return { disabled: false, text: 'Activate Mining', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground/70" />, className: 'border-muted-foreground/50 hover:bg-muted-foreground/10 hover:border-muted-foreground hover:scale-105 animate-heartbeat' };
   };
