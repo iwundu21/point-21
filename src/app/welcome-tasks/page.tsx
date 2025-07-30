@@ -150,7 +150,11 @@ export default function WelcomeTasksPage() {
     const allTasksCompleted = Object.values(tasks).every(Boolean);
 
     if (isLoading || !user) {
-      return <FullScreenLoader />;
+      return (
+        <div className="relative flex-grow flex items-center justify-center">
+            <FullScreenLoader />
+        </div>
+      );
     }
 
     return (

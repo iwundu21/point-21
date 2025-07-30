@@ -94,8 +94,8 @@ export default function LeaderboardPage() {
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
 
     const getMedal = (rank: number) => {
-        if (rank === 0) return <Trophy className="w-5 h-5 text-gray-400" />;
-        if (rank === 1) return <Trophy className="w-5 h-5 text-gray-400" />;
+        if (rank === 0) return <Trophy className="w-5 h-5 text-gold" />;
+        if (rank === 1) return <Trophy className="w-5 h-5 text-slate-400" />;
         if (rank === 2) return <Trophy className="w-5 h-5 text-orange-400" />;
         return <span className="text-sm font-semibold w-5 text-center">{rank + 1}</span>;
     }
@@ -105,7 +105,11 @@ export default function LeaderboardPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-24">
         <main className="flex-grow flex flex-col p-4 mt-8 relative">
-          {isLoading ? <FullScreenLoader /> : (
+          {isLoading ? (
+             <div className="relative flex-grow flex items-center justify-center">
+                <FullScreenLoader />
+            </div>
+          ) : (
              <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
@@ -132,7 +136,7 @@ export default function LeaderboardPage() {
                                         <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-bold text-gray-400">{user.balance.toLocaleString()}</p>
+                                        <p className="font-bold text-gold">{user.balance.toLocaleString()}</p>
                                         <p className="text-xs text-muted-foreground">{getLeagueInfo(rank + 1).name} League</p>
                                     </div>
                                 </CardContent>
@@ -184,7 +188,7 @@ export default function LeaderboardPage() {
                                     <p className="text-xs text-muted-foreground">@{currentUserData.telegramUser?.username || 'N/A'}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-gray-400">{currentUserData.balance.toLocaleString()}</p>
+                                    <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()}</p>
                                     <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1).name} League</p>
                                 </div>
                             </CardContent>
@@ -199,5 +203,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-    

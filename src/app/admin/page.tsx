@@ -389,13 +389,13 @@ const UserTable = ({
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
-                                        <span className="text-gray-400 font-bold">{user.balance.toLocaleString()}</span>
+                                        <span className="text-gold font-bold">{user.balance.toLocaleString()}</span>
                                         <EditBalanceDialog user={user} onBalanceUpdated={onBalanceUpdated} />
                                     </div>
                                 </TableCell>
                                 <TableCell>{user.referrals}</TableCell>
                                 <TableCell>
-                                  <div className="flex items-center gap-1 text-gray-400">
+                                  <div className="flex items-center gap-1 text-gold">
                                       <Coins className="w-4 h-4" />
                                       {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                   </div>
@@ -656,7 +656,11 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <main className="flex-grow flex flex-col p-4 mt-8 relative">
-           {isLoading ? <FullScreenLoader /> : (
+           {isLoading ? (
+            <div className="relative flex-grow flex items-center justify-center">
+                <FullScreenLoader />
+            </div>
+           ) : (
             <div className="w-full max-w-6xl mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
@@ -681,7 +685,7 @@ export default function AdminPage() {
                         <Star className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                            <div className="text-2xl font-bold text-gray-400">{totalPoints.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
                     </CardContent>
                 </Card>
                     <Card>
@@ -724,7 +728,7 @@ export default function AdminPage() {
                                         <TableRow key={task.id}>
                                             <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
                                             <TableCell className="font-medium">{task.title}</TableCell>
-                                            <TableCell className="text-gray-400">{task.points}</TableCell>
+                                            <TableCell className="text-gold">{task.points}</TableCell>
                                             <TableCell>
                                                 <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
                                                     {task.link}
@@ -815,5 +819,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

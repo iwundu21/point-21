@@ -284,7 +284,11 @@ export default function Home({}: {}) {
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
-            {isLoading ? <FullScreenLoader /> : (
+            {isLoading ? (
+                <div className="relative flex-grow flex items-center justify-center">
+                    <FullScreenLoader />
+                </div>
+            ) : (
             <>
                 <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
                 <MiningCircle 
@@ -311,5 +315,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    

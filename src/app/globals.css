@@ -44,17 +44,17 @@ body {
   }
   .dark {
     --background: 0 0% 4%; /* Near-black */
-    --foreground: 48 83% 97%; /* Off-white */
+    --foreground: 0 0% 98%; /* Off-white */
     --card: 0 0% 7%;
-    --card-foreground: 48 83% 97%;
+    --card-foreground: 0 0% 98%;
     --popover: 0 0% 4%;
-    --popover-foreground: 48 83% 97%;
+    --popover-foreground: 0 0% 98%;
     --primary: 197 71% 73%; /* Light Sky Blue */
     --primary-foreground: 225 73% 15%;
     --secondary: 0 0% 8%;
-    --secondary-foreground: 48 83% 97%;
+    --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 8%;
-    --muted-foreground: 48 83% 85%;
+    --muted-foreground: 0 0% 63.9%; /* Lighter gray for muted text */
     --accent: 197 71% 73%; /* Light Sky Blue */
     --accent-foreground: 225 73% 15%; /* Darker color for text on accent */
     --destructive: 0 63% 31%;
@@ -75,6 +75,7 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --gold: 48 95% 65%; /* Gold color for points */
   }
 }
 
@@ -88,7 +89,12 @@ body {
 }
 
 @layer components {
-    .dark .glass-card {
-        @apply bg-card/60 border border-white/10 backdrop-blur-lg;
+    .dark {
+        .glass-card {
+            @apply bg-card/60 border border-white/10 backdrop-blur-lg;
+        }
+        body {
+            @apply bg-black;
+        }
     }
 }
