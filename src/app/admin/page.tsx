@@ -465,6 +465,7 @@ export default function AdminPage() {
     const [socialTasks, setSocialTasks] = useState<SocialTask[]>([]);
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [taskCompletionCounts, setTaskCompletionCounts] = useState<{[taskId: string]: number}>({});
 
     const { toast } = useToast();
 
@@ -497,6 +498,21 @@ export default function AdminPage() {
                 getAllUsers(),
                 getSocialTasks()
             ]);
+            
+            const counts: {[taskId: string]: number} = {};
+            tasks.forEach(task => {
+                counts[task.id] = 0;
+            });
+            
+            usersResponse.users.forEach(user => {
+                user.completedSocialTasks?.forEach(taskId => {
+                    if (counts[taskId] !== undefined) {
+                        counts[taskId]++;
+                    }
+                })
+            });
+
+            setTaskCompletionCounts(counts);
             setAllUsers(usersResponse.users);
             setSocialTasks(tasks);
         } catch (error) {
@@ -682,6 +698,7 @@ export default function AdminPage() {
                                     <TableHead>Icon</TableHead>
                                     <TableHead>Title</TableHead>
                                     <TableHead>Points</TableHead>
+                                    <TableHead>Completions</TableHead>
                                     <TableHead>Link</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -692,6 +709,7 @@ export default function AdminPage() {
                                         <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
                                         <TableCell className="font-medium">{task.title}</TableCell>
                                         <TableCell className="text-gold">{task.points}</TableCell>
+                                        <TableCell className="font-bold">{taskCompletionCounts[task.id] || 0}</TableCell>
                                         <TableCell>
                                             <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
                                                 {task.link}
