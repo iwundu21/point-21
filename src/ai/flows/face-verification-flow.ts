@@ -69,7 +69,7 @@ const faceVerificationFlow = ai.defineFlow(
 
     // Step 3: Check if the face fingerprint already exists for another user.
     const existingUser = await findUserByFaceFingerprint(detectionResult.faceFingerprint);
-    if (existingUser && existingUser.id !== `user_${input.user.id}`) {
+    if (existingUser && existingUser.id !== input.userId) {
         // This face is already registered to another user. Ban the current user.
         await banUser(input.user, 'This face is already associated with another account.');
         return {
