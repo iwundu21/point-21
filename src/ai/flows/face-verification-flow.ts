@@ -66,12 +66,13 @@ const faceVerificationFlow = ai.defineFlow(
         const existingUserId = `user_${existingUserWithFace.telegramUser.id}`;
         // If the face is found and belongs to a DIFFERENT user, it's a duplicate.
         if (existingUserId !== input.userId) {
+            const banReason = 'This face is already associated with another account. This account has been banned. Please continue with your original account or contact support.';
             // Ban the current user trying to create a duplicate account.
-            await banUser(input.user);
+            await banUser(input.user, banReason);
             return {
                 isHuman: true,
                 isUnique: false,
-                reason: 'This face is already associated with another account. This account has been banned. Please continue with your original account or contact support.',
+                reason: banReason,
                 faceVerificationUri: input.photoDataUri,
             };
         }

@@ -121,6 +121,7 @@ export default function Home({}: {}) {
           currentBalance += 200; // Award points for daily login
           streakData = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
+          setBalance(currentBalance); // Update balance in state
           shouldSave = true;
         } else {
           setDailyStreak(streakData.count);
@@ -249,7 +250,7 @@ export default function Home({}: {}) {
           <ShieldBan className="h-5 w-5" />
           <AlertTitle>Account Blocked</AlertTitle>
           <AlertDescription>
-            This account has been blocked due to a violation of our terms of service.
+            {userData.banReason || 'This account has been blocked due to a violation of our terms of service.'}
           </AlertDescription>
         </Alert>
         <div className="max-w-sm w-full text-center">

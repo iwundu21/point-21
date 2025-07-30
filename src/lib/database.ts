@@ -55,6 +55,7 @@ export interface UserData {
     };
     completedSocialTasks: string[]; // Array of completed task IDs
     status: 'active' | 'banned';
+    banReason?: string;
 }
 
 const generateReferralCode = () => {
@@ -248,9 +249,13 @@ export const deleteUser = async (telegramUser: TelegramUser) => {
 };
 
 
-export const banUser = async (telegramUser: TelegramUser | null) => {
+export const banUser = async (telegramUser: TelegramUser | null, reason?: string) => {
     if (!telegramUser) return;
-    await saveUserData(telegramUser, { status: 'banned' });
+    const dataToSave: Partial<UserData> = { status: 'banned' };
+    if (reason) {
+        dataToSave.banReason = reason;
+    }
+    await saveUserData(telegramUser, dataToSave);
 }
 
 
