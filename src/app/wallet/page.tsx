@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,9 +20,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getVerificationStatus, getWalletAddress, saveWalletAddress, getBalance } from '@/lib/database';
+import { getVerificationStatus, getWalletAddress, getBalance } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
-import FullScreenLoader from '@/components/full-screen-loader';
 
 declare global {
   interface Window {
@@ -133,11 +131,7 @@ export default function WalletPage({}: WalletPageProps) {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">
         <main className="flex-grow flex flex-col p-4 mt-8 relative">
-          {isLoading ? (
-             <div className="relative flex-grow flex items-center justify-center">
-                <FullScreenLoader />
-            </div>
-          ) : (
+          {isLoading ? null : (
              <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">

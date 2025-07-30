@@ -1,11 +1,9 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import FullScreenLoader from '@/components/full-screen-loader';
 import { Button } from '@/components/ui/button';
 import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Webcam from "react-webcam";
@@ -325,7 +323,7 @@ export default function ProfilePage({}: ProfilePageProps) {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Toaster />
       <div className="flex-grow pb-32">
-        {isLoading ? <FullScreenLoader /> : isVerificationInProgress ? renderVerificationContent() : (
+        {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
             <div className="w-full max-w-sm flex flex-col items-center text-center space-y-4">
                 <Avatar className="w-24 h-24 border-4 border-primary">
@@ -389,5 +387,3 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
-
-    

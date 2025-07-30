@@ -1,10 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress } from '@/lib/database';
-import FullScreenLoader from '@/components/full-screen-loader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -656,11 +654,7 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <main className="flex-grow flex flex-col p-4 mt-8 relative">
-           {isLoading ? (
-            <div className="relative flex-grow flex items-center justify-center">
-                <FullScreenLoader />
-            </div>
-           ) : (
+           {isLoading ? null : (
             <div className="w-full max-w-6xl mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">

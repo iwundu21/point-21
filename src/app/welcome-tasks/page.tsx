@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +5,6 @@ import Footer from '@/components/footer';
 import { Gift, CheckCircle } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
-import FullScreenLoader from '@/components/full-screen-loader';
 import { useToast } from '@/hooks/use-toast';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 
@@ -150,11 +148,7 @@ export default function WelcomeTasksPage() {
     const allTasksCompleted = Object.values(tasks).every(Boolean);
 
     if (isLoading || !user) {
-      return (
-        <div className="relative flex-grow flex items-center justify-center">
-            <FullScreenLoader />
-        </div>
-      );
+      return null;
     }
 
     return (

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +6,6 @@ import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, Chev
 import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData } from '@/lib/database';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import TaskItem from '@/components/task-item';
-import FullScreenLoader from '@/components/full-screen-loader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -187,11 +185,7 @@ export default function TasksPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">
         <main className="flex-grow flex flex-col p-4 mt-8 relative">
-          {isLoading ? (
-            <div className="relative flex-grow flex items-center justify-center">
-                <FullScreenLoader />
-            </div>
-          ) : (
+          {isLoading ? null : (
             <div className="w-full max-w-sm mx-auto space-y-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">

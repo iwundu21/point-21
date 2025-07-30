@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,7 +5,6 @@ import UserCard from '@/components/user-card';
 import BalanceCard from '@/components/balance-card';
 import MiningCircle from '@/components/mining-circle';
 import MissionsCard from '@/components/missions-card';
-import FullScreenLoader from '@/components/full-screen-loader';
 import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
@@ -283,11 +281,7 @@ export default function Home({}: {}) {
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
-            {isLoading ? (
-                <div className="relative flex-grow flex items-center justify-center">
-                    <FullScreenLoader />
-                </div>
-            ) : (
+            {isLoading ? null : (
             <>
                 <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
                 <MiningCircle 

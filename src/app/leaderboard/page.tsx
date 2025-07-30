@@ -1,11 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import Footer from '@/components/footer';
 import { getLeaderboardUsers, UserData } from '@/lib/database';
-import FullScreenLoader from '@/components/full-screen-loader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -105,11 +103,7 @@ export default function LeaderboardPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-24">
         <main className="flex-grow flex flex-col p-4 mt-8 relative">
-          {isLoading ? (
-             <div className="relative flex-grow flex items-center justify-center">
-                <FullScreenLoader />
-            </div>
-          ) : (
+          {isLoading ? null : (
              <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
