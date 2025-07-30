@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, getLeaderboardUsers, UserData } from '@/lib/database';
+import { getUserData, saveUserData, getLeaderboardUsers, getSocialTasks, UserData } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan } from 'lucide-react';
@@ -76,8 +76,9 @@ export default function Home({}: {}) {
             getLeaderboardUsers(),
         ]);
         
+        setUserData(freshUserData);
+        
         if (freshUserData.status === 'banned') {
-          setUserData(freshUserData);
           setIsLoading(false);
           return;
         }
@@ -119,7 +120,6 @@ export default function Home({}: {}) {
           currentBalance += 200; // Award points for daily login
           const newStreak = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
-          freshUserData.dailyStreak = newStreak;
           // Only save when streak is updated to prevent multiple writes
           await saveUserData(telegramUser, { balance: currentBalance, dailyStreak: newStreak });
         } else {
@@ -127,7 +127,6 @@ export default function Home({}: {}) {
         }
         
         setBalance(currentBalance);
-        setUserData(freshUserData);
 
     } catch (error) {
         console.error("Initialization failed:", error);
@@ -221,6 +220,10 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
+  if (isLoading) {
+    return null; // Render nothing while loading
+  }
+
   if (userData?.status === 'banned') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
@@ -268,43 +271,39 @@ export default function Home({}: {}) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4">
+        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
             <div className="flex justify-between items-start">
             <UserCard 
                 user={user}
             />
             <MiningStatusIndicator isActive={isForgingActive} />
             </div>
-            <div className="mt-4">
-                <BalanceCard balance={balance} animating={showPointsAnimation} />
-            </div>
+            <BalanceCard balance={balance} animating={showPointsAnimation} />
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
-            {isLoading ? null : (
-            <>
-                <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
-                <MiningCircle 
-                    isActive={isForgingActive}
-                    endTime={forgingEndTime}
-                    onActivate={handleActivateForging}
-                    onSessionEnd={handleSessionEnd}
-                    isActivating={isActivating}
-                    hasRedeemedReferral={hasRedeemedReferral}
-                    hasCompletedWelcomeTasks={hasCompletedWelcomeTasks}
-                    isVerified={isVerified}
-                />
-                </div>
+            <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
+            <MiningCircle 
+                isActive={isForgingActive}
+                endTime={forgingEndTime}
+                onActivate={handleActivateForging}
+                onSessionEnd={handleSessionEnd}
+                isActivating={isActivating}
+                hasRedeemedReferral={hasRedeemedReferral}
+                hasCompletedWelcomeTasks={hasCompletedWelcomeTasks}
+                isVerified={isVerified}
+            />
+            </div>
 
-                <Separator className="w-full max-w-sm my-4 bg-primary/10" />
+            <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
-                <div className="w-full max-w-sm">
-                <MissionsCard streak={dailyStreak} balance={balance} rank={rank} />
-                </div>
-            </>
-            )}
+            <div className="w-full max-w-sm">
+            <MissionsCard streak={dailyStreak} balance={balance} rank={rank} />
+            </div>
         </main>
         <Footer />
     </div>
   );
 }
+
+    
