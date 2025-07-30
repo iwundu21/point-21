@@ -11,6 +11,10 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getCountFromServer } from 'firebase/firestore';
+import dotenv from 'dotenv';
+
+// Explicitly load environment variables at the start of the file
+dotenv.config();
 
 const UpdateBotProfileOutputSchema = z.object({
   success: z.boolean().describe('Whether the profile was updated successfully.'),
@@ -59,14 +63,15 @@ const updateBotProfileFlow = ai.defineFlow(
         body: JSON.stringify({ description: description }),
       });
 
-      const result = await response.json() as { ok: boolean, description?: string };
+      const result = await response.json() as { ok: boolean, description?: string, error_code?: number };
 
       if (result.ok) {
         console.log("Successfully updated bot description:", description);
         return { success: true, userCount };
       } else {
-        console.error("Failed to update bot description:", result.description);
-        return { success: false, userCount, error: `Telegram API error: ${result.description}` };
+        const errorMessage = `Telegram API error (code ${result.error_code}): ${result.description}`;
+        console.error("Failed to update bot description:", errorMessage);
+        return { success: false, userCount, error: errorMessage };
       }
 
     } catch (error: any) {
