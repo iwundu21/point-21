@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress } from '@/lib/database';
+import { updateBotProfile } from '@/ai/flows/update-bot-profile-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -539,10 +540,18 @@ export default function AdminPage() {
     useEffect(() => {
       if(isAdmin || codeAuthenticated) {
         fetchAdminData();
+        // Trigger bot profile update when an admin loads the page
+        updateBotProfile().then(result => {
+            if (result.success) {
+                toast({ title: "Bot profile updated", description: "The bot's user count has been synced."});
+            } else {
+                toast({ variant: 'destructive', title: "Bot update failed", description: result.error });
+            }
+        });
       } else {
         setIsLoading(false);
       }
-    }, [isAdmin, codeAuthenticated]);
+    }, [isAdmin, codeAuthenticated, toast]);
     
     const filteredUsers = useMemo(() => {
         if (!searchTerm) return allUsers;
@@ -850,5 +859,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
