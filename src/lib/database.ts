@@ -113,11 +113,11 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
         }
         return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id };
     } else {
-        const newUser: Omit<UserData, 'id'> => ({
+        const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(telegramUser),
             referralCode: generateReferralCode(), // Generate code on creation
             ipAddress: 'N/A', // Placeholder
-        });
+        };
         await setDoc(userRef, newUser);
         return { ...newUser, id: userId };
     }
