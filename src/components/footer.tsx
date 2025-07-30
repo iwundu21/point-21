@@ -25,7 +25,7 @@ const Footer = () => {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
   const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
-  const [hasAvailableTasks, setHasAvailableTasks] = useState(false);
+  const [availableTaskCount, setAvailableTaskCount] = useState(0);
 
   useEffect(() => {
     let user: TelegramUser | null = null;
@@ -54,11 +54,12 @@ const Footer = () => {
             const userData = await getUserData(telegramUser);
             const socialTasks = await getSocialTasks();
             const completedCount = userData.completedSocialTasks?.length || 0;
+            const availableCount = socialTasks.length - completedCount;
 
-            if (completedCount < socialTasks.length) {
-                setHasAvailableTasks(true);
+            if (availableCount > 0) {
+                setAvailableTaskCount(availableCount);
             } else {
-                setHasAvailableTasks(false);
+                setAvailableTaskCount(0);
             }
         }
     }
@@ -67,7 +68,7 @@ const Footer = () => {
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/tasks', label: 'Social', icon: Users, notification: hasAvailableTasks },
+    { href: '/tasks', label: 'Social', icon: Users, badge: availableTaskCount },
     { href: '/referral', label: 'Ref', icon: Handshake },
     { href: '/welcome-tasks', label: 'Wel', icon: Gift },
     { href: '/leaderboard', label: 'Leader', icon: Trophy },
@@ -88,8 +89,10 @@ const Footer = () => {
               <span className={cn("text-xs", isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>
                 {item.label}
               </span>
-              {item.notification && !isActive && (
-                <span className="absolute top-1 right-1/2 translate-x-3 w-2 h-2 bg-red-500 rounded-full"></span>
+              {item.badge && item.badge > 0 && !isActive && (
+                <span className="absolute top-0 right-1/2 translate-x-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold">
+                    {item.badge}
+                </span>
               )}
             </Link>
           );
