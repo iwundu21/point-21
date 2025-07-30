@@ -99,6 +99,8 @@ export default function TasksPage() {
                 } finally {
                     setIsLoading(false);
                 }
+            } else {
+                setIsLoading(false);
             }
         }
         loadTaskData();

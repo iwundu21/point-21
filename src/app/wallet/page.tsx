@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getVerificationStatus, getWalletAddress, getBalance } from '@/lib/database';
+import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 
 declare global {
@@ -77,20 +77,26 @@ export default function WalletPage({}: WalletPageProps) {
         if (user) {
             setIsLoading(true);
             try {
-                const storedAddress = await getWalletAddress(user);
+                const [storedAddress, verificationStatus, userBalance] = await Promise.all([
+                    getWalletAddress(user),
+                    getVerificationStatus(user),
+                    getBalance(user),
+                ]);
+
                 if (storedAddress) {
                     setSavedAddress(storedAddress);
                     setWalletAddress(storedAddress);
                 }
-                const verificationStatus = await getVerificationStatus(user);
                 setIsVerified(verificationStatus === 'verified');
-                const userBalance = await getBalance(user);
                 setBalance(userBalance);
+
             } catch (error) {
                 console.error("Failed to load user wallet data:", error);
             } finally {
                 setIsLoading(false);
             }
+        } else {
+            setIsLoading(false);
         }
     }
     loadUserData();

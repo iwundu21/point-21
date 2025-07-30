@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, getLeaderboardUsers, getSocialTasks, UserData } from '@/lib/database';
+import { getUserData, saveUserData, getLeaderboardUsers, UserData } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan } from 'lucide-react';
@@ -70,6 +70,7 @@ export default function Home({}: {}) {
   const { toast } = useToast();
 
   const handleInitializeUser = useCallback(async (telegramUser: TelegramUser, today: string) => {
+    setIsLoading(true);
     try {
         const [freshUserData, { users: leaderboard }] = await Promise.all([
             getUserData(telegramUser),
@@ -85,11 +86,12 @@ export default function Home({}: {}) {
 
         setUser(telegramUser);
         let currentBalance = freshUserData.balance;
+        let streakData = freshUserData.dailyStreak;
+        let shouldSave = false;
         
         const currentUserRank = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
         setRank(currentUserRank !== -1 ? currentUserRank + 1 : null);
         
-        // Set state for sequential tasks
         setHasRedeemedReferral(freshUserData.referralBonusApplied);
         const allWelcomeTasksDone = Object.values(freshUserData.welcomeTasks || {}).every(Boolean);
         setHasCompletedWelcomeTasks(allWelcomeTasksDone);
@@ -100,12 +102,11 @@ export default function Home({}: {}) {
           setIsForgingActive(true);
           setForgingEndTime(freshUserData.forgingEndTime);
         } else if (freshUserData.forgingEndTime) {
-          // If forging session has ended, award points.
           currentBalance += 1000;
           freshUserData.forgingEndTime = null; 
+          shouldSave = true;
         }
 
-        let streakData = freshUserData.dailyStreak;
 
         if (streakData.lastLogin !== today) {
           const yesterday = new Date();
@@ -118,15 +119,22 @@ export default function Home({}: {}) {
           }
           
           currentBalance += 200; // Award points for daily login
-          const newStreak = { count: newStreakCount, lastLogin: today };
+          streakData = { count: newStreakCount, lastLogin: today };
           setDailyStreak(newStreakCount);
-          // Only save when streak is updated to prevent multiple writes
-          await saveUserData(telegramUser, { balance: currentBalance, dailyStreak: newStreak });
+          shouldSave = true;
         } else {
           setDailyStreak(streakData.count);
         }
         
         setBalance(currentBalance);
+        
+        if (shouldSave) {
+          await saveUserData(telegramUser, { 
+            balance: currentBalance, 
+            dailyStreak: streakData, 
+            forgingEndTime: freshUserData.forgingEndTime 
+          });
+        }
 
     } catch (error) {
         console.error("Initialization failed:", error);
@@ -152,11 +160,9 @@ export default function Home({}: {}) {
       }
       
       if (telegramUser) {
-        // Use client's local date. 'en-CA' gives YYYY-MM-DD format.
         const today = new Date().toLocaleDateString('en-CA');
         handleInitializeUser(telegramUser, today);
       } else {
-        // Fallback for development should not create a user
         setIsLoading(false);
       }
     };
@@ -194,10 +200,9 @@ export default function Home({}: {}) {
 
     setIsActivating(true);
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
-    if (user && userData) {
-        const updatedData = { ...userData, forgingEndTime: endTime };
-        await saveUserData(user, updatedData);
-        setUserData(updatedData);
+    if (user) {
+        await saveUserData(user, { forgingEndTime: endTime });
+        setUserData(prev => prev ? {...prev, forgingEndTime: endTime} : null);
     }
     setTimeout(() => {
         setIsForgingActive(true);
@@ -211,17 +216,30 @@ export default function Home({}: {}) {
     setBalance(newBalance);
     setIsForgingActive(false);
     setForgingEndTime(null);
-    if(user && userData){
-        const updatedData = { ...userData, balance: newBalance, forgingEndTime: null };
-        await saveUserData(user, updatedData);
-        setUserData(updatedData);
+    if(user){
+        await saveUserData(user, { balance: newBalance, forgingEndTime: null });
+        setUserData(prev => prev ? {...prev, balance: newBalance, forgingEndTime: null} : null);
     }
     setShowPointsAnimation(true);
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
   if (isLoading) {
-    return null; // Render nothing while loading
+    return null; 
+  }
+  
+  if (!user) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+            <Alert variant="destructive" className="max-w-sm">
+                <ShieldBan className="h-5 w-5" />
+                <AlertTitle>Access Denied</AlertTitle>
+                <AlertDescription>
+                   This application is only accessible via Telegram.
+                </AlertDescription>
+            </Alert>
+        </div>
+    );
   }
 
   if (userData?.status === 'banned') {
@@ -252,20 +270,6 @@ export default function Home({}: {}) {
             </div>
         </div>
       </div>
-    );
-  }
-
-  if (!user) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-            <Alert variant="destructive" className="max-w-sm">
-                <ShieldBan className="h-5 w-5" />
-                <AlertTitle>Access Denied</AlertTitle>
-                <AlertDescription>
-                   This application is only accessible via Telegram.
-                </AlertDescription>
-            </Alert>
-        </div>
     );
   }
 
@@ -305,5 +309,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    

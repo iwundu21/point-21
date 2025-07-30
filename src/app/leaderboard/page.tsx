@@ -62,25 +62,26 @@ export default function LeaderboardPage() {
           
           if (telegramUser) {
               setCurrentUser(telegramUser);
-              fetchLeaderboard();
-          } else {
-            setIsLoading(false); // No user, stop loading
           }
+          // No need to setIsLoading(false) here, fetchLeaderboard will do it.
         };
         init();
     }, []);
     
-    const fetchLeaderboard = async () => {
-        setIsLoading(true);
-        try {
-            const { users } = await getLeaderboardUsers();
-            setLeaderboard(users);
-        } catch (error) {
-            console.error("Failed to fetch leaderboard:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            setIsLoading(true);
+            try {
+                const { users } = await getLeaderboardUsers();
+                setLeaderboard(users);
+            } catch (error) {
+                console.error("Failed to fetch leaderboard:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchLeaderboard();
+    }, []);
     
     const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
     const paginatedUsers = leaderboard.slice(

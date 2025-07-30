@@ -77,6 +77,8 @@ export default function ReferralPage({}: ReferralPageProps) {
             } finally {
                 setIsLoading(false);
             }
+        } else {
+          setIsLoading(false);
         }
     }
     loadUserData();

@@ -482,18 +482,14 @@ export default function AdminPage() {
               setCurrentUser(telegramUser);
               if (ADMIN_IDS.includes(telegramUser.id)) {
                 setIsAdmin(true);
-              } else {
-                setIsLoading(false);
               }
-          } else {
-             setIsLoading(false);
           }
+          setIsLoading(false);
         };
         init();
     }, []);
     
     const fetchAdminData = async () => {
-        if (!isAdmin && !codeAuthenticated) return;
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
@@ -515,8 +511,6 @@ export default function AdminPage() {
     useEffect(() => {
       if(isAdmin || codeAuthenticated) {
         fetchAdminData();
-      } else {
-        setIsLoading(false);
       }
     }, [isAdmin, codeAuthenticated]);
     
@@ -581,7 +575,6 @@ export default function AdminPage() {
     const handleCodeSubmit = () => {
         if (accessCode === ADMIN_ACCESS_CODE) {
             setCodeAuthenticated(true);
-            setIsLoading(true);
         } else {
             toast({
                 variant: 'destructive',
@@ -626,7 +619,11 @@ export default function AdminPage() {
         document.body.removeChild(link);
     };
 
-    if (!isAdmin && !codeAuthenticated && !isLoading) {
+    if (isLoading) {
+        return null;
+    }
+
+    if (!isAdmin && !codeAuthenticated) {
         return (
              <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
                 <Card className="max-w-sm w-full">
@@ -654,161 +651,159 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <main className="flex-grow flex flex-col p-4 mt-8 relative">
-           {isLoading ? null : (
-            <div className="w-full max-w-6xl mx-auto space-y-6">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Shield className="w-8 h-8 text-primary" />
-                        Admin Dashboard
-                    </h1>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                        <Users className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{allUsers.length.toLocaleString()}</div>
-                    </CardContent>
-                </Card>
-                    <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
-                        <Star className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                            <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
-                    </CardContent>
-                </Card>
-                    <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
-                            <Coins className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                            <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
-                    </CardContent>
-                </Card>
-                </div>
-
-                <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle>Social Task Management</CardTitle>
-                        <AddTaskDialog onTaskAdded={fetchAdminData} />
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {isLoadingTasks ? (
-                        <div className="flex justify-center items-center h-24">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Icon</TableHead>
-                                        <TableHead>Title</TableHead>
-                                        <TableHead>Points</TableHead>
-                                        <TableHead>Link</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {socialTasks.map((task) => (
-                                        <TableRow key={task.id}>
-                                            <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
-                                            <TableCell className="font-medium">{task.title}</TableCell>
-                                            <TableCell className="text-gold">{task.points}</TableCell>
-                                            <TableCell>
-                                                <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
-                                                    {task.link}
-                                                </a>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>This will permanently delete this social task.</AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteTask(task.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete Task</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
-                </CardContent>
-                </Card>
-
-                <Card>
-                <CardHeader>
-                    <CardTitle>User Management</CardTitle>
-                    <CardDescription>
-                        Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center gap-2 py-4">
-                        <div className="relative flex-grow">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Search by ID, Wallet, Username or First Name..."
-                                className="pl-9 w-full"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
-                            <Download className="mr-2 h-4 w-4" />
-                            Export Airdrop List
-                        </Button>
-                    </div>
-                    <Tabs defaultValue="active">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="active">Active ({activeUsers.length})</TabsTrigger>
-                            <TabsTrigger value="banned">Banned ({bannedUsers.length})</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="active" className="mt-4">
-                            <UserTable
-                                users={activeUsers}
-                                onUpdateStatus={handleUpdateStatus}
-                                onDeleteUser={handleDeleteUser}
-                                onCopy={handleCopy}
-                                totalPoints={totalPoints}
-                                onBalanceUpdated={handleBalanceUpdated}
-                                onWalletUpdated={handleWalletUpdated}
-                            />
-                        </TabsContent>
-                        <TabsContent value="banned" className="mt-4">
-                            <UserTable
-                                users={bannedUsers}
-                                onUpdateStatus={handleUpdateStatus}
-                                onDeleteUser={handleDeleteUser}
-                                onCopy={handleCopy}
-                                totalPoints={totalPoints}
-                                onBalanceUpdated={handleBalanceUpdated}
-                                onWalletUpdated={handleWalletUpdated}
-                            />
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
-                </Card>
+        <div className="w-full max-w-6xl mx-auto space-y-6">
+            <div className="text-center">
+                <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <Shield className="w-8 h-8 text-primary" />
+                    Admin Dashboard
+                </h1>
             </div>
-           )}
+
+            <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                    <Users className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{allUsers.length.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+                <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
+                    <Star className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                        <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+                <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
+                        <Coins className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                        <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+            </div>
+
+            <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle>Social Task Management</CardTitle>
+                    <AddTaskDialog onTaskAdded={fetchAdminData} />
+                </div>
+            </CardHeader>
+            <CardContent>
+                {isLoadingTasks ? (
+                    <div className="flex justify-center items-center h-24">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Icon</TableHead>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Points</TableHead>
+                                    <TableHead>Link</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {socialTasks.map((task) => (
+                                    <TableRow key={task.id}>
+                                        <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
+                                        <TableCell className="font-medium">{task.title}</TableCell>
+                                        <TableCell className="text-gold">{task.points}</TableCell>
+                                        <TableCell>
+                                            <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
+                                                {task.link}
+                                            </a>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>This will permanently delete this social task.</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeleteTask(task.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete Task</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </CardContent>
+            </Card>
+
+            <Card>
+            <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>
+                    Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-2 py-4">
+                    <div className="relative flex-grow">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search by ID, Wallet, Username or First Name..."
+                            className="pl-9 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
+                        <Download className="mr-2 h-4 w-4" />
+                        Export Airdrop List
+                    </Button>
+                </div>
+                <Tabs defaultValue="active">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="active">Active ({activeUsers.length})</TabsTrigger>
+                        <TabsTrigger value="banned">Banned ({bannedUsers.length})</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="active" className="mt-4">
+                        <UserTable
+                            users={activeUsers}
+                            onUpdateStatus={handleUpdateStatus}
+                            onDeleteUser={handleDeleteUser}
+                            onCopy={handleCopy}
+                            totalPoints={totalPoints}
+                            onBalanceUpdated={handleBalanceUpdated}
+                            onWalletUpdated={handleWalletUpdated}
+                        />
+                    </TabsContent>
+                    <TabsContent value="banned" className="mt-4">
+                        <UserTable
+                            users={bannedUsers}
+                            onUpdateStatus={handleUpdateStatus}
+                            onDeleteUser={handleDeleteUser}
+                            onCopy={handleCopy}
+                            totalPoints={totalPoints}
+                            onBalanceUpdated={handleBalanceUpdated}
+                            onWalletUpdated={handleWalletUpdated}
+                        />
+                    </TabsContent>
+                </Tabs>
+            </CardContent>
+            </Card>
+        </div>
       </main>
     </div>
   );

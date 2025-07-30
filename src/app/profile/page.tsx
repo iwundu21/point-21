@@ -64,7 +64,6 @@ export default function ProfilePage({}: ProfilePageProps) {
       if (telegramUser) {
         setUser(telegramUser);
       } else {
-        // Fallback for development
         const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
         setUser(mockUser);
       }
@@ -84,6 +83,8 @@ export default function ProfilePage({}: ProfilePageProps) {
             } finally {
                 setIsLoading(false);
             }
+        } else {
+           setIsLoading(false);
         }
     };
     loadStatus();
