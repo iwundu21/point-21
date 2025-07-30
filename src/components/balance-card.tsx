@@ -13,7 +13,7 @@ interface BalanceCardProps {
 
 const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
   return (
-    <Card className="w-full bg-transparent backdrop-blur-sm border-0 shadow-none rounded-none">
+    <Card className="w-full">
       <CardHeader className="p-2">
         <CardTitle className="text-center text-muted-foreground font-normal text-sm">E-point</CardTitle>
       </CardHeader>
@@ -36,5 +36,3 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
 };
 
 export default BalanceCard;
-
-    

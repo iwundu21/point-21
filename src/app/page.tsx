@@ -282,10 +282,13 @@ export default function Home({}: {}) {
            />
            <MiningStatusIndicator isActive={isForgingActive} />
          </div>
-        <BalanceCard balance={balance} animating={showPointsAnimation} />
       </header>
       
       <main className="flex flex-col items-center justify-start flex-grow pb-24">
+        <div className="w-full max-w-sm px-4">
+          <BalanceCard balance={balance} animating={showPointsAnimation} />
+        </div>
+        
         <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
           <MiningCircle 
             isActive={isForgingActive}
