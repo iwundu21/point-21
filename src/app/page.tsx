@@ -228,18 +228,32 @@ export default function Home({}: {}) {
   
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 space-y-8">
-        <div className="w-full max-w-sm space-y-4">
-          <Skeleton className="w-full h-24 rounded-lg" />
-          <Skeleton className="w-full h-24 rounded-lg" />
-        </div>
-        <div className="flex flex-col items-center space-y-4">
-          <Skeleton className="w-64 h-64 rounded-full" />
-          <Skeleton className="w-48 h-6" />
-        </div>
-        <div className="w-full max-w-sm space-y-4">
-           <Skeleton className="w-full h-48 rounded-lg" />
-        </div>
+      <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4">
+           <div className="flex justify-between items-start">
+              <div className="w-full p-4">
+                <div className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[150px]" />
+                  </div>
+                </div>
+              </div>
+              <Skeleton className="h-6 w-24 mt-4 mr-4" />
+           </div>
+           <Skeleton className="w-full h-20" />
+        </header>
+        <main className="flex flex-col items-center justify-start flex-grow pb-24">
+            <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
+               <Skeleton className="w-64 h-64 rounded-full" />
+               <Skeleton className="w-48 h-6" />
+            </div>
+            <Separator className="w-full max-w-sm my-4 bg-primary/10" />
+            <div className="w-full max-w-sm">
+                <Skeleton className="w-full h-48 rounded-lg" />
+            </div>
+        </main>
+        <Footer />
       </div>
     );
   }
