@@ -403,7 +403,7 @@ const UserTable = ({
                                 </TableCell>
                                 <TableCell className="text-right space-x-2">
                                     {user.status === 'active' ? (
-                                        <Button variant="destructive" size="icon" onClick={() => onUpdateStatus(user, 'banned', 'This account has been suspended by an administrator.')}><UserX className="h-4 w-4"/></Button>
+                                        <Button variant="destructive" size="icon" onClick={() => onUpdateStatus(user, 'banned', 'Your account is blocked. If you think this is a mistake, please contact support.')}><UserX className="h-4 w-4"/></Button>
                                     ) : (
                                         <Button variant="secondary" size="icon" onClick={() => onUpdateStatus(user, 'active')}><UserCheck className="h-4 w-4"/></Button>
                                     )}
@@ -620,10 +620,6 @@ export default function AdminPage() {
         document.body.removeChild(link);
     };
 
-    if (isLoading) {
-        return null;
-    }
-
     if (!isAdmin && !codeAuthenticated) {
         return (
              <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -652,6 +648,7 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <main className="flex-grow flex flex-col p-4 mt-8 relative">
+        {isLoading ? null : (
         <div className="w-full max-w-6xl mx-auto space-y-6">
             <div className="text-center">
                 <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
@@ -805,6 +802,7 @@ export default function AdminPage() {
             </CardContent>
             </Card>
         </div>
+        )}
       </main>
     </div>
   );
