@@ -53,6 +53,7 @@ const faceVerificationFlow = ai.defineFlow(
         isUnique: false,
         reason: detectionResult.reason || 'Not a real human face.',
         faceVerificationUri: input.photoDataUri,
+        faceFingerprint: null,
       };
     }
 
@@ -64,6 +65,7 @@ const faceVerificationFlow = ai.defineFlow(
             isUnique: false,
             reason: "This account has already been verified.",
             faceVerificationUri: currentUserData.faceVerificationUri || input.photoDataUri,
+            faceFingerprint: currentUserData.faceFingerprint,
         };
     }
 
@@ -77,10 +79,11 @@ const faceVerificationFlow = ai.defineFlow(
             isUnique: false,
             reason: 'This face is already associated with another account. This account has been blocked.',
             faceVerificationUri: input.photoDataUri,
+            faceFingerprint: detectionResult.faceFingerprint,
         };
     }
     
-    // If we are here, the face is considered unique.
+    // If we are here, the face is considered unique. The UI will handle saving the verified status and fingerprint.
     return {
         isHuman: true,
         isUnique: true,

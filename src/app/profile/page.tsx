@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -148,7 +149,8 @@ export default function ProfilePage({}: ProfilePageProps) {
           if (result.isHuman && result.isUnique) {
             setVerificationSuccess(true);
             setAccountStatus('verified');
-            await saveVerificationStatus(user, 'verified', imageSrc, result.faceFingerprint);
+            // This is the key change: save all data after successful verification
+            await saveVerificationStatus(user, 'verified', result.faceVerificationUri, result.faceFingerprint);
              toast({
               title: 'Verification Successful',
               description: 'Your account has been verified.',
@@ -156,7 +158,7 @@ export default function ProfilePage({}: ProfilePageProps) {
           } else {
             setAccountStatus('failed');
             setFailureReason(result.reason || 'Verification failed. Please try again.');
-            await saveVerificationStatus(user, 'failed');
+            await saveVerificationStatus(user, 'failed'); // Still save the failed status
           }
         } catch (error) {
            console.error('Verification error:', error);
