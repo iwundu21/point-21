@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -332,6 +332,7 @@ const UserTable = ({
                             <TableHead>User</TableHead>
                             <TableHead>Photo</TableHead>
                             <TableHead>Wallet</TableHead>
+                            <TableHead>Last IP</TableHead>
                             <TableHead>Balance</TableHead>
                             <TableHead>Referrals</TableHead>
                             <TableHead>Airdrop Allocation</TableHead>
@@ -385,6 +386,12 @@ const UserTable = ({
                                             <EditWalletDialog user={user} onWalletUpdated={onWalletUpdated} />
                                         </div>
                                     )}
+                                </TableCell>
+                                <TableCell>
+                                     <div className="flex items-center gap-1 font-mono text-xs">
+                                        <Server className="w-4 h-4 text-muted-foreground" />
+                                        <span>{user.ipAddress || 'N/A'}</span>
+                                    </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
@@ -540,7 +547,8 @@ export default function AdminPage() {
             const walletAddress = user.walletAddress?.toLowerCase() || '';
             const username = user.telegramUser?.username?.toLowerCase() || '';
             const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
-            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
+            const ipAddress = user.ipAddress?.toLowerCase() || '';
+            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term) || ipAddress.includes(term);
         });
     }, [allUsers, searchTerm]);
     
@@ -782,7 +790,7 @@ export default function AdminPage() {
                     <div className="relative flex-grow">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="Search by ID, Wallet, Username or First Name..."
+                            placeholder="Search by ID, Wallet, Username, First Name, or IP..."
                             className="pl-9 w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -829,5 +837,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

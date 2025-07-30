@@ -55,6 +55,7 @@ export interface UserData {
     completedSocialTasks: string[]; // Array of completed task IDs
     status: 'active' | 'banned';
     banReason?: string;
+    ipAddress?: string;
 }
 
 const generateReferralCode = () => {
@@ -94,6 +95,7 @@ const defaultUserData = (telegramUser: TelegramUser | null): Omit<UserData, 'id'
     },
     completedSocialTasks: [],
     status: 'active',
+    ipAddress: 'N/A',
 });
 
 export const getUserData = async (telegramUser: TelegramUser | null): Promise<UserData> => {
@@ -111,10 +113,11 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
         }
         return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id };
     } else {
-        const newUser: Omit<UserData, 'id'> = {
+        const newUser: Omit<UserData, 'id'> => ({
             ...defaultUserData(telegramUser),
-            referralCode: generateReferralCode() // Generate code on creation
-        };
+            referralCode: generateReferralCode(), // Generate code on creation
+            ipAddress: 'N/A', // Placeholder
+        });
         await setDoc(userRef, newUser);
         return { ...newUser, id: userId };
     }
