@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 @layer base {
@@ -43,25 +43,25 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 240 24% 9%; /* Dark Navy Blue */
-    --foreground: 240 25% 95%; /* Off-white */
-    --card: 240 24% 12%;
-    --card-foreground: 240 25% 95%;
-    --popover: 240 24% 9%;
-    --popover-foreground: 240 25% 95%;
-    --primary: 199 89% 72%; /* Light Sky Blue */
-    --primary-foreground: 240 24% 9%;
-    --secondary: 240 24% 15%;
-    --secondary-foreground: 240 25% 95%;
-    --muted: 240 24% 15%;
-    --muted-foreground: 240 25% 75%;
-    --accent: 199 89% 72%; /* Light Sky Blue */
-    --accent-foreground: 240 24% 9%;
+    --background: 225 73% 15%; /* Dark Navy Blue */
+    --foreground: 48 83% 97%; /* Off-white */
+    --card: 225 73% 18%;
+    --card-foreground: 48 83% 97%;
+    --popover: 225 73% 15%;
+    --popover-foreground: 48 83% 97%;
+    --primary: 197 71% 73%; /* Light Sky Blue */
+    --primary-foreground: 225 73% 15%;
+    --secondary: 225 73% 20%;
+    --secondary-foreground: 48 83% 97%;
+    --muted: 225 73% 20%;
+    --muted-foreground: 48 83% 85%;
+    --accent: 48 83% 97%; /* Off-white for accents */
+    --accent-foreground: 225 73% 15%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 240 24% 20%;
-    --input: 240 24% 20%;
-    --ring: 199 89% 72%;
+    --border: 225 73% 25%;
+    --input: 225 73% 25%;
+    --ring: 197 71% 73%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;

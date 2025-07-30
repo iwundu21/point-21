@@ -79,7 +79,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
   };
 
   const handleClick = () => {
-    if (isActivating) return;
+    if (isActivating || isActive) return;
 
     if (!hasRedeemedReferral) {
         router.push('/referral');
@@ -99,7 +99,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
 
   const getButtonState = () => {
     if (isActivating) return { disabled: true, text: 'Activating...', icon: <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-spin" />, className: 'border-primary/30' };
-    if (isActive) return { disabled: true, text: 'Mining Active', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-primary" />, className: 'shadow-primary/20 border-primary/50' };
+    if (isActive) return { disabled: true, text: 'Mining Active', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-fast-pulse" />, className: 'shadow-primary/20 border-primary/50' };
 
     if (!hasRedeemedReferral) {
       return { disabled: false, text: 'Redeem Code', icon: <Handshake className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
@@ -110,7 +110,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
     if (!isVerified) {
       return { disabled: false, text: 'Verification Needed', icon: <ShieldAlert className="w-12 h-12 sm:w-16 sm:h-16 text-destructive" />, className: 'border-destructive/50' };
     }
-    return { disabled: false, text: 'Activate Mining', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400/70" />, className: 'border-yellow-400/50 hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105 animate-fast-pulse' };
+    return { disabled: false, text: 'Activate Mining', icon: <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400/70" />, className: 'border-yellow-400/50 hover:bg-yellow-400/10 hover:border-yellow-400 hover:scale-105' };
   };
 
   const getHelperText = () => {
