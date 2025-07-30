@@ -394,7 +394,7 @@ const UserTable = ({
                                 <TableCell>
                                     {user.walletAddress ? (
                                         <div className="flex items-center gap-1 font-mono text-xs">
-                                            <Wallet className="w-4 h-4 mr-1 text-muted-foreground" />
+                                            <Wallet className="w-4 h-4 mr-1 text-primary" />
                                             <span className="truncate max-w-[100px]">{user.walletAddress}</span>
                                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onCopy(user.walletAddress as string)}>
                                                 <Copy className="h-3 w-3" />
@@ -410,13 +410,13 @@ const UserTable = ({
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
-                                        <span className="text-muted-foreground font-bold">{user.balance.toLocaleString()}</span>
+                                        <span className="text-gray-400 font-bold">{user.balance.toLocaleString()}</span>
                                         <EditBalanceDialog user={user} onBalanceUpdated={onBalanceUpdated} />
                                     </div>
                                 </TableCell>
                                 <TableCell>{user.referrals}</TableCell>
                                 <TableCell>
-                                  <div className="flex items-center gap-1 text-muted-foreground">
+                                  <div className="flex items-center gap-1 text-gray-400">
                                       <Coins className="w-4 h-4" />
                                       {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                   </div>
@@ -705,7 +705,7 @@ export default function AdminPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <Users className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-24" /> : allUsers.length.toLocaleString()}</div>
@@ -714,16 +714,16 @@ export default function AdminPage() {
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
-                        <Star className="h-4 w-4 text-muted-foreground" />
+                        <Star className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                         <div className="text-2xl font-bold text-muted-foreground">{isLoading ? <Skeleton className="h-8 w-32" /> : totalPoints.toLocaleString()}</div>
+                         <div className="text-2xl font-bold text-gray-400">{isLoading ? <Skeleton className="h-8 w-32" /> : totalPoints.toLocaleString()}</div>
                     </CardContent>
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
-                         <Coins className="h-4 w-4 text-muted-foreground" />
+                         <Coins className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
                          <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
@@ -758,7 +758,7 @@ export default function AdminPage() {
                                        <TableRow key={task.id}>
                                            <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
                                            <TableCell className="font-medium">{task.title}</TableCell>
-                                           <TableCell className="text-muted-foreground">{task.points}</TableCell>
+                                           <TableCell className="text-gray-400">{task.points}</TableCell>
                                            <TableCell>
                                                <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
                                                    {task.link}
@@ -850,5 +850,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

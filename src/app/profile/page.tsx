@@ -265,7 +265,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                     </h2>
                   ) : (
                     <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Camera className="w-8 h-8" /> System Verification
+                        <Camera className="w-8 h-8 text-primary" /> System Verification
                     </h2>
                   )}
                 </div>
@@ -365,7 +365,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                     </h2>
                   ) : (
                     <h2 className="text-xl font-bold flex items-center justify-center gap-2">
-                        <Camera className="w-6 h-6" /> System Verification
+                        <Camera className="w-6 h-6 text-primary" /> System Verification
                     </h2>
                   )}
                 </div>

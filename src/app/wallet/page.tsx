@@ -152,7 +152,7 @@ export default function WalletPage({}: WalletPageProps) {
              <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <WalletIcon className="w-8 h-8" />
+                        <WalletIcon className="w-8 h-8 text-primary" />
                         Wallet
                     </h1>
                 </div>
@@ -163,8 +163,8 @@ export default function WalletPage({}: WalletPageProps) {
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                         <div className="flex items-center space-x-2">
-                            <Coins className="w-6 h-6 text-muted-foreground" />
-                            <span className="text-2xl font-bold text-muted-foreground">{balance.toLocaleString()} E-points</span>
+                            <Coins className="w-6 h-6 text-primary" />
+                            <span className="text-2xl font-bold text-gray-400">{balance.toLocaleString()} E-points</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -219,7 +219,7 @@ export default function WalletPage({}: WalletPageProps) {
                               <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                                   <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
                                   <div className="flex items-center space-x-2">
-                                      <WalletIcon className="w-5 h-5 text-muted-foreground" />
+                                      <WalletIcon className="w-5 h-5 text-primary" />
                                       <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
                                   </div>
                               </div>
@@ -242,5 +242,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
-    

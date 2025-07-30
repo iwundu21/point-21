@@ -179,7 +179,7 @@ export default function WelcomeTasksPage() {
                     <div className="w-full max-w-sm mx-auto space-y-8">
                         <div className="text-center space-y-2">
                             <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                                <Gift className="w-8 h-8" />
+                                <Gift className="w-8 h-8 text-primary" />
                                 Welcome Tasks
                             </h1>
                             <p className="text-sm text-muted-foreground">

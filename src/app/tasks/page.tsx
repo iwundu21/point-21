@@ -215,7 +215,7 @@ export default function TasksPage() {
              <div className="w-full max-w-sm mx-auto space-y-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Users className="w-8 h-8" />
+                        <Users className="w-8 h-8 text-primary" />
                         Social Engagement
                     </h1>
                      <p className="text-sm text-muted-foreground pt-2">
@@ -322,5 +322,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
-    

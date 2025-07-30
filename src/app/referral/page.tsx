@@ -155,7 +155,7 @@ export default function ReferralPage({}: ReferralPageProps) {
              <div className="w-full max-w-sm mx-auto space-y-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Gift className="w-8 h-8" />
+                        <Gift className="w-8 h-8 text-primary" />
                         Referral Program
                     </h1>
                 </div>
@@ -165,7 +165,7 @@ export default function ReferralPage({}: ReferralPageProps) {
                     <div className="space-y-4 text-center">
                         <h2 className="text-xl font-semibold">Have a referral code?</h2>
                         <p className="text-sm text-muted-foreground">
-                            Enter the code from your friend to get a <strong className="text-muted-foreground">50 E-point</strong> bonus.
+                            Enter the code from your friend to get a <strong className="text-gray-400">50 E-point</strong> bonus.
                         </p>
                         <div className="flex w-full max-w-sm items-center space-x-2">
                            <Input
@@ -194,7 +194,7 @@ export default function ReferralPage({}: ReferralPageProps) {
                 <div className="space-y-4 text-center">
                   <h2 className="text-xl font-semibold">Invite Friends, Earn E-points</h2>
                   <p className="text-sm text-muted-foreground">
-                    Share your unique referral code with friends. When they sign up, you'll earn <strong className="text-muted-foreground">200 E-points</strong>, and they'll get a <strong className="text-muted-foreground">50 E-point</strong> head start! It's a win-win.
+                    Share your unique referral code with friends. When they sign up, you'll earn <strong className="text-gray-400">200 E-points</strong>, and they'll get a <strong className="text-gray-400">50 E-point</strong> head start! It's a win-win.
                   </p>
                   <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center cursor-pointer" onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')}>
                       <p className="text-xs text-primary/80 mb-1">Your Unique Code</p>
@@ -230,7 +230,7 @@ export default function ReferralPage({}: ReferralPageProps) {
                    </div>
                    <div className="flex justify-between items-center p-4 bg-primary/5 rounded-lg">
                        <span className="text-muted-foreground">Bonus Earned:</span>
-                       <span className="font-bold text-xl text-muted-foreground">{(friendsReferred * 200).toLocaleString()} E-points</span>
+                       <span className="font-bold text-xl text-gray-400">{(friendsReferred * 200).toLocaleString()} E-points</span>
                    </div>
                  </div>
             </div>
@@ -240,5 +240,3 @@ export default function ReferralPage({}: ReferralPageProps) {
     </div>
   );
 }
-
-    
