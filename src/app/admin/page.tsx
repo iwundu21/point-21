@@ -373,7 +373,7 @@ const UserTable = ({
                                 <TableCell>
                                     {user.walletAddress ? (
                                         <div className="flex items-center gap-1 font-mono text-xs">
-                                            <Wallet className="w-4 h-4 mr-1 text-primary" />
+                                            <Wallet className="w-4 h-4 text-primary" />
                                             <span className="truncate max-w-[100px]">{user.walletAddress}</span>
                                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onCopy(user.walletAddress as string)}>
                                                 <Copy className="h-3 w-3" />
@@ -499,14 +499,15 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [{ users: newUsers }, tasks] = await Promise.all([
+            const [usersResponse, tasks] = await Promise.all([
                 getAllUsers(),
                 getSocialTasks()
             ]);
-            setAllUsers(newUsers);
+            setAllUsers(usersResponse.users);
             setSocialTasks(tasks);
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch admin data.' });
         } finally {
             setIsLoading(false);
             setIsLoadingTasks(false);
@@ -519,7 +520,7 @@ export default function AdminPage() {
       } else {
         setIsLoading(false);
       }
-    }, [isAdmin, codeAuthenticated, toast]);
+    }, [isAdmin, codeAuthenticated]);
     
     const filteredUsers = useMemo(() => {
         if (!searchTerm) return allUsers;

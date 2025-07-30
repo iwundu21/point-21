@@ -64,6 +64,7 @@ export default function LeaderboardPage() {
           
           if (telegramUser) {
               setCurrentUser(telegramUser);
+              fetchLeaderboard();
           } else {
             setIsLoading(false); // No user, stop loading
           }
@@ -82,12 +83,6 @@ export default function LeaderboardPage() {
             setIsLoading(false);
         }
     };
-    
-    useEffect(() => {
-      if (currentUser) {
-        fetchLeaderboard();
-      }
-    }, [currentUser]);
     
     const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
     const paginatedUsers = leaderboard.slice(
