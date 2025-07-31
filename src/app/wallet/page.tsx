@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
 import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 
@@ -190,7 +191,7 @@ export default function WalletPage({}: WalletPageProps) {
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
                                       This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
-                                      <p className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</p>
+                                      <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -219,9 +220,9 @@ export default function WalletPage({}: WalletPageProps) {
                      <Alert variant="destructive" className="mt-12">
                         <AlertTriangle className="h-4 w-4" />
                         <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
-                        <AlertDescription>
+                        <AlertBoxDescription>
                         Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
-                        </AlertDescription>
+                        </AlertBoxDescription>
                     </Alert>
                 </div>
             </div>
