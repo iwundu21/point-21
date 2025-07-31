@@ -42,6 +42,11 @@ interface TelegramUser {
 
 interface WalletPageProps {}
 
+const isValidSolanaAddress = (address: string): boolean => {
+    const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    return solanaAddressRegex.test(address);
+};
+
 export default function WalletPage({}: WalletPageProps) {
   const [walletAddress, setWalletAddress] = useState('');
   const [savedAddress, setSavedAddress] = useState('');
@@ -102,11 +107,6 @@ export default function WalletPage({}: WalletPageProps) {
     }
     loadUserData();
   }, [user]);
-
-  const isValidSolanaAddress = (address: string): boolean => {
-    const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-    return solanaAddressRegex.test(address);
-  };
 
   const handleSaveAddress = async () => {
     if (!isVerified) {
@@ -208,8 +208,8 @@ export default function WalletPage({}: WalletPageProps) {
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
                                       This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
-                                      <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
                                     </AlertDialogDescription>
+                                    <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -250,5 +250,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
-    
