@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
-import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress } from '@/lib/database';
+import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress, findUserByWalletAddress } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 
 declare global {
@@ -115,9 +116,20 @@ export default function WalletPage({}: WalletPageProps) {
     
     const trimmedAddress = walletAddress.trim();
 
-    // The validation logic remains, but we wrap the core logic in a timeout
     if (trimmedAddress && user) {
         try {
+            // Check for wallet uniqueness before saving
+            const existingUser = await findUserByWalletAddress(trimmedAddress);
+            if (existingUser && existingUser.id !== `user_${user.id}`) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Wallet Address In Use',
+                    description: 'This Solana wallet is already registered to another account.',
+                });
+                setIsSaving(false);
+                return;
+            }
+
             await saveWalletAddress(user, trimmedAddress);
 
             setTimeout(() => {
@@ -140,7 +152,6 @@ export default function WalletPage({}: WalletPageProps) {
             setIsSaving(false);
         }
     } else {
-        // This case handles if the user somehow manages to click save with an empty address
         toast({
             variant: 'destructive',
             title: 'Invalid Address',
@@ -281,3 +292,5 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
+
+    

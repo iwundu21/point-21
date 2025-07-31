@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -137,6 +138,17 @@ export const findUserByReferralCode = async (code: string): Promise<UserData | n
     }
     return null;
 }
+
+export const findUserByWalletAddress = async (address: string): Promise<UserData | null> => {
+    if (!address) return null;
+    const q = query(collection(db, 'users'), where('walletAddress', '==', address.trim()), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
+    }
+    return null;
+};
 
 export const findUserByFaceFingerprint = async (fingerprint: string): Promise<UserData | null> => {
     if (!fingerprint) return null;
@@ -306,3 +318,5 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
+
+    

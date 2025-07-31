@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,14 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
 
         setIsSaving(true);
         try {
+            // Check if wallet is already used by another user
+            const existingUser = await findUserByWalletAddress(trimmedAddress);
+            if(existingUser && existingUser.id !== user.id){
+                toast({ variant: 'destructive', title: 'Wallet In Use', description: 'This wallet is already registered to another user.' });
+                setIsSaving(false);
+                return;
+            }
+
             await saveWalletAddress(user.telegramUser, trimmedAddress);
             onWalletUpdated(user.id, trimmedAddress);
             toast({ title: 'Wallet Updated', description: `${user.telegramUser.first_name}'s wallet address has been updated.` });
@@ -840,5 +849,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
