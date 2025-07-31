@@ -103,6 +103,11 @@ export default function WalletPage({}: WalletPageProps) {
     loadUserData();
   }, [user]);
 
+  const isValidSolanaAddress = (address: string): boolean => {
+    const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    return solanaAddressRegex.test(address);
+  };
+
   const handleSaveAddress = async () => {
     if (!isVerified) {
        toast({
@@ -113,9 +118,21 @@ export default function WalletPage({}: WalletPageProps) {
        });
        return;
     }
-    if (walletAddress.trim() && user) {
-      await saveWalletAddress(user, walletAddress);
-      setSavedAddress(walletAddress);
+
+    const trimmedAddress = walletAddress.trim();
+
+    if (!isValidSolanaAddress(trimmedAddress)) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Solana Address',
+            description: 'Please enter a valid Solana wallet address.',
+        });
+        return;
+    }
+    
+    if (trimmedAddress && user) {
+      await saveWalletAddress(user, trimmedAddress);
+      setSavedAddress(trimmedAddress);
       toast({
         title: 'Wallet Address Saved',
         description: 'Your wallet address has been saved successfully.',
@@ -233,3 +250,5 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
+
+    

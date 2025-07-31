@@ -76,6 +76,11 @@ const getInitials = (user: UserData) => {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
 }
 
+const isValidSolanaAddress = (address: string): boolean => {
+    const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    return solanaAddressRegex.test(address);
+};
+
 const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletUpdated: (userId: string, newAddress: string) => void }) => {
     const [newAddress, setNewAddress] = useState(user.walletAddress || '');
     const [isOpen, setIsOpen] = useState(false);
@@ -85,15 +90,21 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
     const handleSubmit = async () => {
         if (!user.telegramUser) return;
         
-        if (!newAddress.trim()) {
+        const trimmedAddress = newAddress.trim();
+        if (!trimmedAddress) {
             toast({ variant: 'destructive', title: 'Invalid Address', description: 'Wallet address cannot be empty.' });
+            return;
+        }
+
+        if (!isValidSolanaAddress(trimmedAddress)) {
+            toast({ variant: 'destructive', title: 'Invalid Solana Address', description: 'Please enter a valid Solana wallet address.' });
             return;
         }
 
         setIsSaving(true);
         try {
-            await saveWalletAddress(user.telegramUser, newAddress.trim());
-            onWalletUpdated(user.id, newAddress.trim());
+            await saveWalletAddress(user.telegramUser, trimmedAddress);
+            onWalletUpdated(user.id, trimmedAddress);
             toast({ title: 'Wallet Updated', description: `${user.telegramUser.first_name}'s wallet address has been updated.` });
             setIsOpen(false);
         } catch (error) {
@@ -616,7 +627,7 @@ export default function AdminPage() {
 
     const handleExportAirdrop = () => {
         const airdropData = allUsers
-            .filter(user => user.walletAddress && user.status === 'active') // Only include active users with a wallet address
+            .filter(user => user.walletAddress && user.status === 'active' && isValidSolanaAddress(user.walletAddress)) // Only include active users with a valid wallet address
             .map(user => {
                 const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
                 return {
@@ -829,3 +840,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
