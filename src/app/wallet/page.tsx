@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, Save, AlertTriangle, Coins } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +56,8 @@ export default function WalletPage({}: WalletPageProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     const init = () => {
@@ -109,7 +111,47 @@ export default function WalletPage({}: WalletPageProps) {
   }, [user]);
 
   const handleSaveAddress = async () => {
-    if (!isVerified) {
+    setIsSaving(true);
+    
+    const trimmedAddress = walletAddress.trim();
+
+    // The validation logic remains, but we wrap the core logic in a timeout
+    if (trimmedAddress && user) {
+        try {
+            await saveWalletAddress(user, trimmedAddress);
+
+            setTimeout(() => {
+                setSavedAddress(trimmedAddress);
+                toast({
+                    title: 'Wallet Address Saved',
+                    description: 'Your wallet address has been saved successfully.',
+                });
+                setIsSaving(false);
+                setIsDialogOpen(false); // Close dialog on success
+            }, 6000);
+
+        } catch (error) {
+            console.error("Error saving wallet address:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not save wallet address.',
+            });
+            setIsSaving(false);
+        }
+    } else {
+        // This case handles if the user somehow manages to click save with an empty address
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Address',
+            description: 'Please enter a valid wallet address.',
+        });
+        setIsSaving(false);
+    }
+  };
+  
+  const handleTriggerClick = () => {
+     if (!isVerified) {
        toast({
         variant: "destructive",
         title: "Verification Required",
@@ -118,9 +160,8 @@ export default function WalletPage({}: WalletPageProps) {
        });
        return;
     }
-
+    
     const trimmedAddress = walletAddress.trim();
-
     if (!isValidSolanaAddress(trimmedAddress)) {
         toast({
             variant: 'destructive',
@@ -130,21 +171,8 @@ export default function WalletPage({}: WalletPageProps) {
         return;
     }
     
-    if (trimmedAddress && user) {
-      await saveWalletAddress(user, trimmedAddress);
-      setSavedAddress(trimmedAddress);
-      toast({
-        title: 'Wallet Address Saved',
-        description: 'Your wallet address has been saved successfully.',
-      });
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Address',
-            description: 'Please enter a valid wallet address.',
-        });
-    }
-  };
+    setIsDialogOpen(true);
+  }
 
   const truncateAddress = (address: string) => {
     if (address.length < 14) return address;
@@ -195,9 +223,9 @@ export default function WalletPage({}: WalletPageProps) {
                                   className="bg-background/80"
                                   disabled={!isVerified}
                               />
-                              <AlertDialog>
+                               <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                 <AlertDialogTrigger asChild>
-                                   <Button disabled={!walletAddress.trim() || !isVerified}>
+                                   <Button onClick={handleTriggerClick} disabled={!walletAddress.trim()}>
                                       <Save className="mr-2 h-4 w-4" /> Save Address
                                    </Button>
                                 </AlertDialogTrigger>
@@ -212,8 +240,11 @@ export default function WalletPage({}: WalletPageProps) {
                                     <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleSaveAddress}>Confirm & Save</AlertDialogAction>
+                                    <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
+                                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                      {isSaving ? 'Saving...' : 'Confirm & Save'}
+                                    </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
