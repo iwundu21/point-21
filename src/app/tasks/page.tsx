@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -120,30 +121,31 @@ export default function TasksPage() {
 
         window.open(linkUrl, '_blank');
         
-        if (isTelegramTask) {
-            try {
-                const result = await verifyTelegramTask({ userId: user.id, chatId: task.link });
-                if (result.isMember) {
-                    // Reward user
-                    const freshUserData = await getUserData(user);
-                    const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
-                    const updatedBalance = freshUserData.balance + task.points;
-                    const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
-                    await saveUserData(user, { completedSocialTasks: updatedCompletedTasks, balance: updatedBalance });
-                    setUserData(updatedData);
-                    toast({ title: "Success!", description: `You've earned ${task.points} E-points.`});
-                } else {
-                    toast({ variant: 'destructive', title: "Verification Failed", description: result.error || "You must join the channel first."});
+        // Give user time to complete the action
+        setTimeout(async () => {
+            if (isTelegramTask) {
+                try {
+                    const result = await verifyTelegramTask({ userId: user.id, chatId: task.link });
+                    if (result.isMember) {
+                        // Reward user
+                        const freshUserData = await getUserData(user);
+                        const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
+                        const updatedBalance = freshUserData.balance + task.points;
+                        const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
+                        await saveUserData(user, { completedSocialTasks: updatedCompletedTasks, balance: updatedBalance });
+                        setUserData(updatedData);
+                        toast({ title: "Success!", description: `You've earned ${task.points} E-points.`});
+                    } else {
+                        toast({ variant: 'destructive', title: "Verification Failed", description: result.error || "You must join the channel first."});
+                    }
+                } catch (e) {
+                    console.error(e);
+                    toast({ variant: 'destructive', title: "Error", description: "Could not verify task completion."});
+                } finally {
+                    setVerifyingTaskId(null);
                 }
-            } catch (e) {
-                console.error(e);
-                toast({ variant: 'destructive', title: "Error", description: "Could not verify task completion."});
-            } finally {
-                setVerifyingTaskId(null);
-            }
-        } else {
-            // Fallback for non-telegram tasks
-            setTimeout(async () => {
+            } else {
+                // Fallback for non-telegram tasks
                 const freshUserData = await getUserData(user);
                 const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
                 const updatedBalance = freshUserData.balance + task.points;
@@ -162,8 +164,8 @@ export default function TasksPage() {
                 setUserData(updatedData);
                 toast({ title: "Success!", description: `You've earned ${task.points} E-points.`});
                 setVerifyingTaskId(null);
-            }, 9000);
-        }
+            }
+        }, 9000);
     };
     
     const availableTasks = allTasks.filter(task => !userData?.completedSocialTasks?.includes(task.id));
