@@ -51,7 +51,7 @@ const faceVerificationFlow = ai.defineFlow(
       return {
         isHuman: false,
         isUnique: false,
-        reason: detectionResult.reason || 'Not a real human face.',
+        reason: detectionResult.reason || 'Not a real human face. Please ensure your face is clear and your eyes are open.',
         faceVerificationUri: input.photoDataUri,
         faceFingerprint: undefined,
       };
@@ -70,20 +70,21 @@ const faceVerificationFlow = ai.defineFlow(
             faceFingerprint: detectionResult.faceFingerprint,
         };
     }
-
-    // Step 3: Check if the current user's account is already verified to prevent re-verification.
+    
+    // Step 3: Check if the current user is already verified to prevent re-verification.
+    // Note: We check this after the duplicate check to catch users trying to verify with a face already used by another account.
     const currentUserData = await getUserData(input.user);
     if (currentUserData.verificationStatus === 'verified') {
         return {
             isHuman: true,
-            isUnique: false,
+            isUnique: false, // Not unique in the sense that this user is already verified.
             reason: "This account has already been verified.",
             faceVerificationUri: currentUserData.faceVerificationUri || input.photoDataUri,
             faceFingerprint: currentUserData.faceFingerprint,
         };
     }
     
-    // If we are here, the face is considered unique. The UI will handle saving the verified status and fingerprint.
+    // If we are here, the face is human and not registered to another user.
     return {
         isHuman: true,
         isUnique: true,

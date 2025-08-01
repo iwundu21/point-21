@@ -107,7 +107,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 setHasCameraPermission(true);
                 setIsCameraActive(true);
-                // The stream is automatically handled by the Webcam component
+                stream.getTracks().forEach(track => track.stop());
             } catch (error) {
                 console.error("Camera access denied:", error);
                 setHasCameraPermission(false);
@@ -236,7 +236,7 @@ export default function ProfilePage({}: ProfilePageProps) {
             </AlertDescription>
             <div className="flex justify-center gap-4 pt-2">
                  <Button onClick={resetVerification} variant="secondary" className="w-full">
-                    Cancel
+                    Try Again
                 </Button>
             </div>
         </div>
@@ -281,6 +281,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                                 ref={webcamRef}
                                 screenshotFormat="image/jpeg"
                                 className="w-full h-full object-cover"
+                                videoConstraints={{ facingMode: "user" }}
                             />
                         </div>
                         <Button onClick={capture} className="w-full max-w-xs">
