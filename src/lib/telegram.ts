@@ -2,6 +2,7 @@
 'use server';
 
 import { z } from 'zod';
+import 'dotenv/config';
 
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
 const API_URL = `https://api.telegram.org/bot${botToken}`;
