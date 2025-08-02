@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -130,20 +131,20 @@ export default function LeaderboardPage() {
                         return (
                             <Card key={user.telegramUser?.id || rank} className={cn("transition-all", currentUser?.id === user.telegramUser?.id && "border-primary ring-2 ring-primary")}>
                                 <CardContent className="p-3 flex items-center space-x-4">
-                                    <div className="flex items-center justify-center w-6">
+                                    <div className="flex-shrink-0 flex items-center justify-center w-6">
                                         {getMedal(rank)}
                                     </div>
-                                    <Avatar className="w-10 h-10">
+                                    <Avatar className="w-10 h-10 flex-shrink-0">
                                         <AvatarImage src={user.telegramUser?.photo_url} />
                                         <AvatarFallback>{getInitials(user)}</AvatarFallback>
                                     </Avatar>
-                                    <div className="flex-grow">
+                                    <div className="flex-grow min-w-0">
                                         <p className="font-semibold truncate">{user.telegramUser?.first_name || 'Anonymous'}</p>
-                                        <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
+                                        <p className="text-xs text-muted-foreground truncate">@{user.telegramUser?.username || 'N/A'}</p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right flex-shrink-0 ml-auto pl-2">
                                         <p className="font-bold text-gold">{user.balance.toLocaleString()}</p>
-                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(rank + 1).name} League</p>
+                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(rank + 1).name}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -181,23 +182,23 @@ export default function LeaderboardPage() {
                             <CardHeader className="p-3">
                                 <CardTitle className="text-sm font-normal text-center">Your Ranking</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-3 pt-0 flex items-center space-x-4">
-                                    <div className="flex items-center justify-center w-6">
-                                    <span className="text-sm font-semibold w-5 text-center">{currentUserRank + 1}</span>
+                             <CardContent className="p-3 pt-0 flex items-center space-x-4">
+                                    <div className="flex-shrink-0 flex items-center justify-center w-6">
+                                       <span className="text-sm font-semibold w-5 text-center">{currentUserRank + 1}</span>
                                     </div>
-                                    <Avatar className="w-10 h-10">
-                                    <AvatarImage src={currentUserData.telegramUser?.photo_url} />
-                                    <AvatarFallback>{getInitials(currentUserData)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-grow">
-                                    <p className="font-semibold truncate">{currentUserData.telegramUser?.first_name || 'Anonymous'}</p>
-                                    <p className="text-xs text-muted-foreground">@{currentUserData.telegramUser?.username || 'N/A'}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()}</p>
-                                    <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1).name} League</p>
-                                </div>
-                            </CardContent>
+                                    <Avatar className="w-10 h-10 flex-shrink-0">
+                                        <AvatarImage src={currentUserData.telegramUser?.photo_url} />
+                                        <AvatarFallback>{getInitials(currentUserData)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-grow min-w-0">
+                                        <p className="font-semibold truncate">{currentUserData.telegramUser?.first_name || 'Anonymous'}</p>
+                                        <p className="text-xs text-muted-foreground truncate">@{currentUserData.telegramUser?.username || 'N/A'}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0 ml-auto pl-2">
+                                        <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()}</p>
+                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1).name}</p>
+                                    </div>
+                                </CardContent>
                         </Card>
                     </>
                 )}
