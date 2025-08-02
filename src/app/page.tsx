@@ -70,11 +70,92 @@ export default function Home({}: {}) {
   const router = useRouter();
   const { toast } = useToast();
 
+  const initializeUser = async (telegramUser: TelegramUser) => {
+    try {
+      const today = new Date().toLocaleDateString('en-CA');
+      const [freshUserData, { users: leaderboard }] = await Promise.all([
+          getUserData(telegramUser),
+          getLeaderboardUsers(),
+      ]);
+      
+      setUserData(freshUserData);
+      setUser(telegramUser);
+      
+      if (freshUserData.status === 'banned') {
+        setIsLoading(false);
+        return;
+      }
+
+      let currentBalance = freshUserData.balance;
+      let streakData = freshUserData.dailyStreak;
+      let shouldSave = false;
+      
+      const currentUserRank = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
+      setRank(currentUserRank !== -1 ? currentUserRank + 1 : null);
+      
+      setHasRedeemedReferral(freshUserData.referralBonusApplied);
+      const allWelcomeTasksDone = Object.values(freshUserData.welcomeTasks || {}).every(Boolean);
+      setHasCompletedWelcomeTasks(allWelcomeTasksDone);
+      setIsVerified(freshUserData.verificationStatus === 'verified');
+
+      if (freshUserData.forgingEndTime && freshUserData.forgingEndTime > Date.now()) {
+        setIsForgingActive(true);
+        setForgingEndTime(freshUserData.forgingEndTime);
+      } else if (freshUserData.forgingEndTime) {
+        currentBalance += 1000;
+        freshUserData.forgingEndTime = null; 
+        shouldSave = true;
+      }
+
+      if (streakData.lastLogin !== today) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toLocaleDateString('en-CA');
+
+        let newStreakCount = 1;
+        if (streakData.lastLogin === yesterdayStr) {
+           newStreakCount = (streakData.count % 7) + 1;
+        }
+        
+        const dailyBonus = 200;
+        currentBalance += dailyBonus;
+        streakData = { count: newStreakCount, lastLogin: today };
+        setDailyStreak(newStreakCount);
+        
+        await saveUserData(telegramUser, { 
+          balance: currentBalance, 
+          dailyStreak: streakData, 
+          forgingEndTime: freshUserData.forgingEndTime 
+        });
+        
+      } else {
+        setDailyStreak(streakData.count);
+      }
+      
+      setBalance(currentBalance);
+      
+      if (shouldSave) {
+        await saveUserData(telegramUser, { 
+          balance: currentBalance, 
+          forgingEndTime: freshUserData.forgingEndTime 
+        });
+      }
+    } catch (error) {
+      console.error("Initialization failed:", error);
+      toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not load user data. Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const init = async () => {
+    const init = () => {
       let telegramUser: TelegramUser | null = null;
-      // Use a timeout to ensure the Telegram Web App script has loaded.
-      setTimeout(async () => {
+      setTimeout(() => {
         if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
           const tg = window.Telegram.WebApp;
           if (tg.initDataUnsafe?.user) {
@@ -84,93 +165,14 @@ export default function Home({}: {}) {
         }
         
         if (telegramUser) {
-          try {
-            setIsLoading(true);
-            const today = new Date().toLocaleDateString('en-CA');
-            const [freshUserData, { users: leaderboard }] = await Promise.all([
-                getUserData(telegramUser),
-                getLeaderboardUsers(),
-            ]);
-            
-            setUserData(freshUserData);
-            setUser(telegramUser);
-            
-            if (freshUserData.status === 'banned') {
-              setIsLoading(false);
-              return;
-            }
-
-            let currentBalance = freshUserData.balance;
-            let streakData = freshUserData.dailyStreak;
-            let shouldSave = false;
-            
-            const currentUserRank = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
-            setRank(currentUserRank !== -1 ? currentUserRank + 1 : null);
-            
-            setHasRedeemedReferral(freshUserData.referralBonusApplied);
-            const allWelcomeTasksDone = Object.values(freshUserData.welcomeTasks || {}).every(Boolean);
-            setHasCompletedWelcomeTasks(allWelcomeTasksDone);
-            setIsVerified(freshUserData.verificationStatus === 'verified');
-
-            if (freshUserData.forgingEndTime && freshUserData.forgingEndTime > Date.now()) {
-              setIsForgingActive(true);
-              setForgingEndTime(freshUserData.forgingEndTime);
-            } else if (freshUserData.forgingEndTime) {
-              currentBalance += 1000;
-              freshUserData.forgingEndTime = null; 
-              shouldSave = true;
-            }
-
-            if (streakData.lastLogin !== today) {
-              const yesterday = new Date();
-              yesterday.setDate(yesterday.getDate() - 1);
-              const yesterdayStr = yesterday.toLocaleDateString('en-CA');
-
-              let newStreakCount = 1;
-              if (streakData.lastLogin === yesterdayStr) {
-                 newStreakCount = (streakData.count % 7) + 1;
-              }
-              
-              const dailyBonus = 200;
-              currentBalance += dailyBonus;
-              streakData = { count: newStreakCount, lastLogin: today };
-              setDailyStreak(newStreakCount);
-              
-              await saveUserData(telegramUser, { 
-                balance: currentBalance, 
-                dailyStreak: streakData, 
-                forgingEndTime: freshUserData.forgingEndTime 
-              });
-              
-            } else {
-              setDailyStreak(streakData.count);
-            }
-            
-            setBalance(currentBalance);
-            
-            if (shouldSave) {
-              await saveUserData(telegramUser, { 
-                balance: currentBalance, 
-                forgingEndTime: freshUserData.forgingEndTime 
-              });
-            }
-          } catch (error) {
-            console.error("Initialization failed:", error);
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Could not load user data. Please try again later.",
-            });
-          } finally {
-            setIsLoading(false);
-          }
+          initializeUser(telegramUser);
         } else {
-          setIsLoading(false); // Stop loading if user is not available
+          setIsLoading(false);
         }
-      }, 500); // Wait 0.5 sec for TG to initialize
+      }, 500);
     };
     init();
-  }, [toast]);
+  }, []);
   
   const handleActivateForging = async () => {
     if (!hasRedeemedReferral) {
