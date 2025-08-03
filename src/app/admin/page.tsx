@@ -465,6 +465,7 @@ export default function AdminPage() {
     const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [totalPoints, setTotalPoints] = useState(0);
+    const [isExporting, setIsExporting] = useState(false);
 
     const { toast } = useToast();
 
@@ -686,6 +687,55 @@ export default function AdminPage() {
         link.click();
         document.body.removeChild(link);
     };
+    
+    const handleExportAllUsers = async () => {
+        setIsExporting(true);
+        toast({ title: 'Exporting...', description: 'Fetching all user data. This may take a moment.' });
+        try {
+            let allUsersToExport: UserData[] = [];
+            let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+            
+            // Loop through all pages of users
+            do {
+                const response = await getAllUsers(lastDoc, 1000); // Fetch in larger chunks for export
+                allUsersToExport = allUsersToExport.concat(response.users);
+                lastDoc = response.lastVisible as QueryDocumentSnapshot<DocumentData> | undefined;
+            } while (lastDoc);
+
+            const userData = allUsersToExport.map(user => ({
+                telegramId: user.telegramUser?.id,
+                username: user.telegramUser?.username,
+                firstName: user.telegramUser?.first_name,
+                lastName: user.telegramUser?.last_name,
+                balance: user.balance,
+                walletAddress: user.walletAddress,
+                referrals: user.referrals,
+                referredBy: user.referredBy,
+                verificationStatus: user.verificationStatus,
+                status: user.status,
+                banReason: user.banReason || '',
+                referralCode: user.referralCode,
+            }));
+
+            const csv = Papa.unparse(userData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'all_users_export.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast({ title: 'Export Complete!', description: `${userData.length} users have been exported.` });
+
+        } catch (error) {
+            console.error("Failed to export all users:", error);
+            toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not export user data.' });
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     if (!isAdmin && !codeAuthenticated) {
         return (
@@ -832,20 +882,26 @@ export default function AdminPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center gap-2 py-4">
-                    <div className="relative flex-grow">
+                <div className="flex items-center gap-2 py-4 flex-wrap">
+                    <div className="relative flex-grow min-w-[200px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="Search by ID, Wallet, Username, or First Name..."
+                            placeholder="Search by ID, Wallet, Username..."
                             className="pl-9 w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
-                        <Download className="mr-2 h-4 w-4" />
-                        Export Airdrop List
-                    </Button>
+                    <div className="flex gap-2 flex-wrap">
+                        <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export Airdrop List
+                        </Button>
+                         <Button onClick={handleExportAllUsers} disabled={isExporting} variant="outline" className="flex-shrink-0">
+                            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                            Export All Users
+                        </Button>
+                    </div>
                 </div>
                 <Tabs defaultValue="active">
                     <TabsList className="grid w-full grid-cols-2">
@@ -875,7 +931,7 @@ export default function AdminPage() {
                         />
                     </TabsContent>
                 </Tabs>
-                {lastVisible && allUsers.length < totalUserCount && (
+                {lastVisible && allUsers.length < totalUserCount && !searchTerm && (
                      <div className="flex justify-center mt-4">
                         <Button onClick={fetchMoreUsers} disabled={isFetchingMore}>
                             {isFetchingMore ? (
@@ -895,3 +951,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
