@@ -47,6 +47,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { renderIcon } from '@/app/tasks/page';
 import Papa from 'papaparse';
+import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 
 
 // NOTE: Add your Telegram user ID here for admin access
@@ -335,14 +336,7 @@ const UserTable = ({
     onBalanceUpdated: (userId: string, newBalance: number) => void,
     onWalletUpdated: (userId: string, newAddress: string) => void
 }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-    
-    const totalPages = Math.ceil(users.length / USERS_PER_PAGE);
-    const paginatedUsers = users.slice(
-        (currentPage - 1) * USERS_PER_PAGE,
-        currentPage * USERS_PER_PAGE
-    );
-
+   
     return (
         <div>
             <div className="overflow-x-auto">
@@ -360,7 +354,7 @@ const UserTable = ({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedUsers.map((user) => {
+                        {users.map((user) => {
                           const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
                           return (
                             <TableRow key={user.id}>
@@ -451,25 +445,6 @@ const UserTable = ({
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-between pt-4">
-                <div className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages} ({users.length} users)
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
-                        <ChevronsLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
-                        <ChevronsRight className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
         </div>
     );
 };
@@ -487,6 +462,9 @@ export default function AdminPage() {
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [taskCompletionCounts, setTaskCompletionCounts] = useState<{[taskId: string]: number}>({});
+    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const [totalPoints, setTotalPoints] = useState(0);
 
     const { toast } = useToast();
 
@@ -511,7 +489,7 @@ export default function AdminPage() {
         init();
     }, []);
     
-    const fetchAdminData = async () => {
+    const fetchInitialData = async () => {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
@@ -521,12 +499,17 @@ export default function AdminPage() {
                 getTotalUsersCount()
             ]);
             
+            const fetchedUsers = usersResponse.users;
             const counts: {[taskId: string]: number} = {};
             tasks.forEach(task => {
                 counts[task.id] = 0;
             });
             
-            usersResponse.users.forEach(user => {
+            let totalActivePoints = 0;
+            fetchedUsers.forEach(user => {
+                 if (user.status === 'active') {
+                    totalActivePoints += user.balance;
+                }
                 user.completedSocialTasks?.forEach(taskId => {
                     if (counts[taskId] !== undefined) {
                         counts[taskId]++;
@@ -535,9 +518,11 @@ export default function AdminPage() {
             });
 
             setTaskCompletionCounts(counts);
-            setAllUsers(usersResponse.users);
+            setAllUsers(fetchedUsers);
             setSocialTasks(tasks);
             setTotalUserCount(totalCount);
+            setLastVisible(usersResponse.lastVisible);
+            setTotalPoints(totalActivePoints);
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch admin data.' });
@@ -547,9 +532,34 @@ export default function AdminPage() {
         }
     };
     
+    const fetchMoreUsers = async () => {
+        if (!lastVisible || isFetchingMore) return;
+        setIsFetchingMore(true);
+         try {
+            const { users: newUsers, lastVisible: newLastVisible } = await getAllUsers(lastVisible);
+            
+            let totalActivePoints = totalPoints;
+            newUsers.forEach(user => {
+                 if (user.status === 'active') {
+                    totalActivePoints += user.balance;
+                }
+            });
+
+            setAllUsers(prevUsers => [...prevUsers, ...newUsers]);
+            setLastVisible(newLastVisible);
+            setTotalPoints(totalActivePoints);
+        } catch (error) {
+            console.error("Failed to fetch more users:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch more users.' });
+        } finally {
+            setIsFetchingMore(false);
+        }
+    }
+
+
     useEffect(() => {
       if(isAdmin || codeAuthenticated) {
-        fetchAdminData();
+        fetchInitialData();
       } else {
         setIsLoading(false);
       }
@@ -572,25 +582,53 @@ export default function AdminPage() {
 
     const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned', reason?: string) => {
         if (!user.telegramUser) return;
-        await updateUserStatus(user.telegramUser, status, reason);
-        // This will trigger a re-render and the user will move to the correct list
-        setAllUsers(currentUsers =>
-            currentUsers.map(u =>
-                u.id === user.id ? { ...u, status: status, banReason: reason } : u
-            )
+        
+        // Optimistic UI update
+        const originalUsers = allUsers;
+        const updatedUsers = originalUsers.map(u =>
+            u.id === user.id ? { ...u, status: status, banReason: reason } : u
         );
-        toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
+        setAllUsers(updatedUsers);
+
+        try {
+            await updateUserStatus(user.telegramUser, status, reason);
+            
+            // Adjust total points
+            setTotalPoints(prevTotal => {
+                if (status === 'banned') {
+                    return prevTotal - user.balance;
+                } else {
+                     return prevTotal + user.balance;
+                }
+            });
+
+            toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
+        } catch(error) {
+            setAllUsers(originalUsers); // Revert on failure
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update user status.' });
+        }
     }
 
     const handleBalanceUpdated = (userId: string, newBalance: number) => {
-        setAllUsers(currentUsers => {
-            const updatedUsers = currentUsers.map(u =>
-                u.id === userId ? { ...u, balance: newBalance } : u
-            );
-            // Re-sort users based on the new balance
-            return updatedUsers.sort((a, b) => b.balance - a.balance);
+        let balanceDifference = 0;
+        const updatedUsers = allUsers.map(u => {
+            if (u.id === userId) {
+                balanceDifference = newBalance - u.balance;
+                return { ...u, balance: newBalance };
+            }
+            return u;
         });
+
+        const sortedUsers = updatedUsers.sort((a, b) => b.balance - a.balance);
+        setAllUsers(sortedUsers);
+        
+        // Adjust total points only for active users
+        const user = allUsers.find(u => u.id === userId);
+        if (user && user.status === 'active') {
+            setTotalPoints(prevTotal => prevTotal + balanceDifference);
+        }
     };
+
 
     const handleWalletUpdated = (userId: string, newAddress: string) => {
         setAllUsers(currentUsers =>
@@ -602,10 +640,25 @@ export default function AdminPage() {
 
     const handleDeleteUser = async (user: UserData) => {
         if (!user.telegramUser) return;
-        await deleteUser(user.telegramUser);
+        
+        const originalUsers = allUsers;
         setAllUsers(allUsers.filter(u => u.id !== user.id));
         setTotalUserCount(prev => prev - 1);
-        toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
+        if(user.status === 'active') {
+            setTotalPoints(prevTotal => prevTotal - user.balance);
+        }
+
+        try {
+            await deleteUser(user.telegramUser);
+            toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
+        } catch(error) {
+            setAllUsers(originalUsers); // Revert on error
+            setTotalUserCount(prev => prev + 1);
+            if(user.status === 'active') {
+                setTotalPoints(prevTotal => prevTotal + user.balance);
+            }
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete user.' });
+        }
     }
 
     const handleDeleteTask = async (taskId: string) => {
@@ -634,9 +687,6 @@ export default function AdminPage() {
         });
       };
 
-    const totalPoints = useMemo(() => {
-        return allUsers.filter(u => u.status === 'active').reduce((acc, user) => acc + user.balance, 0);
-    }, [allUsers]);
 
     const handleExportAirdrop = () => {
         const airdropData = allUsers
@@ -692,7 +742,11 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <main className="flex-grow flex flex-col p-4 mt-8 relative">
-        {isLoading ? null : (
+        {isLoading ? (
+             <div className="flex justify-center items-center h-64">
+                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            </div>
+        ) : (
         <div className="w-full max-w-6xl mx-auto space-y-6">
             <div className="text-center">
                 <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
@@ -705,7 +759,7 @@ export default function AdminPage() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Social Task Management</CardTitle>
-                    <AddTaskDialog onTaskAdded={fetchAdminData} />
+                    <AddTaskDialog onTaskAdded={fetchInitialData} />
                 </div>
                 <CardDescription>Create and manage social engagement tasks for users.</CardDescription>
             </CardHeader>
@@ -769,7 +823,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>User Management</CardTitle>
                 <CardDescription>
-                    Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop.
+                    Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop. Displaying {allUsers.length} of {totalUserCount} users.
                 </CardDescription>
                 <div className="grid gap-4 md:grid-cols-3 pt-4">
                     <Card className="bg-primary/5">
@@ -845,6 +899,18 @@ export default function AdminPage() {
                         />
                     </TabsContent>
                 </Tabs>
+                {lastVisible && allUsers.length < totalUserCount && (
+                     <div className="flex justify-center mt-4">
+                        <Button onClick={fetchMoreUsers} disabled={isFetchingMore}>
+                            {isFetchingMore ? (
+                                <>
+                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Loading...
+                                </>
+                            ) : 'Load More'}
+                        </Button>
+                    </div>
+                )}
             </CardContent>
             </Card>
         </div>
@@ -853,7 +919,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-
-    

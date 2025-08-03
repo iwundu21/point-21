@@ -242,9 +242,16 @@ export const getLeaderboardUsers = async (): Promise<{ users: UserData[]}> => {
 
 // --- Admin Functions ---
 
-export const getAllUsers = async (): Promise<{ users: UserData[] }> => {
+export const getAllUsers = async (lastVisible?: QueryDocumentSnapshot<DocumentData>): Promise<{ users: UserData[], lastVisible: QueryDocumentSnapshot<DocumentData> | null }> => {
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, orderBy('balance', 'desc'));
+    let q;
+    const PAGE_SIZE = 50; // Keep this in sync with USERS_PER_PAGE in admin page
+
+    if (lastVisible) {
+        q = query(usersRef, orderBy('balance', 'desc'), startAfter(lastVisible), limit(PAGE_SIZE));
+    } else {
+        q = query(usersRef, orderBy('balance', 'desc'), limit(PAGE_SIZE));
+    }
     
     const querySnapshot = await getDocs(q);
     
@@ -253,7 +260,9 @@ export const getAllUsers = async (): Promise<{ users: UserData[] }> => {
         users.push({ ...defaultUserData(null), ...(doc.data() as Omit<UserData, 'id'>), id: doc.id });
     });
     
-    return { users };
+    const newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+    return { users, lastVisible: newLastVisible || null };
 };
 
 
