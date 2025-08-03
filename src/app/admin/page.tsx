@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -477,6 +477,7 @@ const UserTable = ({
 
 export default function AdminPage() {
     const [allUsers, setAllUsers] = useState<UserData[]>([]);
+    const [totalUserCount, setTotalUserCount] = useState(0);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -514,9 +515,10 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks] = await Promise.all([
+            const [usersResponse, tasks, totalCount] = await Promise.all([
                 getAllUsers(),
-                getSocialTasks()
+                getSocialTasks(),
+                getTotalUsersCount()
             ]);
             
             const counts: {[taskId: string]: number} = {};
@@ -535,6 +537,7 @@ export default function AdminPage() {
             setTaskCompletionCounts(counts);
             setAllUsers(usersResponse.users);
             setSocialTasks(tasks);
+            setTotalUserCount(totalCount);
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch admin data.' });
@@ -601,6 +604,7 @@ export default function AdminPage() {
         if (!user.telegramUser) return;
         await deleteUser(user.telegramUser);
         setAllUsers(allUsers.filter(u => u.id !== user.id));
+        setTotalUserCount(prev => prev - 1);
         toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
     }
 
@@ -774,7 +778,7 @@ export default function AdminPage() {
                             <Users className="h-4 w-4 text-primary" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{allUsers.length.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">{totalUserCount.toLocaleString()}</div>
                         </CardContent>
                     </Card>
                     <Card className="bg-primary/5">

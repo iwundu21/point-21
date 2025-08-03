@@ -1,7 +1,7 @@
 
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
 
@@ -97,6 +97,26 @@ const defaultUserData = (telegramUser: TelegramUser | null): Omit<UserData, 'id'
     status: 'active',
 });
 
+// --- User Count Management ---
+const statsRef = doc(db, 'app-stats', 'user-counter');
+
+const incrementUserCount = async () => {
+    await setDoc(statsRef, { count: increment(1) }, { merge: true });
+};
+
+const decrementUserCount = async () => {
+    await setDoc(statsRef, { count: increment(-1) }, { merge: true });
+};
+
+export const getTotalUsersCount = async (): Promise<number> => {
+    const statsSnap = await getDoc(statsRef);
+    if (statsSnap.exists()) {
+        return statsSnap.data().count || 0;
+    }
+    return 0;
+};
+
+
 export const getUserData = async (telegramUser: TelegramUser | null): Promise<UserData> => {
     if (!telegramUser) return { ...defaultUserData(null), id: 'guest' };
     const userId = getUserId(telegramUser);
@@ -117,6 +137,7 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
             referralCode: generateReferralCode(), // Generate code on creation
         };
         await setDoc(userRef, newUser);
+        await incrementUserCount(); // Increment count for new user
         return { ...newUser, id: userId };
     }
 };
@@ -266,6 +287,7 @@ export const deleteUser = async (telegramUser: TelegramUser) => {
     if (!userId) return;
     const userRef = doc(db, 'users', userId);
     await deleteDoc(userRef);
+    await decrementUserCount(); // Decrement count when a user is deleted
 };
 
 

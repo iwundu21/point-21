@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Users } from 'lucide-react';
 import Footer from '@/components/footer';
-import { getLeaderboardUsers, getAllUsers, UserData } from '@/lib/database';
+import { getLeaderboardUsers, getTotalUsersCount, UserData } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -74,12 +74,13 @@ export default function LeaderboardPage() {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
             try {
-                const [{ users: leaderboardUsers }, { users: allUsers }] = await Promise.all([
+                // Fetch leaderboard and total user count concurrently
+                const [{ users: leaderboardUsers }, count] = await Promise.all([
                     getLeaderboardUsers(), // This fetches the top 100 users.
-                    getAllUsers()
+                    getTotalUsersCount()   // This efficiently gets the count from a single document.
                 ]);
                 setLeaderboard(leaderboardUsers); // Contains max 100 users
-                setTotalUsers(allUsers.length);
+                setTotalUsers(count);
             } catch (error) {
                 console.error("Failed to fetch leaderboard data:", error);
             } finally {
