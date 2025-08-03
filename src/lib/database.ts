@@ -116,6 +116,27 @@ export const getTotalUsersCount = async (): Promise<number> => {
     return 0;
 };
 
+// --- Total Points Management ---
+const pointsStatsRef = doc(db, 'app-stats', 'points-counter');
+
+const incrementTotalPoints = async (amount: number) => {
+    if (isNaN(amount)) return;
+    await setDoc(pointsStatsRef, { total: increment(amount) }, { merge: true });
+}
+
+const decrementTotalPoints = async (amount: number) => {
+    if (isNaN(amount)) return;
+    await setDoc(pointsStatsRef, { total: increment(-amount) }, { merge: true });
+}
+
+export const getTotalActivePoints = async (): Promise<number> => {
+    const pointsSnap = await getDoc(pointsStatsRef);
+    if (pointsSnap.exists()) {
+        return pointsSnap.data().total || 0;
+    }
+    return 0;
+};
+
 
 export const getUserData = async (telegramUser: TelegramUser | null): Promise<UserData> => {
     if (!telegramUser) return { ...defaultUserData(null), id: 'guest' };
@@ -125,13 +146,19 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
 
     if (userSnap.exists()) {
         const fetchedData = userSnap.data() as Partial<Omit<UserData, 'id'>>;
-        // Ensure every existing user has a referral code
+        let shouldSave = false;
         if (!fetchedData.referralCode) {
-            const newCode = generateReferralCode();
-            await setDoc(userRef, { referralCode: newCode }, { merge: true });
-            return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id, referralCode: newCode };
+            fetchedData.referralCode = generateReferralCode();
+            shouldSave = true;
         }
-        return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id };
+
+        const finalUserData = { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id };
+
+        if (shouldSave) {
+            await setDoc(userRef, { referralCode: finalUserData.referralCode }, { merge: true });
+        }
+        
+        return finalUserData;
     } else {
         const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(telegramUser),
@@ -139,6 +166,7 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
         };
         await setDoc(userRef, newUser);
         await incrementUserCount(); // Increment count for new user
+        // New users start with 0 points, so no need to increment total points here.
         return { ...newUser, id: userId };
     }
 };
@@ -147,7 +175,18 @@ export const saveUserData = async (telegramUser: TelegramUser | null, data: Part
     if (!telegramUser) return;
     const userId = getUserId(telegramUser);
     const userRef = doc(db, 'users', userId);
+    const oldSnap = await getDoc(userRef);
+    const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(telegramUser);
+
     await setDoc(userRef, data, { merge: true });
+
+    // If balance was updated, adjust total points
+    if (data.balance !== undefined && data.balance !== oldData.balance) {
+         if (oldData.status === 'active') { // Only adjust if the user is active
+            const difference = data.balance - oldData.balance;
+            await incrementTotalPoints(difference);
+        }
+    }
 };
 
 export const findUserByReferralCode = async (code: string): Promise<UserData | null> => {
@@ -193,7 +232,6 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
                 const referrerRef = doc(db, 'users', getUserId(referrerData.telegramUser!));
                 const newUserRef = doc(db, 'users', getUserId(newUser));
 
-                // Get the latest data within the transaction
                 const referrerDoc = await transaction.get(referrerRef);
                 const newUserDoc = await transaction.get(newUserRef);
 
@@ -201,12 +239,10 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
                     throw "Documents do not exist!";
                 }
                 
-                // Award referrer
                 const newReferrerBalance = (referrerDoc.data().balance || 0) + 200;
                 const newReferralsCount = (referrerDoc.data().referrals || 0) + 1;
                 transaction.update(referrerRef, { balance: newReferrerBalance, referrals: newReferralsCount });
 
-                // Award new user
                 const newUserBalance = (newUserDoc.data().balance || 0) + 50;
                 transaction.update(newUserRef, { 
                     balance: newUserBalance,
@@ -214,14 +250,18 @@ export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: st
                     referredBy: referrerData.telegramUser?.id.toString() ?? null,
                 });
             });
-            // Return the updated data for the current user
+
+            // After transaction, update total points for both users
+            await incrementTotalPoints(200); // For referrer
+            await incrementTotalPoints(50); // For new user
+
             return await getUserData(newUser);
         } catch (error) {
             console.error("Transaction failed: ", error);
             return null;
         }
     }
-    return null; // Referrer not found
+    return null;
 };
 
 const LEADERBOARD_PAGE_SIZE = 100;
@@ -270,12 +310,21 @@ export const updateUserStatus = async (telegramUser: TelegramUser, status: 'acti
     const userId = getUserId(telegramUser);
     if (!userId) return;
     const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) return;
+    const userData = userSnap.data() as UserData;
+    
+    // If status is not changing, do nothing
+    if (userData.status === status) return;
+
     const dataToUpdate: Partial<UserData> = { status };
-    if (status === 'banned' && reason) {
-        dataToUpdate.banReason = reason;
+    if (status === 'banned') {
+        if (reason) dataToUpdate.banReason = reason;
+        await decrementTotalPoints(userData.balance); // Subtract from total
     } else if (status === 'active') {
-        // When unbanning, clear the reason
         dataToUpdate.banReason = '';
+        await incrementTotalPoints(userData.balance); // Add back to total
     }
     await setDoc(userRef, dataToUpdate, { merge: true });
 };
@@ -284,18 +333,40 @@ export const updateUserBalance = async (telegramUser: TelegramUser, newBalance: 
     const userId = getUserId(telegramUser);
     if (!userId) return;
     const userRef = doc(db, 'users', userId);
-    // Ensure balance is a valid number
+    
     if (isNaN(newBalance)) {
         console.error("Invalid balance provided.");
         return;
     }
+
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return;
+
+    const oldBalance = userSnap.data().balance || 0;
+    const difference = newBalance - oldBalance;
+
     await setDoc(userRef, { balance: Number(newBalance) }, { merge: true });
+    
+    // Only adjust total points if the user is active
+    if (userSnap.data().status === 'active') {
+        await incrementTotalPoints(difference);
+    }
 }
 
 export const deleteUser = async (telegramUser: TelegramUser) => {
     const userId = getUserId(telegramUser);
     if (!userId) return;
     const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+        const userData = userSnap.data() as UserData;
+        // If the user was active, subtract their points from the total
+        if (userData.status === 'active') {
+            await decrementTotalPoints(userData.balance);
+        }
+    }
+
     await deleteDoc(userRef);
     await decrementUserCount(); // Decrement count when a user is deleted
 };
@@ -303,6 +374,17 @@ export const deleteUser = async (telegramUser: TelegramUser) => {
 
 export const banUser = async (telegramUser: TelegramUser | null, reason?: string) => {
     if (!telegramUser) return;
+    
+    const userRef = doc(db, 'users', getUserId(telegramUser));
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+        const userData = userSnap.data() as UserData;
+        if(userData.status !== 'banned') {
+             await decrementTotalPoints(userData.balance);
+        }
+    }
+    
     const dataToSave: Partial<UserData> = { status: 'banned' };
     if (reason) {
         dataToSave.banReason = reason;
@@ -358,5 +440,3 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
-
-    

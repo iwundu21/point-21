@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -493,10 +493,11 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalActivePoints] = await Promise.all([
                 getAllUsers(),
                 getSocialTasks(),
-                getTotalUsersCount()
+                getTotalUsersCount(),
+                getTotalActivePoints()
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -505,11 +506,7 @@ export default function AdminPage() {
                 counts[task.id] = 0;
             });
             
-            let totalActivePoints = 0;
             fetchedUsers.forEach(user => {
-                 if (user.status === 'active') {
-                    totalActivePoints += user.balance;
-                }
                 user.completedSocialTasks?.forEach(taskId => {
                     if (counts[taskId] !== undefined) {
                         counts[taskId]++;
@@ -537,17 +534,8 @@ export default function AdminPage() {
         setIsFetchingMore(true);
          try {
             const { users: newUsers, lastVisible: newLastVisible } = await getAllUsers(lastVisible);
-            
-            let totalActivePoints = totalPoints;
-            newUsers.forEach(user => {
-                 if (user.status === 'active') {
-                    totalActivePoints += user.balance;
-                }
-            });
-
             setAllUsers(prevUsers => [...prevUsers, ...newUsers]);
             setLastVisible(newLastVisible);
-            setTotalPoints(totalActivePoints);
         } catch (error) {
             console.error("Failed to fetch more users:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch more users.' });
@@ -582,25 +570,21 @@ export default function AdminPage() {
 
     const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned', reason?: string) => {
         if (!user.telegramUser) return;
-        
-        // Optimistic UI update
+
         const originalUsers = allUsers;
         const updatedUsers = originalUsers.map(u =>
             u.id === user.id ? { ...u, status: status, banReason: reason } : u
         );
         setAllUsers(updatedUsers);
 
+        const oldStatus = user.status;
+        
         try {
             await updateUserStatus(user.telegramUser, status, reason);
             
-            // Adjust total points
-            setTotalPoints(prevTotal => {
-                if (status === 'banned') {
-                    return prevTotal - user.balance;
-                } else {
-                     return prevTotal + user.balance;
-                }
-            });
+            // Refetch total points
+            const newTotalPoints = await getTotalActivePoints();
+            setTotalPoints(newTotalPoints);
 
             toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
         } catch(error) {
@@ -609,11 +593,9 @@ export default function AdminPage() {
         }
     }
 
-    const handleBalanceUpdated = (userId: string, newBalance: number) => {
-        let balanceDifference = 0;
+    const handleBalanceUpdated = async (userId: string, newBalance: number) => {
         const updatedUsers = allUsers.map(u => {
             if (u.id === userId) {
-                balanceDifference = newBalance - u.balance;
                 return { ...u, balance: newBalance };
             }
             return u;
@@ -622,11 +604,9 @@ export default function AdminPage() {
         const sortedUsers = updatedUsers.sort((a, b) => b.balance - a.balance);
         setAllUsers(sortedUsers);
         
-        // Adjust total points only for active users
-        const user = allUsers.find(u => u.id === userId);
-        if (user && user.status === 'active') {
-            setTotalPoints(prevTotal => prevTotal + balanceDifference);
-        }
+        // Refetch total points as balance was changed
+        const newTotalPoints = await getTotalActivePoints();
+        setTotalPoints(newTotalPoints);
     };
 
 
@@ -644,19 +624,15 @@ export default function AdminPage() {
         const originalUsers = allUsers;
         setAllUsers(allUsers.filter(u => u.id !== user.id));
         setTotalUserCount(prev => prev - 1);
-        if(user.status === 'active') {
-            setTotalPoints(prevTotal => prevTotal - user.balance);
-        }
 
         try {
             await deleteUser(user.telegramUser);
+            const newTotalPoints = await getTotalActivePoints();
+            setTotalPoints(newTotalPoints);
             toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
         } catch(error) {
             setAllUsers(originalUsers); // Revert on error
             setTotalUserCount(prev => prev + 1);
-            if(user.status === 'active') {
-                setTotalPoints(prevTotal => prevTotal + user.balance);
-            }
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete user.' });
         }
     }
