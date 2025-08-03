@@ -127,8 +127,9 @@ export const getUserData = async (telegramUser: TelegramUser | null): Promise<Us
         const fetchedData = userSnap.data() as Partial<Omit<UserData, 'id'>>;
         // Ensure every existing user has a referral code
         if (!fetchedData.referralCode) {
-            fetchedData.referralCode = generateReferralCode();
-            await setDoc(userRef, { referralCode: fetchedData.referralCode }, { merge: true });
+            const newCode = generateReferralCode();
+            await setDoc(userRef, { referralCode: newCode }, { merge: true });
+            return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id, referralCode: newCode };
         }
         return { ...defaultUserData(telegramUser), ...fetchedData, telegramUser, id: userSnap.id };
     } else {
