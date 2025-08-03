@@ -60,8 +60,7 @@ export default function Home({}: {}) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
-  const [rank, setRank] = useState<number | null>(null);
-
+  
   // New state for sequential tasks
   const [hasRedeemedReferral, setHasRedeemedReferral] = useState(false);
   const [hasCompletedWelcomeTasks, setHasCompletedWelcomeTasks] = useState(false);
@@ -73,10 +72,7 @@ export default function Home({}: {}) {
   const initializeUser = async (telegramUser: TelegramUser) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      const [freshUserData, { users: leaderboard }] = await Promise.all([
-          getUserData(telegramUser),
-          getLeaderboardUsers(),
-      ]);
+      const freshUserData = await getUserData(telegramUser);
       
       setUserData(freshUserData);
       setUser(telegramUser);
@@ -89,9 +85,6 @@ export default function Home({}: {}) {
       let currentBalance = freshUserData.balance;
       let streakData = freshUserData.dailyStreak;
       let shouldSave = false;
-      
-      const currentUserRank = leaderboard.findIndex(u => u.telegramUser?.id === telegramUser.id);
-      setRank(currentUserRank !== -1 ? currentUserRank + 1 : null);
       
       setHasRedeemedReferral(freshUserData.referralBonusApplied);
       const allWelcomeTasksDone = Object.values(freshUserData.welcomeTasks || {}).every(Boolean);
@@ -298,7 +291,7 @@ export default function Home({}: {}) {
             <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
             <div className="w-full max-w-sm">
-            <MissionsCard streak={dailyStreak} balance={balance} rank={rank} />
+            <MissionsCard streak={dailyStreak} />
             </div>
         </main>
         <Footer />
