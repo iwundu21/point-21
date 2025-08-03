@@ -130,8 +130,10 @@ export const saveUserData = async (telegramUser: TelegramUser | null, data: Part
 
 export const findUserByReferralCode = async (code: string): Promise<UserData | null> => {
     if (!code) return null;
-    const q = query(collection(db, 'users'), where('referralCode', '==', code.trim()), limit(1));
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where('referralCode', '==', code.trim().toUpperCase()), limit(1));
     const querySnapshot = await getDocs(q);
+
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
         return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
@@ -162,34 +164,40 @@ export const findUserByFaceFingerprint = async (fingerprint: string): Promise<Us
 }
 
 export const applyReferralBonus = async (newUser: TelegramUser, referrerCode: string): Promise<UserData | null> => {
-    const referrer = await findUserByReferralCode(referrerCode);
-    if (referrer?.telegramUser) {
-        await runTransaction(db, async (transaction) => {
-            const referrerRef = doc(db, 'users', getUserId(referrer.telegramUser!));
-            const newUserRef = doc(db, 'users', getUserId(newUser));
+    const referrerData = await findUserByReferralCode(referrerCode);
+    if (referrerData?.telegramUser) {
+        try {
+            await runTransaction(db, async (transaction) => {
+                const referrerRef = doc(db, 'users', getUserId(referrerData.telegramUser!));
+                const newUserRef = doc(db, 'users', getUserId(newUser));
 
-            const referrerDoc = await transaction.get(referrerRef);
-            const newUserDoc = await transaction.get(newUserRef);
+                // Get the latest data within the transaction
+                const referrerDoc = await transaction.get(referrerRef);
+                const newUserDoc = await transaction.get(newUserRef);
 
-            if (!referrerDoc.exists() || !newUserDoc.exists()) {
-                throw "Documents do not exist!";
-            }
-            
-            // Award referrer
-            const newReferrerBalance = (referrerDoc.data().balance || 0) + 200;
-            const newReferralsCount = (referrerDoc.data().referrals || 0) + 1;
-            transaction.update(referrerRef, { balance: newReferrerBalance, referrals: newReferralsCount });
+                if (!referrerDoc.exists() || !newUserDoc.exists()) {
+                    throw "Documents do not exist!";
+                }
+                
+                // Award referrer
+                const newReferrerBalance = (referrerDoc.data().balance || 0) + 200;
+                const newReferralsCount = (referrerDoc.data().referrals || 0) + 1;
+                transaction.update(referrerRef, { balance: newReferrerBalance, referrals: newReferralsCount });
 
-            // Award new user
-            const newUserBalance = (newUserDoc.data().balance || 0) + 50;
-            transaction.update(newUserRef, { 
-                balance: newUserBalance,
-                referralBonusApplied: true,
-                referredBy: referrer.telegramUser?.id.toString() ?? null,
+                // Award new user
+                const newUserBalance = (newUserDoc.data().balance || 0) + 50;
+                transaction.update(newUserRef, { 
+                    balance: newUserBalance,
+                    referralBonusApplied: true,
+                    referredBy: referrerData.telegramUser?.id.toString() ?? null,
+                });
             });
-        });
-
-        return await getUserData(newUser);
+            // Return the updated data for the current user
+            return await getUserData(newUser);
+        } catch (error) {
+            console.error("Transaction failed: ", error);
+            return null;
+        }
     }
     return null; // Referrer not found
 };
@@ -318,5 +326,3 @@ export const getWalletAddress = async (user: TelegramUser | null) => (await getU
 export const saveWalletAddress = async (user: TelegramUser | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: TelegramUser | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: TelegramUser | null, code: string) => saveUserData(user, { referralCode: code });
-
-    
