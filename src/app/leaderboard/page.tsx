@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Users } from 'lucide-react';
+import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Users, Monitor, Bot } from 'lucide-react';
 import Footer from '@/components/footer';
-import { getLeaderboardUsers, getTotalUsersCount, UserData } from '@/lib/database';
+import { getLeaderboardUsers, getTotalTelegramUsersCount, getTotalBrowserUsersCount, UserData } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -77,7 +77,8 @@ const LeaderboardSkeleton = () => (
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
-    const [totalUsers, setTotalUsers] = useState(0);
+    const [totalTelegramUsers, setTotalTelegramUsers] = useState(0);
+    const [totalBrowserUsers, setTotalBrowserUsers] = useState(0);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -110,12 +111,14 @@ export default function LeaderboardPage() {
             setIsLoading(true);
             try {
                 // Fetch leaderboard and total user count concurrently
-                const [{ users: leaderboardUsers }, count] = await Promise.all([
+                const [{ users: leaderboardUsers }, telegramCount, browserCount] = await Promise.all([
                     getLeaderboardUsers(), // This fetches the top 100 users.
-                    getTotalUsersCount()   // This efficiently gets the count from a single document.
+                    getTotalTelegramUsersCount(),   // This efficiently gets the telegram count.
+                    getTotalBrowserUsersCount() // This efficiently gets the browser count.
                 ]);
                 setLeaderboard(leaderboardUsers); // Contains max 100 users
-                setTotalUsers(count);
+                setTotalTelegramUsers(telegramCount);
+                setTotalBrowserUsers(browserCount);
             } catch (error) {
                 console.error("Failed to fetch leaderboard data:", error);
             } finally {
@@ -159,10 +162,14 @@ export default function LeaderboardPage() {
                         <Trophy className="w-8 h-8 text-primary" />
                         Leaderboard
                     </h1>
-                     <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5 mt-2">
-                        <Users className="w-4 h-4" />
-                        {totalUsers > 0 ? `${totalUsers.toLocaleString()} Total Players` : ` `}
-                    </p>
+                     <div className="text-xs text-muted-foreground flex items-center justify-center gap-4 mt-2">
+                        {(totalTelegramUsers > 0 || totalBrowserUsers > 0) && (
+                            <>
+                                <span className="flex items-center gap-1.5"><Bot className="w-4 h-4" /> {totalTelegramUsers.toLocaleString()} Telegram</span>
+                                <span className="flex items-center gap-1.5"><Monitor className="w-4 h-4" /> {totalBrowserUsers.toLocaleString()} Browser</span>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {isLoading ? <LeaderboardSkeleton /> : (

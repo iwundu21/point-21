@@ -90,13 +90,35 @@ const defaultUserData = (user: { id: number | string, first_name?: string } | nu
 
 // --- User Count Management ---
 const statsRef = doc(db, 'app-stats', 'user-counter');
+const telegramUsersStatsRef = doc(db, 'app-stats', 'telegram-user-counter');
+const browserUsersStatsRef = doc(db, 'app-stats', 'browser-user-counter');
+
+
+const incrementTelegramUserCount = async () => {
+    await setDoc(telegramUsersStatsRef, { count: increment(1) }, { merge: true });
+};
+const decrementTelegramUserCount = async () => {
+    await setDoc(telegramUsersStatsRef, { count: increment(-1) }, { merge: true });
+};
+
+const incrementBrowserUserCount = async () => {
+    await setDoc(browserUsersStatsRef, { count: increment(1) }, { merge: true });
+};
+const decrementBrowserUserCount = async () => {
+    await setDoc(browserUsersStatsRef, { count: increment(-1) }, { merge: true });
+};
 
 const incrementUserCount = async () => {
     await setDoc(statsRef, { count: increment(1) }, { merge: true });
 };
 
-const decrementUserCount = async () => {
+const decrementUserCount = async (userType: 'telegram' | 'browser') => {
     await setDoc(statsRef, { count: increment(-1) }, { merge: true });
+    if (userType === 'telegram') {
+        await decrementTelegramUserCount();
+    } else {
+        await decrementBrowserUserCount();
+    }
 };
 
 export const getTotalUsersCount = async (): Promise<number> => {
@@ -106,6 +128,23 @@ export const getTotalUsersCount = async (): Promise<number> => {
     }
     return 0;
 };
+
+export const getTotalTelegramUsersCount = async (): Promise<number> => {
+    const statsSnap = await getDoc(telegramUsersStatsRef);
+    if (statsSnap.exists()) {
+        return statsSnap.data().count || 0;
+    }
+    return 0;
+}
+
+export const getTotalBrowserUsersCount = async (): Promise<number> => {
+    const statsSnap = await getDoc(browserUsersStatsRef);
+    if (statsSnap.exists()) {
+        return statsSnap.data().count || 0;
+    }
+    return 0;
+}
+
 
 // --- Total Points Management ---
 const pointsStatsRef = doc(db, 'app-stats', 'points-counter');
@@ -154,12 +193,18 @@ export const getUserData = async (user: { id: number | string } | null): Promise
         
         return finalUserData;
     } else {
+        const isTelegramUser = typeof user.id === 'number';
         const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(user),
             referralCode: generateReferralCode(), // Generate code on creation
         };
         await setDoc(userRef, newUser);
-        await incrementUserCount(); // Increment count for new user
+        await incrementUserCount();
+        if (isTelegramUser) {
+            await incrementTelegramUserCount();
+        } else {
+            await incrementBrowserUserCount();
+        }
         // New users start with 0 points, so no need to increment total points here.
         return { ...newUser, id: userId };
     }
@@ -302,7 +347,7 @@ export const getAllUsers = async (lastVisible?: QueryDocumentSnapshot<DocumentDa
 export const updateUserStatus = async (user: {id: string | number}, status: 'active' | 'banned', reason?: string) => {
     const userId = user.id;
     if (!userId) return;
-    const userDocId = typeof userId === 'number' ? `user_${userId}` : userId;
+    const userDocId = typeof userId === 'number' ? `user_${userId}` : `browser_${userId}`;
     const userRef = doc(db, 'users', userDocId);
     const userSnap = await getDoc(userRef);
 
@@ -326,7 +371,7 @@ export const updateUserStatus = async (user: {id: string | number}, status: 'act
 export const updateUserBalance = async (user: {id: string | number }, newBalance: number) => {
     const userId = user.id;
     if (!userId) return;
-    const userDocId = typeof userId === 'number' ? `user_${userId}` : userId;
+    const userDocId = typeof userId === 'number' ? `user_${userId}` : `browser_${userId}`;
     const userRef = doc(db, 'users', userDocId);
     
     if (isNaN(newBalance)) {
@@ -349,10 +394,9 @@ export const updateUserBalance = async (user: {id: string | number }, newBalance
 }
 
 export const deleteUser = async (user: {id: string | number}) => {
-    const userId = user.id;
+    const userId = getUserId(user);
     if (!userId) return;
-    const userDocId = typeof userId === 'number' ? `user_${userId}` : userId;
-    const userRef = doc(db, 'users', userDocId);
+    const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
@@ -361,10 +405,11 @@ export const deleteUser = async (user: {id: string | number}) => {
         if (userData.status === 'active') {
             await decrementTotalPoints(userData.balance);
         }
+        const userType = userId.startsWith('user_') ? 'telegram' : 'browser';
+        await decrementUserCount(userType); // Decrement count when a user is deleted
     }
 
     await deleteDoc(userRef);
-    await decrementUserCount(); // Decrement count when a user is deleted
 };
 
 
