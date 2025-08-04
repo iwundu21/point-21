@@ -2,14 +2,16 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Gift, Zap, Crown, Flame } from 'lucide-react';
-import StatCard from './stat-card';
+import RankCard from './rank-card';
 import DailyStreak from './daily-streak';
 
 interface MissionsCardProps {
   streak: number;
+  rank: number;
+  league: string;
 }
 
-const MissionsCard = ({ streak }: MissionsCardProps) => {
+const MissionsCard = ({ streak, rank, league }: MissionsCardProps) => {
     return (
         <div className="w-full max-w-sm p-4 space-y-6">
             <div className="text-center">
@@ -17,10 +19,9 @@ const MissionsCard = ({ streak }: MissionsCardProps) => {
             </div>
             <div className="space-y-4">
                 <DailyStreak streak={streak} />
-                <StatCard 
-                    icon={<Crown className="w-10 h-10 text-muted-foreground" />}
-                    title="Current Rank"
-                    value="View on Leaderboard"
+                <RankCard 
+                    rank={rank}
+                    league={league}
                 />
             </div>
         </div>

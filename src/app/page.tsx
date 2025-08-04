@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, UserData } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan } from 'lucide-react';
@@ -67,16 +67,23 @@ export default function Home({}: {}) {
   const [hasCompletedWelcomeTasks, setHasCompletedWelcomeTasks] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   
+  const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
+
   const router = useRouter();
   const { toast } = useToast();
 
-  const initializeUser = async (currentUser: User) => {
+  const initializeUser = useCallback(async (currentUser: User) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      const freshUserData = await getUserData(currentUser);
+      // Fetch user data and rank concurrently
+      const [freshUserData, userRankInfo] = await Promise.all([
+        getUserData(currentUser),
+        getUserRank(currentUser)
+      ]);
       
       setUserData(freshUserData);
       setUser(currentUser);
+      setRankInfo(userRankInfo);
       
       if (freshUserData.status === 'banned') {
         setIsLoading(false);
@@ -144,7 +151,7 @@ export default function Home({}: {}) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     const init = () => {
@@ -170,7 +177,7 @@ export default function Home({}: {}) {
       }
     };
     init();
-  }, []);
+  }, [initializeUser]);
   
   const handleActivateForging = async () => {
     if (!hasRedeemedReferral) {
@@ -297,7 +304,7 @@ export default function Home({}: {}) {
             <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
             <div className="w-full max-w-sm">
-            <MissionsCard streak={dailyStreak} />
+            <MissionsCard streak={dailyStreak} rank={rankInfo.rank} league={rankInfo.league} />
             </div>
         </main>
         <Footer />

@@ -319,6 +319,38 @@ export const getLeaderboardUsers = async (): Promise<{ users: UserData[]}> => {
     return { users };
 }
 
+export const getUserRank = async (user: { id: number | string } | null): Promise<{ rank: number; league: string }> => {
+    if (!user) return { rank: 0, league: 'Unranked' };
+    const userId = getUserId(user);
+
+    // Fetch the top 10,000 users to determine league and rank
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, orderBy('balance', 'desc'), limit(10000));
+    const querySnapshot = await getDocs(q);
+    
+    let rank = -1;
+    querySnapshot.forEach((doc, index) => {
+        if (doc.id === userId) {
+            rank = index + 1;
+        }
+    });
+
+    // If user is not in the top 10,000, they are in Bronze league.
+    // We can't know their exact rank without fetching all users, so we'll assign a general "rank"
+    if (rank === -1) {
+        return { rank: 10001, league: 'Bronze' }; 
+    }
+
+    let league = 'Bronze';
+    if (rank <= 10) league = 'Diamond';
+    else if (rank <= 100) league = 'Platinum';
+    else if (rank <= 1000) league = 'Gold';
+    else if (rank <= 10000) league = 'Silver';
+    
+    return { rank, league };
+};
+
+
 // --- Admin Functions ---
 
 export const getAllUsers = async (lastVisible?: QueryDocumentSnapshot<DocumentData>, pageSize: number = 50): Promise<{ users: UserData[], lastVisible: QueryDocumentSnapshot<DocumentData> | null }> => {
