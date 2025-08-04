@@ -222,19 +222,50 @@ export default function ProfilePage({}: ProfilePageProps) {
     const file = event.target.files?.[0];
     if (file) {
         setIsUploading(true);
+        
+        // --- Image Resizing Logic ---
         const reader = new FileReader();
-        reader.onloadend = async () => {
-            const dataUrl = reader.result as string;
-            try {
-                await saveUserPhotoUrl(user, dataUrl);
-                setUserData(prev => prev ? { ...prev, customPhotoUrl: dataUrl } : null);
-                toast({ title: 'Avatar Updated!' });
-            } catch (error) {
-                console.error("Failed to save avatar:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not update your avatar.' });
-            } finally {
-                setIsUploading(false);
-            }
+        reader.onload = async (e) => {
+            const img = document.createElement('img');
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 256;
+                const MAX_HEIGHT = 256;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL(file.type); // Get resized data URI
+
+                try {
+                    await saveUserPhotoUrl(user, dataUrl);
+                    setUserData(prev => prev ? { ...prev, customPhotoUrl: dataUrl } : null);
+                    toast({ title: 'Avatar Updated!' });
+                } catch (error) {
+                    console.error("Failed to save avatar:", error);
+                    toast({ variant: 'destructive', title: 'Error', description: 'Could not update your avatar.' });
+                } finally {
+                    setIsUploading(false);
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = ''; // Reset file input
+                    }
+                }
+            };
+            img.src = e.target?.result as string;
         };
         reader.readAsDataURL(file);
     }
