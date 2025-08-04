@@ -20,7 +20,7 @@ const VerifyHumanFaceInputSchema = z.object({
       "A photo of a person's face, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'.",
     ),
    userId: z.string().describe("A unique identifier for the user."),
-   user: z.any().describe("The user's Telegram object."),
+   user: z.any().describe("The user's Telegram object or browser user object."),
 });
 export type VerifyHumanFaceInput = z.infer<typeof VerifyHumanFaceInputSchema>;
 
@@ -60,12 +60,12 @@ const faceVerificationFlow = ai.defineFlow(
     // Step 2: CRITICAL - Check if the face fingerprint already exists for ANOTHER user first.
     const existingUser = await findUserByFaceFingerprint(detectionResult.faceFingerprint);
     if (existingUser && existingUser.id !== input.userId) {
-        // This face is already registered to another user. Ban the current user.
+        // This face is already registered to another user. Ban the current user for attempting to create a duplicate account.
         await banUser(input.user, 'This face is already associated with another account.');
         return {
             isHuman: true,
             isUnique: false,
-            reason: 'This face is already associated with another account. This account has been blocked.',
+            reason: 'This face is already associated with another account. This account has been blocked to prevent duplicate users.',
             faceVerificationUri: input.photoDataUri,
             faceFingerprint: detectionResult.faceFingerprint,
         };
