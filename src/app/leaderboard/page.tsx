@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
+import { Skeleton } from '@/components/ui/skeleton';
 
 declare global {
   interface Window {
@@ -51,6 +52,28 @@ const getLeagueInfo = (rank: number) => {
 
 const USERS_PER_PAGE = 10;
 const LEADERBOARD_LIMIT = 100;
+
+const LeaderboardSkeleton = () => (
+    <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i}>
+                <CardContent className="p-3 flex items-center space-x-4">
+                     <Skeleton className="h-6 w-6 rounded-md" />
+                     <Skeleton className="h-10 w-10 rounded-full" />
+                     <div className="flex-grow space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                     </div>
+                      <div className="flex-shrink-0 space-y-2">
+                        <Skeleton className="h-4 w-12" />
+                        <Skeleton className="h-3 w-10" />
+                     </div>
+                </CardContent>
+            </Card>
+        ))}
+    </div>
+);
+
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
@@ -130,8 +153,7 @@ export default function LeaderboardPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-24">
         <main className="flex-grow flex flex-col p-4 mt-8 relative">
-          {isLoading ? null : (
-             <div className="w-full max-w-sm mx-auto space-y-6">
+            <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
                         <Trophy className="w-8 h-8 text-primary" />
@@ -139,10 +161,12 @@ export default function LeaderboardPage() {
                     </h1>
                      <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5 mt-2">
                         <Users className="w-4 h-4" />
-                        {totalUsers.toLocaleString()} Total Players
+                        {totalUsers > 0 ? `${totalUsers.toLocaleString()} Total Players` : ` `}
                     </p>
                 </div>
 
+                {isLoading ? <LeaderboardSkeleton /> : (
+                <>
                 <div className="space-y-2">
                     {paginatedUsers.map((user, index) => {
                         const rank = (currentPage - 1) * USERS_PER_PAGE + index;
@@ -223,8 +247,9 @@ export default function LeaderboardPage() {
                         </Card>
                     </>
                 )}
+                </>
+                )}
             </div>
-          )}
         </main>
        </div>
       <Footer />
