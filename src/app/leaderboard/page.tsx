@@ -83,30 +83,7 @@ export default function LeaderboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     
-    useEffect(() => {
-        const init = () => {
-          let user: User | null = null;
-          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
-              const tg = window.Telegram.WebApp;
-              user = tg.initDataUnsafe.user;
-              tg.ready();
-          } else if (typeof window !== 'undefined') {
-              let browserId = localStorage.getItem('browser_user_id');
-              if (!browserId) {
-                  browserId = uuidv4();
-                  localStorage.setItem('browser_user_id', browserId);
-              }
-              user = { id: browserId, first_name: 'Browser User' };
-          }
-          
-          if (user) {
-              setCurrentUser(user);
-          }
-        };
-        init();
-    }, []);
-    
-    useEffect(() => {
+     useEffect(() => {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
             try {
@@ -128,6 +105,29 @@ export default function LeaderboardPage() {
             }
         };
         fetchLeaderboardData();
+    }, []);
+
+    useEffect(() => {
+        const init = () => {
+          let user: User | null = null;
+          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
+              const tg = window.Telegram.WebApp;
+              user = tg.initDataUnsafe.user;
+              tg.ready();
+          } else if (typeof window !== 'undefined') {
+              let browserId = localStorage.getItem('browser_user_id');
+              if (!browserId) {
+                  browserId = uuidv4();
+                  localStorage.setItem('browser_user_id', browserId);
+              }
+              user = { id: browserId, first_name: 'Browser User' };
+          }
+          
+          if (user) {
+              setCurrentUser(user);
+          }
+        };
+        init();
     }, []);
     
     // The total number of pages is based on the limited leaderboard size (100), not all users.
@@ -229,7 +229,7 @@ export default function LeaderboardPage() {
                 )}
 
 
-                {currentUserData && (currentPage * USERS_PER_PAGE) < currentUserRank + 1 && (
+                {currentUserData && (currentPage * USERS_PER_PAGE) > currentUserRank && (
                     <>
                         <Separator />
                         <Card className="border-primary ring-2 ring-primary">
