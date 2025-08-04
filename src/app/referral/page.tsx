@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,6 +9,7 @@ import { Gift, Copy, MessageSquarePlus, CheckCircle, Loader2 } from 'lucide-reac
 import { getUserData, saveUserData, applyReferralBonus } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { v4 as uuidv4 } from 'uuid';
 
 declare global {
   interface Window {
@@ -15,12 +17,12 @@ declare global {
   }
 }
 
-interface TelegramUser {
-    id: number;
-    username?: string;
+interface User {
+    id: number | string;
     first_name: string;
     last_name?: string;
-    language_code: string;
+    username?: string;
+    language_code?: string;
     is_premium?: boolean;
     photo_url?: string;
 }
@@ -28,7 +30,7 @@ interface TelegramUser {
 interface ReferralPageProps {}
 
 export default function ReferralPage({}: ReferralPageProps) {
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [referralCode, setReferralCode] = useState('');
   const [enteredCode, setEnteredCode] = useState('');
@@ -43,21 +45,24 @@ export default function ReferralPage({}: ReferralPageProps) {
 
   useEffect(() => {
     const init = () => {
-      let telegramUser: TelegramUser | null = null;
-      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+      let currentUser: User | null = null;
+      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
         const tg = window.Telegram.WebApp;
-        if (tg.initDataUnsafe?.user) {
-            telegramUser = tg.initDataUnsafe.user;
-            tg.ready();
+        currentUser = tg.initDataUnsafe.user;
+        tg.ready();
+      } else if (typeof window !== 'undefined') {
+        let browserId = localStorage.getItem('browser_user_id');
+        if (!browserId) {
+          browserId = uuidv4();
+          localStorage.setItem('browser_user_id', browserId);
         }
+        currentUser = { id: browserId, first_name: 'Browser User' };
       }
       
-      if (telegramUser) {
-        setUser(telegramUser);
+      if (currentUser) {
+        setUser(currentUser);
       } else {
-        // Fallback for development
-        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-        setUser(mockUser);
+        setIsLoading(false);
       }
     };
     init();
@@ -77,8 +82,6 @@ export default function ReferralPage({}: ReferralPageProps) {
             } finally {
                 setIsLoading(false);
             }
-        } else {
-          setIsLoading(false);
         }
     }
     loadUserData();

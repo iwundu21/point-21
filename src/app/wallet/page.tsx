@@ -24,6 +24,8 @@ import {
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
 import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress, findUserByWalletAddress } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
+import { v4 as uuidv4 } from 'uuid';
+
 
 declare global {
   interface Window {
@@ -31,12 +33,12 @@ declare global {
   }
 }
 
-interface TelegramUser {
-    id: number;
+interface User {
+    id: number | string;
     first_name: string;
     last_name?: string;
     username?: string;
-    language_code: string;
+    language_code?: string;
     is_premium?: boolean;
     photo_url?: string;
 }
@@ -52,7 +54,7 @@ export default function WalletPage({}: WalletPageProps) {
   const [walletAddress, setWalletAddress] = useState('');
   const [savedAddress, setSavedAddress] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [balance, setBalance] = useState(0);
   const { toast } = useToast();
   const router = useRouter();
@@ -62,20 +64,24 @@ export default function WalletPage({}: WalletPageProps) {
 
   useEffect(() => {
     const init = () => {
-        let telegramUser: TelegramUser | null = null;
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+        let currentUser: User | null = null;
+        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
             const tg = window.Telegram.WebApp;
-            if (tg.initDataUnsafe?.user) {
-                telegramUser = tg.initDataUnsafe.user;
-                tg.ready();
+            currentUser = tg.initDataUnsafe.user;
+            tg.ready();
+        } else if (typeof window !== 'undefined') {
+            let browserId = localStorage.getItem('browser_user_id');
+            if (!browserId) {
+                browserId = uuidv4();
+                localStorage.setItem('browser_user_id', browserId);
             }
+            currentUser = { id: browserId, first_name: 'Browser User' };
         }
 
-        if (telegramUser) {
-            setUser(telegramUser);
+        if (currentUser) {
+            setUser(currentUser);
         } else {
-            const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-            setUser(mockUser);
+            setIsLoading(false);
         }
     }
     init();
@@ -104,8 +110,6 @@ export default function WalletPage({}: WalletPageProps) {
             } finally {
                 setIsLoading(false);
             }
-        } else {
-            setIsLoading(false);
         }
     }
     loadUserData();
@@ -120,7 +124,8 @@ export default function WalletPage({}: WalletPageProps) {
         try {
             // Check for wallet uniqueness before saving
             const existingUser = await findUserByWalletAddress(trimmedAddress);
-            if (existingUser && existingUser.id !== `user_${user.id}`) {
+            const currentUserId = typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
+            if (existingUser && existingUser.id !== currentUserId) {
                 toast({
                     variant: 'destructive',
                     title: 'Wallet Address In Use',
@@ -292,5 +297,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
-    

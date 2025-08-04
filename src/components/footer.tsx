@@ -7,6 +7,7 @@ import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield } from 'luci
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { getUserData, getSocialTasks } from '@/lib/database';
+import { v4 as uuidv4 } from 'uuid';
 
 // NOTE: Add your Telegram user ID here to see the Admin link
 const ADMIN_IDS = [123, 12345, 6954452147]; 
@@ -17,41 +18,48 @@ declare global {
   }
 }
 
-interface TelegramUser {
-    id: number;
+interface User {
+    id: number | string;
 }
 
 const Footer = () => {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [availableTaskCount, setAvailableTaskCount] = useState(0);
 
   useEffect(() => {
-    let user: TelegramUser | null = null;
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+    let user: User | null = null;
+    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
       const tg = window.Telegram.WebApp;
-      if (tg.initDataUnsafe?.user) {
-          user = tg.initDataUnsafe.user;
-          tg.ready();
-      }
+      user = tg.initDataUnsafe.user;
+      tg.ready();
+      if(user) setIsAdmin(ADMIN_IDS.includes(user.id as number));
+    } else if (typeof window !== 'undefined') {
+        let browserId = localStorage.getItem('browser_user_id');
+        if (browserId) {
+            user = { id: browserId };
+        }
     }
     
     if (user) {
-        setTelegramUser(user);
-        setIsAdmin(ADMIN_IDS.includes(user.id));
+        setCurrentUser(user);
+        if (typeof user.id === 'number') {
+            setIsAdmin(ADMIN_IDS.includes(user.id));
+        }
     } else {
-        // Fallback for development, check against all mock IDs
-        const mockUser: TelegramUser = { id: 123 };
-        setTelegramUser(mockUser);
-        setIsAdmin(ADMIN_IDS.includes(mockUser.id));
+        const mockUser: User = { id: 123 }; // for dev fallback
+        setCurrentUser(mockUser);
+        if (typeof mockUser.id === 'number') {
+           setIsAdmin(ADMIN_IDS.includes(mockUser.id));
+        }
     }
   }, []);
 
   useEffect(() => {
     const checkTasks = async () => {
-        if(telegramUser) {
-            const userData = await getUserData(telegramUser);
+        if(currentUser) {
+            const userData = await getUserData(currentUser);
             const socialTasks = await getSocialTasks();
             const completedCount = userData.completedSocialTasks?.length || 0;
             const availableCount = socialTasks.length - completedCount;
@@ -64,7 +72,7 @@ const Footer = () => {
         }
     }
     checkTasks();
-  }, [telegramUser]);
+  }, [currentUser]);
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },

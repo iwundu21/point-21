@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
+import { v4 as uuidv4 } from 'uuid';
 
 declare global {
   interface Window {
@@ -18,8 +18,8 @@ declare global {
   }
 }
 
-interface TelegramUser {
-    id: number;
+interface User {
+    id: number | string;
     first_name: string;
     last_name?: string;
     username?: string;
@@ -27,10 +27,17 @@ interface TelegramUser {
 }
 
 const getInitials = (user: UserData) => {
-    if (!user.telegramUser) return '??';
+    if (!user.telegramUser) return 'BU'; // Browser User
     const firstNameInitial = user.telegramUser.first_name ? user.telegramUser.first_name[0] : '';
     const lastNameInitial = user.telegramUser.last_name ? user.telegramUser.last_name[0] : '';
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
+}
+
+const getDisplayName = (user: UserData) => {
+    if (user.telegramUser) {
+        return user.telegramUser.first_name || 'Anonymous';
+    }
+    return 'Browser User';
 }
 
 const getLeagueInfo = (rank: number) => {
@@ -48,23 +55,28 @@ const LEADERBOARD_LIMIT = 100;
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
     const [totalUsers, setTotalUsers] = useState(0);
-    const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     
     useEffect(() => {
         const init = () => {
-          let telegramUser: TelegramUser | null = null;
-          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+          let user: User | null = null;
+          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
               const tg = window.Telegram.WebApp;
-              if (tg.initDataUnsafe?.user) {
-                  telegramUser = tg.initDataUnsafe.user;
-                  tg.ready();
+              user = tg.initDataUnsafe.user;
+              tg.ready();
+          } else if (typeof window !== 'undefined') {
+              let browserId = localStorage.getItem('browser_user_id');
+              if (!browserId) {
+                  browserId = uuidv4();
+                  localStorage.setItem('browser_user_id', browserId);
               }
+              user = { id: browserId, first_name: 'Browser User' };
           }
           
-          if (telegramUser) {
-              setCurrentUser(telegramUser);
+          if (user) {
+              setCurrentUser(user);
           }
         };
         init();
@@ -98,7 +110,12 @@ export default function LeaderboardPage() {
         currentPage * USERS_PER_PAGE
     );
     
-    const currentUserRank = currentUser ? leaderboard.findIndex(u => u.telegramUser?.id === currentUser.id) : -1;
+    const currentUserRank = currentUser ? leaderboard.findIndex(u => {
+        const uId = u.telegramUser ? `user_${u.telegramUser.id}` : u.id;
+        const currentId = typeof currentUser.id === 'number' ? `user_${currentUser.id}` : `browser_${currentUser.id}`;
+        return uId === currentId || u.id === currentId;
+    }) : -1;
+
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
 
     const getMedal = (rank: number) => {
@@ -129,8 +146,11 @@ export default function LeaderboardPage() {
                 <div className="space-y-2">
                     {paginatedUsers.map((user, index) => {
                         const rank = (currentPage - 1) * USERS_PER_PAGE + index;
+                        const currentUserId = currentUser ? (typeof currentUser.id === 'number' ? `user_${currentUser.id}` : `browser_${currentUser.id}`) : null;
+                        const isCurrentUser = user.id === currentUserId;
+
                         return (
-                            <Card key={user.telegramUser?.id || rank} className={cn("transition-all", currentUser?.id === user.telegramUser?.id && "border-primary ring-2 ring-primary")}>
+                            <Card key={user.id || rank} className={cn("transition-all", isCurrentUser && "border-primary ring-2 ring-primary")}>
                                 <CardContent className="p-3 flex items-center space-x-4">
                                     <div className="flex-shrink-0 flex items-center justify-center w-6">
                                         {getMedal(rank)}
@@ -140,7 +160,7 @@ export default function LeaderboardPage() {
                                         <AvatarFallback>{getInitials(user)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow min-w-0">
-                                        <p className="font-semibold truncate">{user.telegramUser?.first_name || 'Anonymous'}</p>
+                                        <p className="font-semibold truncate">{getDisplayName(user)}</p>
                                         <p className="text-xs text-muted-foreground truncate">@{user.telegramUser?.username || 'N/A'}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
@@ -192,7 +212,7 @@ export default function LeaderboardPage() {
                                         <AvatarFallback>{getInitials(currentUserData)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow min-w-0">
-                                        <p className="font-semibold truncate">{currentUserData.telegramUser?.first_name || 'Anonymous'}</p>
+                                        <p className="font-semibold truncate">{getDisplayName(currentUserData)}</p>
                                         <p className="text-xs text-muted-foreground truncate">@{currentUserData.telegramUser?.username || 'N/A'}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">

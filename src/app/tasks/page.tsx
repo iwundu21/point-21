@@ -10,6 +10,7 @@ import TaskItem from '@/components/task-item';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 declare global {
   interface Window {
@@ -17,12 +18,12 @@ declare global {
   }
 }
 
-interface TelegramUser {
-  id: number;
+interface User {
+  id: number | string;
   first_name: string;
   last_name?: string;
   username?: string;
-  language_code: string;
+  language_code?: string;
   is_premium?: boolean;
   photo_url?: string;
 }
@@ -54,7 +55,7 @@ export const renderIcon = (iconName: string, className?: string) => {
 const TASKS_PER_PAGE = 10;
 
 export default function TasksPage() {
-    const [user, setUser] = useState<TelegramUser | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [allTasks, setAllTasks] = useState<SocialTask[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -65,20 +66,24 @@ export default function TasksPage() {
 
     useEffect(() => {
         const init = () => {
-            let telegramUser: TelegramUser | null = null;
-            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+            let currentUser: User | null = null;
+            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
                 const tg = window.Telegram.WebApp;
-                 if (tg.initDataUnsafe?.user) {
-                    telegramUser = tg.initDataUnsafe.user;
-                    tg.ready();
+                currentUser = tg.initDataUnsafe.user;
+                tg.ready();
+            } else if (typeof window !== 'undefined') {
+                let browserId = localStorage.getItem('browser_user_id');
+                if (!browserId) {
+                    browserId = uuidv4();
+                    localStorage.setItem('browser_user_id', browserId);
                 }
+                currentUser = { id: browserId, first_name: 'Browser User' };
             }
 
-            if (telegramUser) {
-                setUser(telegramUser);
+            if (currentUser) {
+                setUser(currentUser);
             } else {
-                const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-                setUser(mockUser);
+                setIsLoading(false);
             }
         }
         init();
@@ -100,8 +105,6 @@ export default function TasksPage() {
                 } finally {
                     setIsLoading(false);
                 }
-            } else {
-                setIsLoading(false);
             }
         }
         loadTaskData();
@@ -116,6 +119,11 @@ export default function TasksPage() {
         let isTelegramTask = task.icon === 'TelegramIcon';
         
         if (isTelegramTask) {
+            if (typeof user.id !== 'number') {
+                toast({ variant: 'destructive', title: "Telegram Task", description: "Please complete this task within the Telegram app."});
+                setVerifyingTaskId(null);
+                return;
+            }
              linkUrl = task.link.startsWith('@') ? `https://t.me/${task.link.substring(1)}` : task.link;
         }
 
@@ -123,7 +131,7 @@ export default function TasksPage() {
         
         // Give user time to complete the action
         setTimeout(async () => {
-            if (isTelegramTask) {
+            if (isTelegramTask && typeof user.id === 'number') {
                 try {
                     const result = await verifyTelegramTask({ userId: user.id, chatId: task.link });
                     if (result.isMember) {

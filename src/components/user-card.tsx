@@ -5,18 +5,18 @@ import type { FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from './ui/skeleton';
 
-interface TelegramUser {
-    id: number;
+interface User {
+    id: number | string;
     first_name: string;
     last_name?: string;
     username?: string;
-    language_code: string;
+    language_code?: string;
     is_premium?: boolean;
     photo_url?: string;
 }
 
 interface UserCardProps {
-  user: TelegramUser;
+  user: User | null;
 }
 
 const UserCard: FC<UserCardProps> = ({ user }) => {
@@ -39,7 +39,9 @@ const UserCard: FC<UserCardProps> = ({ user }) => {
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
   }
 
-  const displayName = `${user.first_name} ${user.last_name || ''}`.trim();
+  const displayName = user.first_name && user.first_name !== 'Browser User' 
+    ? `${user.first_name} ${user.last_name || ''}`.trim()
+    : 'Browser User';
 
   return (
     <div className="w-full">

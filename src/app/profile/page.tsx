@@ -14,6 +14,8 @@ import { verifyHumanFace } from '@/ai/flows/face-verification-flow';
 import { Toaster } from '@/components/ui/toaster';
 import { getVerificationStatus, saveVerificationStatus, UserData } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
+import { v4 as uuidv4 } from 'uuid';
+
 
 declare global {
   interface Window {
@@ -21,12 +23,12 @@ declare global {
   }
 }
 
-interface TelegramUser {
-    id: number;
+interface User {
+    id: number | string;
     first_name: string;
     last_name?: string;
     username?: string;
-    language_code: string;
+    language_code?: string;
     is_premium?: boolean;
     photo_url?: string;
 }
@@ -36,7 +38,7 @@ type VerificationStatus = 'unverified' | 'detecting' | 'verified' | 'failed';
 interface ProfilePageProps {}
 
 export default function ProfilePage({}: ProfilePageProps) {
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -53,20 +55,24 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   useEffect(() => {
     const init = () => {
-      let telegramUser: TelegramUser | null = null;
-      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+      let currentUser: User | null = null;
+      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
         const tg = window.Telegram.WebApp;
-        if (tg.initDataUnsafe?.user) {
-            telegramUser = tg.initDataUnsafe.user;
-            tg.ready();
+        currentUser = tg.initDataUnsafe.user;
+        tg.ready();
+      } else if (typeof window !== 'undefined') {
+        let browserId = localStorage.getItem('browser_user_id');
+        if (!browserId) {
+            browserId = uuidv4();
+            localStorage.setItem('browser_user_id', browserId);
         }
+        currentUser = { id: browserId, first_name: 'Browser User' };
       }
       
-      if (telegramUser) {
-        setUser(telegramUser);
+      if (currentUser) {
+        setUser(currentUser);
       } else {
-        const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en', photo_url: 'https://placehold.co/128x128.png' };
-        setUser(mockUser);
+        setIsLoading(false);
       }
     };
     init();
@@ -84,8 +90,6 @@ export default function ProfilePage({}: ProfilePageProps) {
             } finally {
                 setIsLoading(false);
             }
-        } else {
-           setIsLoading(false);
         }
     };
     loadStatus();
@@ -95,7 +99,7 @@ export default function ProfilePage({}: ProfilePageProps) {
     if (!user) return '';
     const firstNameInitial = user.first_name ? user.first_name[0] : '';
     const lastNameInitial = user.last_name ? user.last_name[0] : '';
-    return `${firstNameInitial}${lastNameInitial}`.toUpperCase();
+    return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || 'BU';
   }
   
   const handleStartVerification = () => {
@@ -140,9 +144,10 @@ export default function ProfilePage({}: ProfilePageProps) {
         setAccountStatus('detecting');
 
         try {
+          const userIdString = typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
           const result = await verifyHumanFace({ 
               photoDataUri: imageSrc,
-              userId: `user_${user.id}`,
+              userId: userIdString,
               user: user
           });
           

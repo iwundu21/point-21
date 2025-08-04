@@ -10,10 +10,11 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { getUserData, saveUserData, getLeaderboardUsers, UserData } from '@/lib/database';
+import { getUserData, saveUserData, UserData } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 declare global {
   interface Window {
@@ -21,12 +22,12 @@ declare global {
   }
 }
 
-interface TelegramUser {
-    id: number;
+interface User {
+    id: number | string;
     first_name: string;
     last_name?: string;
     username?: string;
-    language_code: string;
+    language_code?: string;
     is_premium?: boolean;
     photo_url?: string;
 }
@@ -56,7 +57,7 @@ export default function Home({}: {}) {
   const [forgingEndTime, setForgingEndTime] = useState<number | null>(null);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(0);
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
@@ -69,13 +70,13 @@ export default function Home({}: {}) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const initializeUser = async (telegramUser: TelegramUser) => {
+  const initializeUser = async (currentUser: User) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      const freshUserData = await getUserData(telegramUser);
+      const freshUserData = await getUserData(currentUser);
       
       setUserData(freshUserData);
-      setUser(telegramUser);
+      setUser(currentUser);
       
       if (freshUserData.status === 'banned') {
         setIsLoading(false);
@@ -115,7 +116,7 @@ export default function Home({}: {}) {
         streakData = { count: newStreakCount, lastLogin: today };
         setDailyStreak(newStreakCount);
         
-        await saveUserData(telegramUser, { 
+        await saveUserData(currentUser, { 
           balance: currentBalance, 
           dailyStreak: streakData, 
           forgingEndTime: freshUserData.forgingEndTime 
@@ -128,7 +129,7 @@ export default function Home({}: {}) {
       setBalance(currentBalance);
       
       if (shouldSave) {
-        await saveUserData(telegramUser, { 
+        await saveUserData(currentUser, { 
           balance: currentBalance, 
           forgingEndTime: freshUserData.forgingEndTime 
         });
@@ -147,22 +148,26 @@ export default function Home({}: {}) {
 
   useEffect(() => {
     const init = () => {
-      let telegramUser: TelegramUser | null = null;
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+      let currentUser: User | null = null;
+      
+      if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
           const tg = window.Telegram.WebApp;
-          if (tg.initDataUnsafe?.user) {
-              telegramUser = tg.initDataUnsafe.user;
-              tg.ready();
+          currentUser = tg.initDataUnsafe.user;
+          tg.ready();
+      } else if (typeof window !== 'undefined') {
+          let browserId = localStorage.getItem('browser_user_id');
+          if (!browserId) {
+              browserId = uuidv4();
+              localStorage.setItem('browser_user_id', browserId);
           }
-        }
-        
-        if (telegramUser) {
-          initializeUser(telegramUser);
-        } else {
+          currentUser = { id: browserId, first_name: 'Browser User' };
+      }
+      
+      if (currentUser) {
+          initializeUser(currentUser);
+      } else {
           setIsLoading(false);
-        }
-      }, 500);
+      }
     };
     init();
   }, []);
