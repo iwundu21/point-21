@@ -273,6 +273,7 @@ export default function Home({}: {}) {
             <div className="flex justify-between items-start">
             <UserCard 
                 user={user}
+                userData={userData}
             />
             <MiningStatusIndicator isActive={isForgingActive} />
             </div>

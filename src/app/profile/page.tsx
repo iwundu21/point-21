@@ -6,13 +6,13 @@ import Link from 'next/link';
 import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, Loader2, Copy, Upload } from 'lucide-react';
 import Webcam from "react-webcam";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { verifyHumanFace } from '@/ai/flows/face-verification-flow';
 import { Toaster } from '@/components/ui/toaster';
-import { getVerificationStatus, saveVerificationStatus, UserData } from '@/lib/database';
+import { getUserData, saveVerificationStatus, UserData, saveUserPhotoUrl } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -39,6 +39,7 @@ interface ProfilePageProps {}
 
 export default function ProfilePage({}: ProfilePageProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -49,9 +50,25 @@ export default function ProfilePage({}: ProfilePageProps) {
   const [accountStatus, setAccountStatus] = useState<VerificationStatus>('unverified');
   const [failureReason, setFailureReason] = useState<string | null>(null);
   const [isVerificationInProgress, setIsVerificationInProgress] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const webcamRef = useRef<Webcam>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const loadInitialData = useCallback(async (currentUser: User) => {
+      setIsLoading(true);
+      try {
+          const data = await getUserData(currentUser);
+          setUserData(data);
+          setAccountStatus(data.verificationStatus);
+      } catch (error) {
+          console.error("Failed to load user data:", error);
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to load user data.' });
+      } finally {
+          setIsLoading(false);
+      }
+  }, [toast]);
 
   useEffect(() => {
     const init = () => {
@@ -71,29 +88,14 @@ export default function ProfilePage({}: ProfilePageProps) {
       
       if (currentUser) {
         setUser(currentUser);
+        loadInitialData(currentUser);
       } else {
         setIsLoading(false);
       }
     };
     init();
-  }, []);
+  }, [loadInitialData]);
 
-  useEffect(() => {
-    const loadStatus = async () => {
-        if (user) {
-            setIsLoading(true);
-            try {
-                const storedStatus = await getVerificationStatus(user);
-                setAccountStatus(storedStatus);
-            } catch (error) {
-                console.error("Failed to load verification status:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-    };
-    loadStatus();
-  }, [user]);
 
   const getInitials = () => {
     if (!user) return '';
@@ -194,8 +196,44 @@ export default function ProfilePage({}: ProfilePageProps) {
         await saveVerificationStatus(user, 'unverified');
     }
   }
+  
+  const handleCopy = (textToCopy: string) => {
+    navigator.clipboard.writeText(textToCopy);
+    toast({ title: 'Copied to Clipboard!' });
+  };
+  
+  const handleAvatarClick = () => {
+      if (user?.first_name === 'Browser User' && fileInputRef.current) {
+          fileInputRef.current.click();
+      }
+  }
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) return;
+    const file = event.target.files?.[0];
+    if (file) {
+        setIsUploading(true);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const dataUrl = reader.result as string;
+            try {
+                await saveUserPhotoUrl(user, dataUrl);
+                setUserData(prev => prev ? { ...prev, customPhotoUrl: dataUrl } : null);
+                toast({ title: 'Avatar Updated!' });
+            } catch (error) {
+                console.error("Failed to save avatar:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not update your avatar.' });
+            } finally {
+                setIsUploading(false);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+  };
+
 
   const displayName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Anonymous';
+  const isBrowserUser = user?.first_name === 'Browser User';
 
   const renderAccountStatus = () => {
     switch (accountStatus) {
@@ -328,6 +366,9 @@ export default function ProfilePage({}: ProfilePageProps) {
     )
   }
 
+  const avatarSrc = userData?.customPhotoUrl || user?.photo_url;
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Toaster />
@@ -335,14 +376,35 @@ export default function ProfilePage({}: ProfilePageProps) {
         {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
             <div className="w-full max-w-sm flex flex-col items-center text-center space-y-4">
-                <Avatar className="w-24 h-24 border-4 border-primary">
-                    <AvatarImage src={user?.photo_url} alt={displayName} />
-                    <AvatarFallback className="text-3xl">{getInitials()}</AvatarFallback>
-                </Avatar>
+                <div className="relative group">
+                    <Avatar className="w-24 h-24 border-4 border-primary" onClick={handleAvatarClick} >
+                        <AvatarImage src={avatarSrc} alt={displayName} />
+                        <AvatarFallback className="text-3xl">{getInitials()}</AvatarFallback>
+                    </Avatar>
+                     {isBrowserUser && (
+                        <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
+                           {isUploading ? <Loader2 className="w-8 h-8 animate-spin text-white" /> : <Upload className="w-8 h-8 text-white" />}
+                        </div>
+                    )}
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+                </div>
+                {isBrowserUser && <p className="text-xs text-muted-foreground">Click avatar to upload</p>}
+                
                 <div className="flex flex-col space-y-1">
                     <h2 className="text-2xl font-bold">{displayName}</h2>
-                    <p className="text-sm text-muted-foreground">@{user?.username || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground pt-2">ID: {user?.id}</p>
+                    {isBrowserUser ? (
+                        <div className="flex items-center justify-center gap-2 font-mono text-muted-foreground pt-1">
+                            <span className="truncate max-w-[200px]">ID: {user?.id}</span>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(user?.id.toString() || '')}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ) : (
+                         <>
+                            <p className="text-sm text-muted-foreground">@{user?.username || 'N/A'}</p>
+                            <p className="text-xs text-muted-foreground pt-2">ID: {user?.id}</p>
+                        </>
+                    )}
                     <div className="flex items-center justify-center pt-2">
                         <p className="text-sm font-semibold mr-2">Status:</p>
                         {renderAccountStatus()}

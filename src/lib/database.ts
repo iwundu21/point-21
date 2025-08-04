@@ -24,6 +24,7 @@ export interface UserData {
     faceFingerprint: string | null; // Unique identifier for the face
     walletAddress: string | null;
     telegramUser: TelegramUser | null;
+    customPhotoUrl: string | null; // For browser users' custom avatars
     referralCode: string | null;
     referredBy: string | null;
     referralBonusApplied: boolean;
@@ -65,6 +66,7 @@ const defaultUserData = (user: { id: number | string, first_name?: string } | nu
     faceFingerprint: null,
     walletAddress: null,
     telegramUser: user && typeof user.id === 'number' ? user as TelegramUser : null,
+    customPhotoUrl: null,
     referralCode: null,
     referredBy: null,
     referralBonusApplied: false,
@@ -396,6 +398,17 @@ export const addSocialTask = async (task: Omit<SocialTask, 'id' | 'createdAt'>) 
     });
 };
 
+export interface SocialTask {
+    id: string;
+    title: string;
+    description: string;
+    link: string;
+    points: number;
+    icon: string;
+    createdAt: any; 
+}
+
+
 export const getSocialTasks = async (): Promise<SocialTask[]> => {
     const tasksCollection = collection(db, 'socialTasks');
     const q = query(tasksCollection, orderBy('createdAt', 'desc'));
@@ -434,3 +447,4 @@ export const getWalletAddress = async (user: { id: number | string } | null) => 
 export const saveWalletAddress = async (user: { id: number | string } | null, address: string) => saveUserData(user, { walletAddress: address });
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
+export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });

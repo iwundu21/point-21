@@ -4,6 +4,8 @@
 import type { FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from './ui/skeleton';
+import type { UserData } from '@/lib/database';
+
 
 interface User {
     id: number | string;
@@ -17,9 +19,10 @@ interface User {
 
 interface UserCardProps {
   user: User | null;
+  userData?: UserData | null;
 }
 
-const UserCard: FC<UserCardProps> = ({ user }) => {
+const UserCard: FC<UserCardProps> = ({ user, userData }) => {
   if (!user) {
     return (
       <div className="w-full p-4">
@@ -42,12 +45,14 @@ const UserCard: FC<UserCardProps> = ({ user }) => {
   const displayName = user.first_name && user.first_name !== 'Browser User' 
     ? `${user.first_name} ${user.last_name || ''}`.trim()
     : 'Browser User';
+    
+  const avatarSrc = userData?.customPhotoUrl || user.photo_url;
 
   return (
     <div className="w-full">
       <div className="flex items-center space-x-4">
         <Avatar className="w-12 h-12">
-            <AvatarImage src={user.photo_url} alt={displayName} />
+            <AvatarImage src={avatarSrc} alt={displayName} />
             <AvatarFallback>{getInitials()}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col">
