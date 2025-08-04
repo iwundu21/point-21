@@ -111,9 +111,9 @@ export default function LeaderboardPage() {
     );
     
     const currentUserRank = currentUser ? leaderboard.findIndex(u => {
-        const uId = u.telegramUser ? `user_${u.telegramUser.id}` : u.id;
+        const uId = u.id; // The ID from the database is already in the correct format (e.g., 'user_123' or 'browser_abc')
         const currentId = typeof currentUser.id === 'number' ? `user_${currentUser.id}` : `browser_${currentUser.id}`;
-        return uId === currentId || u.id === currentId;
+        return uId === currentId;
     }) : -1;
 
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
@@ -156,7 +156,7 @@ export default function LeaderboardPage() {
                                         {getMedal(rank)}
                                     </div>
                                     <Avatar className="w-10 h-10 flex-shrink-0">
-                                        <AvatarImage src={user.telegramUser?.photo_url} />
+                                        <AvatarImage src={user.telegramUser?.photo_url || user.customPhotoUrl} />
                                         <AvatarFallback>{getInitials(user)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow min-w-0">
@@ -208,7 +208,7 @@ export default function LeaderboardPage() {
                                        <span className="text-sm font-semibold w-5 text-center">{currentUserRank + 1}</span>
                                     </div>
                                     <Avatar className="w-10 h-10 flex-shrink-0">
-                                        <AvatarImage src={currentUserData.telegramUser?.photo_url} />
+                                        <AvatarImage src={currentUserData.telegramUser?.photo_url || currentUserData.customPhotoUrl} />
                                         <AvatarFallback>{getInitials(currentUserData)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow min-w-0">
