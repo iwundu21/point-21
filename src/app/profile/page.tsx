@@ -105,6 +105,15 @@ export default function ProfilePage({}: ProfilePageProps) {
   }
   
   const handleStartVerification = () => {
+      if (user?.first_name === 'Browser User' && !userData?.customPhotoUrl) {
+        toast({
+            variant: 'destructive',
+            title: 'Avatar Required',
+            description: 'Please upload an avatar by clicking on your profile picture before starting verification.',
+        });
+        return;
+      }
+      
       setIsVerificationInProgress(true);
       setIsVerifying(true);
       setTimeout(async () => {
