@@ -1,6 +1,6 @@
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer } from 'firebase/firestore';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
 
@@ -321,25 +321,20 @@ export const getLeaderboardUsers = async (): Promise<{ users: UserData[]}> => {
 
 export const getUserRank = async (user: { id: number | string } | null): Promise<{ rank: number; league: string }> => {
     if (!user) return { rank: 0, league: 'Unranked' };
-    const userId = getUserId(user);
 
-    // Fetch the top 10,000 users to determine league and rank
+    const currentUserData = await getUserData(user);
+    const userBalance = currentUserData.balance;
+
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, orderBy('balance', 'desc'), limit(10000));
-    const querySnapshot = await getDocs(q);
+    // Query for users with a higher balance
+    const q = query(usersRef, where('balance', '>', userBalance));
     
-    let rank = -1;
-    querySnapshot.forEach((doc, index) => {
-        if (doc.id === userId) {
-            rank = index + 1;
-        }
-    });
+    // Get the count of users with a higher balance
+    const snapshot = await getCountFromServer(q);
+    const higherRankedCount = snapshot.data().count;
 
-    // If user is not in the top 10,000, they are in Bronze league.
-    // We can't know their exact rank without fetching all users, so we'll assign a general "rank"
-    if (rank === -1) {
-        return { rank: 10001, league: 'Bronze' }; 
-    }
+    // The user's rank is the number of people with a higher score, plus one
+    const rank = higherRankedCount + 1;
 
     let league = 'Bronze';
     if (rank <= 10) league = 'Diamond';

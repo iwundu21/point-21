@@ -14,13 +14,14 @@ const RankCard: FC<RankCardProps> = ({ rank, league }) => {
   const router = useRouter();
 
   const getRankDisplay = (rank: number) => {
-    if (rank > 10000) {
-      return '>10,000';
+    if (rank <= 0) {
+      return 'Unranked';
     }
     return `#${rank.toLocaleString()}`;
   };
 
   const getProgress = (rank: number) => {
+    if (rank <= 0) return 0;
     if (rank <= 10) return 100; // Diamond
     if (rank <= 100) return ((100 - (rank - 11)) / 90) * 100; // Platinum
     if (rank <= 1000) return ((1000 - (rank - 101)) / 900) * 100; // Gold
