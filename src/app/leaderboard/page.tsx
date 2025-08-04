@@ -110,15 +110,17 @@ export default function LeaderboardPage() {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
             try {
-                // Fetch leaderboard and total user count concurrently
-                const [{ users: leaderboardUsers }, telegramCount, browserCount] = await Promise.all([
-                    getLeaderboardUsers(), // This fetches the top 100 users.
-                    getTotalTelegramUsersCount(),   // This efficiently gets the telegram count.
-                    getTotalBrowserUsersCount() // This efficiently gets the browser count.
+                // Fetch all data concurrently for efficiency
+                const [leaderboardData, telegramCount, browserCount] = await Promise.all([
+                    getLeaderboardUsers(),
+                    getTotalTelegramUsersCount(),
+                    getTotalBrowserUsersCount()
                 ]);
-                setLeaderboard(leaderboardUsers); // Contains max 100 users
+
+                setLeaderboard(leaderboardData.users);
                 setTotalTelegramUsers(telegramCount);
                 setTotalBrowserUsers(browserCount);
+
             } catch (error) {
                 console.error("Failed to fetch leaderboard data:", error);
             } finally {
