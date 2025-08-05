@@ -15,10 +15,10 @@ interface MiningCircleProps {
   hasRedeemedReferral: boolean;
   hasCompletedWelcomeTasks: boolean;
   isVerified: boolean;
+  miningReward: number;
 }
 
 const TOTAL_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-const TOTAL_POINTS = 1000;
 
 const formatTime = (ms: number): string => {
   if (ms <= 0) return '00:00:00';
@@ -37,7 +37,8 @@ const MiningCircle: FC<MiningCircleProps> = ({
   isActivating, 
   hasRedeemedReferral, 
   hasCompletedWelcomeTasks, 
-  isVerified 
+  isVerified,
+  miningReward
 }) => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [progress, setProgress] = useState(0);
@@ -57,14 +58,14 @@ const MiningCircle: FC<MiningCircleProps> = ({
       if (remaining <= 0) {
         setTimeLeft(0);
         setProgress(100);
-        setEarnedPoints(TOTAL_POINTS);
+        setEarnedPoints(miningReward);
         onSessionEnd();
       } else {
         const timeElapsed = TOTAL_DURATION - remaining;
         const currentProgress = (timeElapsed / TOTAL_DURATION) * 100;
         setTimeLeft(remaining);
         setProgress(currentProgress);
-        setEarnedPoints(Math.floor((currentProgress / 100) * TOTAL_POINTS));
+        setEarnedPoints(Math.floor((currentProgress / 100) * miningReward));
       }
     };
     
@@ -72,7 +73,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
     const intervalId = setInterval(updateTimer, 1000);
 
     return () => clearInterval(intervalId);
-  }, [isActive, endTime, onSessionEnd]);
+  }, [isActive, endTime, onSessionEnd, miningReward]);
 
   const conicGradientStyle = {
     background: `conic-gradient(hsl(var(--gold)) ${progress}%, transparent ${progress}%)`,
@@ -119,7 +120,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
     if (!hasRedeemedReferral) return 'First, redeem a referral code to continue.';
     if (!hasCompletedWelcomeTasks) return 'Next, complete all the welcome tasks.';
     if (!isVerified) return 'Please complete face verification on your profile to start mining.';
-    return 'Activate a 24-hour mining session to earn 1000 E-point';
+    return `Activate a 24-hour mining session to earn ${miningReward} E-point`;
   }
 
   const { disabled, text, icon, className: stateClassName } = getButtonState();
@@ -144,7 +145,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
             {icon}
              {isActive ? (
               <div className="mt-2 text-center">
-                 <p className="text-xl sm:text-2xl font-bold tracking-tighter">{earnedPoints}/{TOTAL_POINTS}</p>
+                 <p className="text-xl sm:text-2xl font-bold tracking-tighter">{earnedPoints}/{miningReward}</p>
                  <p className="text-xl sm:text-2xl font-mono font-bold tracking-wider">{formatTime(timeLeft)}</p>
               </div>
             ) : (

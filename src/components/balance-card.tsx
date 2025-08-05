@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 interface BalanceCardProps {
   balance: number;
   animating: boolean;
+  miningReward: number;
 }
 
-const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
+const BalanceCard: FC<BalanceCardProps> = ({ balance, animating, miningReward }) => {
   return (
     <Card className="w-full glass-card">
       <CardHeader className="p-2">
@@ -27,7 +28,7 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating }) => {
             "absolute -top-6 right-0 text-lg sm:text-xl font-medium text-gold transition-all duration-1000 ease-out",
             animating ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
           )}>
-            +1000
+            +{miningReward}
           </span>
         </div>
       </CardContent>

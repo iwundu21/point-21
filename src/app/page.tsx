@@ -72,6 +72,9 @@ export default function Home({}: {}) {
   const router = useRouter();
   const { toast } = useToast();
 
+  const isBrowserUser = user?.first_name === 'Browser User';
+  const miningReward = isBrowserUser ? 700 : 1000;
+
   const initializeUser = useCallback(async (currentUser: User) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
@@ -102,7 +105,8 @@ export default function Home({}: {}) {
         setIsForgingActive(true);
         setForgingEndTime(freshUserData.forgingEndTime);
       } else if (freshUserData.forgingEndTime) {
-        currentBalance += 1000;
+        const reward = typeof currentUser.id === 'number' ? 1000 : 700;
+        currentBalance += reward;
         freshUserData.forgingEndTime = null; 
         shouldSave = true;
       }
@@ -155,14 +159,14 @@ export default function Home({}: {}) {
   useEffect(() => {
     const init = () => {
       let currentUser: User | null = null;
-      let isBrowserUser = false;
+      let isBrowser = false;
       
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
           const tg = window.Telegram.WebApp;
           currentUser = tg.initDataUnsafe.user;
           tg.ready();
       } else if (typeof window !== 'undefined') {
-          isBrowserUser = true;
+          isBrowser = true;
           const sessionWallet = sessionStorage.getItem('connected_wallet');
           
           if (!sessionWallet) {
@@ -183,7 +187,7 @@ export default function Home({}: {}) {
       
       if (currentUser) {
           initializeUser(currentUser);
-      } else if (!isBrowserUser) {
+      } else if (!isBrowser) {
           // Fallback for Telegram if user object is not available for some reason.
           // Or we can show a message "Please open in Telegram".
           setIsLoading(false); 
@@ -235,7 +239,7 @@ export default function Home({}: {}) {
   };
 
   const handleSessionEnd = async () => {
-    const newBalance = balance + 1000;
+    const newBalance = balance + miningReward;
     setBalance(newBalance);
     setIsForgingActive(false);
     setForgingEndTime(null);
@@ -303,7 +307,7 @@ export default function Home({}: {}) {
             />
             <MiningStatusIndicator isActive={isForgingActive} />
             </div>
-            <BalanceCard balance={balance} animating={showPointsAnimation} />
+            <BalanceCard balance={balance} animating={showPointsAnimation} miningReward={miningReward} />
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
@@ -317,6 +321,7 @@ export default function Home({}: {}) {
                 hasRedeemedReferral={hasRedeemedReferral}
                 hasCompletedWelcomeTasks={hasCompletedWelcomeTasks}
                 isVerified={isVerified}
+                miningReward={miningReward}
             />
             </div>
 
