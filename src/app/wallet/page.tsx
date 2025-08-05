@@ -234,7 +234,6 @@ export default function WalletPage({}: WalletPageProps) {
                                 <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
                             </div>
                         </div>
-                        <WalletMultiButton />
                     </div>
               ) : connected ? (
                     <div className="flex flex-col space-y-4 items-center">
@@ -383,5 +382,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
-    
