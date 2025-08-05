@@ -1,78 +1,27 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useWallet } from '@solana/wallet-adapter-react';
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
-import { findUserByWalletAddress } from '@/lib/database';
-import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
+import { ShieldCheck, Loader2 } from 'lucide-react';
 
-export default function AuthPage() {
-    const router = useRouter();
-    const { publicKey, connected } = useWallet();
-    const [isChecking, setIsChecking] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const checkUserStatus = async () => {
-            if (connected && publicKey) {
-                setIsChecking(true);
-                setError(null);
-                
-                const walletAddress = publicKey.toBase58();
-
-                try {
-                    const userData = await findUserByWalletAddress(walletAddress);
-                    sessionStorage.setItem('connected_wallet', walletAddress);
-                    const browserId = `wallet_${walletAddress}`;
-                    localStorage.setItem('browser_user_id', browserId);
-
-                    if (userData && userData.walletAddress) {
-                        router.replace('/');
-                    } else {
-                        router.replace('/wallet');
-                    }
-                } catch (e) {
-                    console.error("Error checking user status", e);
-                    setError("An error occurred while checking your account. Please try again.");
-                } finally {
-                    setIsChecking(false);
-                }
-            }
-        };
-
-        checkUserStatus();
-    }, [connected, publicKey, router]);
-    
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+const AuthClient = dynamic(() => import('@/components/auth-client'), {
+    ssr: false,
+    loading: () => (
+         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
             <Card className="max-w-sm w-full">
                 <CardHeader className="text-center space-y-4">
-                    <div className="flex justify-center">
-                        {isChecking ? (
-                            <Loader2 className="w-12 h-12 text-primary animate-spin mt-4" />
-                        ) : (
-                             <ShieldCheck className="w-12 h-12 text-primary" />
-                        )}
+                     <div className="flex justify-center">
+                         <Loader2 className="w-12 h-12 text-primary animate-spin mt-4" />
                     </div>
-                     <CardTitle>Connect Your Wallet</CardTitle>
-                     <CardDescription>Connect your Solana wallet to access your Exnus Points dashboard.</CardDescription>
+                     <CardTitle>Loading Wallet</CardTitle>
+                     <CardDescription>Preparing secure connection...</CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center space-y-4">
-                     <WalletMultiButton />
-                      {error && (
-                         <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertBoxDescription>
-                                {error}
-                            </AlertBoxDescription>
-                        </Alert>
-                     )}
+                <CardContent className="flex flex-col items-center space-y-4 h-[60px]">
                 </CardContent>
             </Card>
         </div>
-    );
+    )
+})
+
+export default function AuthPage() {
+    return <AuthClient />;
 }
