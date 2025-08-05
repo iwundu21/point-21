@@ -111,19 +111,17 @@ export default function TasksPage() {
         loadTaskData();
     }, [user]);
 
+    const isBrowserUser = user?.first_name === 'Browser User';
+
     const handleTaskComplete = async (task: SocialTask) => {
         if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id)) return;
 
         setVerifyingTaskId(task.id);
-
-        // Open the link for the user to complete the action
         window.open(task.link, '_blank');
-        
-        // Simulate verification with a timeout, then award points
-        setTimeout(async () => {
-            try {
+
+        const completeTask = async () => {
+             try {
                 const freshUserData = await getUserData(user);
-                // Ensure the task hasn't been completed in another session
                 if (freshUserData.completedSocialTasks?.includes(task.id)) {
                     setVerifyingTaskId(null);
                     return; 
@@ -132,17 +130,12 @@ export default function TasksPage() {
                 const updatedCompletedTasks = [...(freshUserData.completedSocialTasks || []), task.id];
                 const updatedBalance = freshUserData.balance + task.points;
                 
-                const updatedData = { 
-                    ...freshUserData, 
-                    completedSocialTasks: updatedCompletedTasks, 
-                    balance: updatedBalance 
-                };
-                
                 await saveUserData(user, { 
                     completedSocialTasks: updatedCompletedTasks, 
                     balance: updatedBalance 
                 });
-
+                
+                const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
                 setUserData(updatedData);
                 toast({ title: "Success!", description: `You've earned ${task.points} E-points.`});
             } catch (error) {
@@ -151,7 +144,34 @@ export default function TasksPage() {
             } finally {
                 setVerifyingTaskId(null);
             }
-        }, 8000); // 8-second delay
+        };
+
+        if (isBrowserUser) {
+            setTimeout(completeTask, 8000); // 8-second delay for browser users
+            return;
+        }
+
+        // Telegram user logic
+        if (task.icon === 'TelegramIcon') {
+            if (typeof user.id !== 'number') return;
+            try {
+                const chatId = task.link.substring(task.link.lastIndexOf('/') + 1);
+                const result = await verifyTelegramTask({ userId: user.id, chatId });
+                if (result.isMember) {
+                    await completeTask();
+                } else {
+                    toast({ variant: 'destructive', title: "Verification Failed", description: result.error || "You must join the channel first."});
+                    setVerifyingTaskId(null);
+                }
+            } catch (e) {
+                 console.error(e);
+                 toast({ variant: 'destructive', title: "Error", description: "Could not verify task completion."});
+                 setVerifyingTaskId(null);
+            }
+        } else {
+            // Non-verifiable tasks for Telegram users (e.g., X, Discord)
+            setTimeout(completeTask, 8000);
+        }
     };
     
     const availableTasks = allTasks.filter(task => !userData?.completedSocialTasks?.includes(task.id));
@@ -186,6 +206,14 @@ export default function TasksPage() {
                         Engage with us on social media to earn more E-points!
                     </p>
                 </div>
+                 {isBrowserUser && (
+                    <div className="flex items-center gap-2 p-3 text-sm text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                        <Info className="w-5 h-5 flex-shrink-0" />
+                        <div>
+                         Telegram tasks must be completed in the Telegram app to be verified and receive rewards.
+                        </div>
+                    </div>
+                )}
 
                 <Tabs defaultValue="available" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
