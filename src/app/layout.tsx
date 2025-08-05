@@ -3,6 +3,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import WalletProvider from '@/components/wallet-provider';
 
 export const metadata: Metadata = {
   title: 'Aetherium Points',
@@ -23,9 +24,11 @@ export default function RootLayout({
         <script src="https://telegram.org/js/telegram-web-app.js" async></script>
       </head>
       <body className="font-body antialiased">
-        {children}
-        <Toaster />
-        <SpeedInsights/>
+        <WalletProvider>
+            {children}
+            <Toaster />
+            <SpeedInsights/>
+        </WalletProvider>
       </body>
     </html>
   );

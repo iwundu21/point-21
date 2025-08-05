@@ -1,12 +1,10 @@
 
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2 } from 'lucide-react';
@@ -19,13 +17,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
 import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress, findUserByWalletAddress } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
+require('@solana/wallet-adapter-react-ui/styles.css');
 
 declare global {
   interface Window {
@@ -51,7 +51,6 @@ const isValidSolanaAddress = (address: string): boolean => {
 };
 
 export default function WalletPage({}: WalletPageProps) {
-  const [walletAddress, setWalletAddress] = useState('');
   const [savedAddress, setSavedAddress] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -61,6 +60,10 @@ export default function WalletPage({}: WalletPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const { publicKey, connected } = useWallet();
+  const walletAddress = useMemo(() => publicKey?.toBase58() || '', [publicKey]);
+
 
   useEffect(() => {
     const init = () => {
@@ -100,7 +103,6 @@ export default function WalletPage({}: WalletPageProps) {
 
                 if (storedAddress) {
                     setSavedAddress(storedAddress);
-                    setWalletAddress(storedAddress);
                 }
                 setIsVerified(verificationStatus === 'verified');
                 setBalance(userBalance);
@@ -145,7 +147,7 @@ export default function WalletPage({}: WalletPageProps) {
                 });
                 setIsSaving(false);
                 setIsDialogOpen(false); // Close dialog on success
-            }, 6000);
+            }, 1000);
 
         } catch (error) {
             console.error("Error saving wallet address:", error);
@@ -160,7 +162,7 @@ export default function WalletPage({}: WalletPageProps) {
         toast({
             variant: 'destructive',
             title: 'Invalid Address',
-            description: 'Please enter a valid wallet address.',
+            description: 'Please connect your wallet first.',
         });
         setIsSaving(false);
     }
@@ -182,7 +184,7 @@ export default function WalletPage({}: WalletPageProps) {
         toast({
             variant: 'destructive',
             title: 'Invalid Solana Address',
-            description: 'Please enter a valid Solana wallet address.',
+            description: 'Please connect a valid Solana wallet.',
         });
         return;
     }
@@ -191,6 +193,7 @@ export default function WalletPage({}: WalletPageProps) {
   }
 
   const truncateAddress = (address: string) => {
+    if (!address) return '';
     if (address.length < 14) return address;
     return `${address.slice(0, 7)}****${address.slice(-7)}`;
   }
@@ -226,44 +229,40 @@ export default function WalletPage({}: WalletPageProps) {
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                          Save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
+                          Connect and save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
                       </p>
 
                       {!savedAddress ? (
-                          <div className="flex flex-col space-y-2">
-                              <Input
-                                  type="text"
-                                  placeholder="Enter your Solana wallet address"
-                                  value={walletAddress}
-                                  onChange={(e) => setWalletAddress(e.target.value)}
-                                  className="bg-background/80"
-                                  disabled={!isVerified}
-                              />
-                               <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                <AlertDialogTrigger asChild>
-                                   <Button onClick={handleTriggerClick} disabled={!walletAddress.trim()}>
-                                      <Save className="mr-2 h-4 w-4" /> Save Address
-                                   </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle className="flex items-center gap-2">
-                                      <AlertTriangle className="text-destructive" /> Are you absolutely sure?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
-                                    </AlertDialogDescription>
-                                    <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
-                                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                      {isSaving ? 'Saving...' : 'Confirm & Save'}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                          <div className="flex flex-col space-y-4 items-center">
+                              <WalletMultiButton />
+                              
+                              {connected && (
+                                <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                  <AlertDialogTrigger asChild>
+                                     <Button onClick={handleTriggerClick} disabled={!walletAddress.trim()} className="w-full">
+                                        <Save className="mr-2 h-4 w-4" /> Save Address
+                                     </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle className="flex items-center gap-2">
+                                        <AlertTriangle className="text-destructive" /> Are you absolutely sure?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
+                                      </AlertDialogDescription>
+                                      <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
+                                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {isSaving ? 'Saving...' : 'Confirm & Save'}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
                               {!isVerified && (
                                 <p className="text-xs text-destructive text-center">Please verify your account to save your wallet.</p>
                               )}
