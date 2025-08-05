@@ -108,8 +108,13 @@ const decrementBrowserUserCount = async () => {
     await setDoc(browserUsersStatsRef, { count: increment(-1) }, { merge: true });
 };
 
-const incrementUserCount = async () => {
+const incrementUserCount = async (userType: 'telegram' | 'browser') => {
     await setDoc(statsRef, { count: increment(1) }, { merge: true });
+    if (userType === 'telegram') {
+        await incrementTelegramUserCount();
+    } else {
+        await incrementBrowserUserCount();
+    }
 };
 
 const decrementUserCount = async (userType: 'telegram' | 'browser') => {
@@ -202,8 +207,7 @@ export const getUserData = async (user: { id: number | string } | null): Promise
                 referralCode: generateReferralCode(),
             };
             await setDoc(userRef, newUser);
-            await incrementUserCount();
-            await incrementTelegramUserCount();
+            await incrementUserCount('telegram');
             return { ...newUser, id: userId };
         } else {
             // Return default data for a new browser user without saving to DB.
@@ -536,8 +540,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
             walletAddress: address,
         };
         await setDoc(userRef, newUser);
-        await incrementUserCount();
-        await incrementBrowserUserCount();
+        await incrementUserCount('browser');
     } else {
         // This is an existing user (Telegram or Browser) just updating their wallet.
         await setDoc(userRef, { walletAddress: address }, { merge: true });
