@@ -83,7 +83,7 @@ export default function Home({}: {}) {
       
       setUserData(freshUserData);
       setUser(currentUser);
-      setRankInfo(userRankInfo);
+      setRankInfo(userRankInfo || { rank: 0, league: 'Unranked' });
       
       if (freshUserData.status === 'banned') {
         setIsLoading(false);

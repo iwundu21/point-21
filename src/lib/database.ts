@@ -323,21 +323,23 @@ export const getUserRank = async (user: { id: number | string } | null): Promise
     if (!user) return { rank: 0, league: 'Unranked' };
 
     const currentUserData = await getUserData(user);
-    const userBalance = currentUserData.balance;
-
-    if (userBalance === 0) {
+    if (!currentUserData) {
         return { rank: 0, league: 'Unranked' };
     }
 
+    const userBalance = currentUserData.balance;
+
+    if (userBalance === 0) {
+        const totalUsers = await getTotalUsersCount();
+        return { rank: totalUsers, league: 'Unranked' };
+    }
+
     const usersRef = collection(db, 'users');
-    // Query for users with a higher balance
     const q = query(usersRef, where('balance', '>', userBalance));
     
-    // Get the count of users with a higher balance using the efficient server-side aggregation
     const snapshot = await getCountFromServer(q);
     const higherRankedCount = snapshot.data().count;
 
-    // The user's rank is the number of people with a higher score, plus one
     const rank = higherRankedCount + 1;
 
     let league = 'Bronze';
