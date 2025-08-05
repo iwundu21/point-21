@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -675,6 +675,11 @@ export default function AdminPage() {
         }
     }
     
+    const handleLogout = () => {
+        setCodeAuthenticated(false);
+        setAccessCode('');
+    }
+
     const handleCopy = (textToCopy: string) => {
         navigator.clipboard.writeText(textToCopy);
         toast({
@@ -793,11 +798,16 @@ export default function AdminPage() {
             </div>
         ) : (
         <div className="w-full max-w-7xl mx-auto space-y-6">
-            <div className="text-center">
+            <div className="text-center relative">
                 <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
                     <Shield className="w-8 h-8 text-primary" />
                     Admin Dashboard
                 </h1>
+                 {codeAuthenticated && !isAdmin && (
+                    <Button onClick={handleLogout} variant="destructive" size="sm" className="absolute top-0 right-0">
+                        <LogOut className="mr-2 h-4 w-4" /> Logout
+                    </Button>
+                )}
             </div>
 
             <Card>
