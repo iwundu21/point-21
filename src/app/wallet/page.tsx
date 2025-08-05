@@ -1,6 +1,7 @@
 
 'use client';
 
+import '@solana/wallet-adapter-react-ui/styles.css';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/footer';
@@ -25,7 +26,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
-require('@solana/wallet-adapter-react-ui/styles.css');
 
 declare global {
   interface Window {
