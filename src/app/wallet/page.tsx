@@ -18,6 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
 import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress, findUserByWalletAddress } from '@/lib/database';
