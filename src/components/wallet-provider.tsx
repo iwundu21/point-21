@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { FC, useMemo } from 'react';
@@ -25,7 +26,7 @@ const WalletProvider: FC<{children: React.ReactNode}> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <BaseWalletProvider wallets={wallets} autoConnect>
+            <BaseWalletProvider wallets={wallets} autoConnect={false}>
                 <WalletModalProvider>
                     {children}
                 </WalletModalProvider>
