@@ -164,24 +164,28 @@ export default function Home({}: {}) {
       } else if (typeof window !== 'undefined') {
           isBrowserUser = true;
           const sessionWallet = sessionStorage.getItem('connected_wallet');
-          let browserId = localStorage.getItem('browser_user_id');
           
           if (!sessionWallet) {
               router.replace('/auth');
-              return;
-          }
-
-          if (!browserId) {
-             browserId = `wallet_${sessionWallet}`;
-             localStorage.setItem('browser_user_id', browserId);
+              return; // Stop execution until authenticated
           }
           
-          currentUser = { id: browserId, first_name: 'Browser User' };
+          const browserId = localStorage.getItem('browser_user_id');
+          // The browserId should have been set during the auth flow.
+          if (browserId) {
+             currentUser = { id: browserId, first_name: 'Browser User' };
+          } else {
+             // This is a fallback, but the user should be redirected to auth.
+             router.replace('/auth');
+             return;
+          }
       }
       
       if (currentUser) {
           initializeUser(currentUser);
       } else if (!isBrowserUser) {
+          // Fallback for Telegram if user object is not available for some reason.
+          // Or we can show a message "Please open in Telegram".
           setIsLoading(false); 
       }
     };
@@ -283,6 +287,8 @@ export default function Home({}: {}) {
   }
 
   if (!user) {
+      // This case should ideally be handled by the redirect in useEffect,
+      // but it's good practice to have a fallback.
       return null;
   }
 

@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
-import { getUserData, getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
+import { getUserData, getVerificationStatus, getBalance, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -84,6 +84,7 @@ export default function WalletPage({}: WalletPageProps) {
             }
             let browserId = localStorage.getItem('browser_user_id');
             if (!browserId) {
+                // This is a fallback. The auth page should set this.
                 browserId = `wallet_${sessionWallet}`;
                 localStorage.setItem('browser_user_id', browserId);
             }
@@ -170,6 +171,10 @@ export default function WalletPage({}: WalletPageProps) {
                 });
                 setIsSaving(false);
                 setIsDialogOpen(false); 
+                // Redirect home after successful save for new browser users
+                if(isBrowserUser) {
+                    router.push('/');
+                }
             }, 1000);
 
         } catch (error) {
@@ -271,11 +276,12 @@ export default function WalletPage({}: WalletPageProps) {
               </div>
             )
         }
+        // This case should not be hit often because the /auth page handles connection,
+        // but it's a good fallback.
         return (
             <div className="flex flex-col items-center space-y-2 text-center">
-                 <p className="text-sm text-muted-foreground">You are almost there!</p>
-                 <h3 className="text-lg font-semibold">Save Your Wallet</h3>
-                 <p className="text-sm text-muted-foreground">Save your newly connected wallet to finish creating your account.</p>
+                 <p className="text-sm text-muted-foreground">Please connect your wallet.</p>
+                 <WalletMultiButton />
             </div>
         )
     }
