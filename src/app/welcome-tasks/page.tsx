@@ -129,7 +129,7 @@ export default function WelcomeTasksPage() {
                     toast({ title: "Success!", description: "You've earned 300 E-points."});
                 }
                 setVerifyingTaskId(null);
-            }, 1000); // Short delay to simulate action
+            }, 10000); // 10 second delay to simulate action
             return;
         }
 
