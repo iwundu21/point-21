@@ -196,16 +196,6 @@ export default function WalletPage({}: WalletPageProps) {
   };
   
   const handleTriggerClick = () => {
-     if (!isVerified) {
-       toast({
-        variant: "destructive",
-        title: "Verification Required",
-        description: "Please verify your account on the profile page to save your wallet.",
-        action: <Button onClick={() => router.push('/profile')}>Go to Profile</Button>,
-       });
-       return;
-    }
-    
     const addressToSave = isBrowserUser ? walletAddress : manualAddress;
     if (!isValidSolanaAddress(addressToSave.trim())) {
         toast({
@@ -340,7 +330,7 @@ export default function WalletPage({}: WalletPageProps) {
                         </AlertDialogContent>
                     </AlertDialog>
                     {!isVerified && (
-                        <p className="text-xs text-destructive text-center">Please verify your account to save your wallet.</p>
+                        <p className="text-xs text-destructive text-center">Please verify your account on the profile page to unlock all features.</p>
                     )}
                 </div>
             )}
@@ -412,3 +402,5 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
+
+    
