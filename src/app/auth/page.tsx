@@ -38,6 +38,7 @@ export default function AuthPage() {
                 } catch (e) {
                     console.error("Error checking user status", e);
                     setError("An error occurred while checking your account. Please try again.");
+                } finally {
                     setIsChecking(false);
                 }
             }
