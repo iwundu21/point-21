@@ -233,11 +233,13 @@ export default function WalletPage({}: WalletPageProps) {
                           Connect and save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
                       </p>
 
-                      {!savedAddress ? (
+                      {!savedAddress && !connected ? (
                           <div className="flex flex-col space-y-4 items-center">
                               <WalletMultiButton />
-                              
-                              {connected && (
+                          </div>
+                      ) : !savedAddress && connected ? (
+                            <div className="flex flex-col space-y-4 items-center">
+                               <p className="text-sm font-mono p-2 bg-primary/10 rounded-md break-all">{walletAddress}</p>
                                 <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                   <AlertDialogTrigger asChild>
                                      <Button onClick={handleTriggerClick} disabled={!walletAddress.trim()} className="w-full">
@@ -263,7 +265,6 @@ export default function WalletPage({}: WalletPageProps) {
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
-                              )}
                               {!isVerified && (
                                 <p className="text-xs text-destructive text-center">Please verify your account to save your wallet.</p>
                               )}
