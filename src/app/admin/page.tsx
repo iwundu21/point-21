@@ -71,11 +71,21 @@ interface TelegramUser {
 }
 
 const getInitials = (user: UserData) => {
-    if (!user.telegramUser) return 'BU';
-    const firstNameInitial = user.telegramUser.first_name ? user.telegramUser.first_name[0] : '';
-    const lastNameInitial = user.telegramUser.last_name ? user.telegramUser.last_name[0] : '';
-    return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
-}
+    if (user.telegramUser) {
+        const firstNameInitial = user.telegramUser.first_name?.[0] || '';
+        const lastNameInitial = user.telegramUser.last_name?.[0] || '';
+        return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
+    }
+    return 'BU';
+};
+
+const getDisplayName = (user: UserData) => {
+    if (user.telegramUser) {
+        return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
+    }
+    return 'Browser User';
+};
+
 
 const isValidSolanaAddress = (address: string): boolean => {
     const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -114,7 +124,7 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
             const userIdentifier = user.telegramUser || { id: user.id };
             await saveWalletAddress(userIdentifier, trimmedAddress);
             onWalletUpdated(user.id, trimmedAddress);
-            toast({ title: 'Wallet Updated', description: `${user.telegramUser?.first_name || 'Browser User'}'s wallet address has been updated.` });
+            toast({ title: 'Wallet Updated', description: `${getDisplayName(user)}'s wallet address has been updated.` });
             setIsOpen(false);
         } catch (error) {
             console.error("Failed to update wallet address:", error);
@@ -133,7 +143,7 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Wallet for {user.telegramUser?.first_name || 'Browser User'}</DialogTitle>
+                    <DialogTitle>Edit Wallet for {getDisplayName(user)}</DialogTitle>
                     <DialogDescription>
                         Set a new Solana wallet address for this user. This action should be used with caution.
                     </DialogDescription>
@@ -181,7 +191,7 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
             const userIdentifier = user.telegramUser || { id: user.id };
             await updateUserBalance(userIdentifier, balanceValue);
             onBalanceUpdated(user.id, balanceValue);
-            toast({ title: 'Balance Updated', description: `${user.telegramUser?.first_name || 'Browser User'}'s balance has been updated.` });
+            toast({ title: 'Balance Updated', description: `${getDisplayName(user)}'s balance has been updated.` });
             setIsOpen(false);
         } catch (error) {
             console.error("Failed to update balance:", error);
@@ -200,7 +210,7 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Balance for {user.telegramUser?.first_name || 'Browser User'}</DialogTitle>
+                    <DialogTitle>Edit Balance for {getDisplayName(user)}</DialogTitle>
                     <DialogDescription>
                         Set a new point balance for this user.
                     </DialogDescription>
@@ -359,6 +369,8 @@ const UserTable = ({
                         {users.map((user) => {
                           const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
                           const isMiningActive = user.forgingEndTime && user.forgingEndTime > Date.now();
+                          const userId = user.telegramUser?.id || user.id;
+
                           return (
                             <TableRow key={user.id}>
                                 <TableCell>
@@ -368,9 +380,9 @@ const UserTable = ({
                                             <AvatarFallback>{getInitials(user)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Browser User'}</p>
+                                            <p className="font-medium truncate max-w-[150px]">{getDisplayName(user)}</p>
                                             <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
-                                            <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id || user.id}</p>
+                                            <p className="text-xs text-muted-foreground font-mono">ID: {userId}</p>
                                         </div>
                                     </div>
                                 </TableCell>

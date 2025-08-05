@@ -28,18 +28,21 @@ interface User {
 }
 
 const getInitials = (user: UserData) => {
-    if (!user.telegramUser) return 'BU'; // Browser User
-    const firstNameInitial = user.telegramUser.first_name ? user.telegramUser.first_name[0] : '';
-    const lastNameInitial = user.telegramUser.last_name ? user.telegramUser.last_name[0] : '';
-    return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
-}
+    if (user.telegramUser) {
+        const firstNameInitial = user.telegramUser.first_name?.[0] || '';
+        const lastNameInitial = user.telegramUser.last_name?.[0] || '';
+        return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
+    }
+    return 'BU';
+};
 
 const getDisplayName = (user: UserData) => {
     if (user.telegramUser) {
-        return user.telegramUser.first_name || 'Anonymous';
+        return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
     }
     return 'Browser User';
-}
+};
+
 
 const getLeagueInfo = (rank: number) => {
     if (rank <= 10) return { name: "Diamond", progress: 100 };
@@ -189,7 +192,7 @@ export default function LeaderboardPage() {
                                         {getMedal(rank)}
                                     </div>
                                     <Avatar className="w-10 h-10 flex-shrink-0">
-                                        <AvatarImage src={user.telegramUser?.photo_url || user.customPhotoUrl} />
+                                        <AvatarImage src={user.customPhotoUrl || user.telegramUser?.photo_url} />
                                         <AvatarFallback>{getInitials(user)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow min-w-0">
@@ -241,7 +244,7 @@ export default function LeaderboardPage() {
                                        <span className="text-sm font-semibold w-5 text-center">{currentUserRank + 1}</span>
                                     </div>
                                     <Avatar className="w-10 h-10 flex-shrink-0">
-                                        <AvatarImage src={currentUserData.telegramUser?.photo_url || currentUserData.customPhotoUrl} />
+                                        <AvatarImage src={currentUserData.customPhotoUrl || currentUserData.telegramUser?.photo_url} />
                                         <AvatarFallback>{getInitials(currentUserData)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow min-w-0">
