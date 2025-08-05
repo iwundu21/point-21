@@ -382,9 +382,7 @@ export const getAllUsers = async (lastVisible?: QueryDocumentSnapshot<DocumentDa
 
 
 export const updateUserStatus = async (user: {id: string | number}, status: 'active' | 'banned', reason?: string) => {
-    const userId = user.id;
-    if (!userId) return;
-    const userDocId = typeof userId === 'number' ? `user_${userId}` : `browser_${userId}`;
+    const userDocId = getUserId(user);
     const userRef = doc(db, 'users', userDocId);
     const userSnap = await getDoc(userRef);
 
@@ -406,9 +404,7 @@ export const updateUserStatus = async (user: {id: string | number}, status: 'act
 };
 
 export const updateUserBalance = async (user: {id: string | number }, newBalance: number) => {
-    const userId = user.id;
-    if (!userId) return;
-    const userDocId = typeof userId === 'number' ? `user_${userId}` : `browser_${userId}`;
+    const userDocId = getUserId(user);
     const userRef = doc(db, 'users', userDocId);
     
     if (isNaN(newBalance)) {
@@ -551,3 +547,5 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+    
+    

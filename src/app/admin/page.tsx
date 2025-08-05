@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,7 +71,7 @@ interface TelegramUser {
 }
 
 const getInitials = (user: UserData) => {
-    if (!user.telegramUser) return '??';
+    if (!user.telegramUser) return 'BU';
     const firstNameInitial = user.telegramUser.first_name ? user.telegramUser.first_name[0] : '';
     const lastNameInitial = user.telegramUser.last_name ? user.telegramUser.last_name[0] : '';
     return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
@@ -90,7 +89,7 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
     const { toast } = useToast();
 
     const handleSubmit = async () => {
-        if (!user.telegramUser) return;
+        if (!user.telegramUser && !user.id.startsWith('browser_')) return;
         
         const trimmedAddress = newAddress.trim();
         if (!trimmedAddress) {
@@ -112,10 +111,10 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
                 setIsSaving(false);
                 return;
             }
-
-            await saveWalletAddress(user.telegramUser, trimmedAddress);
+            const userIdentifier = user.telegramUser || { id: user.id };
+            await saveWalletAddress(userIdentifier, trimmedAddress);
             onWalletUpdated(user.id, trimmedAddress);
-            toast({ title: 'Wallet Updated', description: `${user.telegramUser.first_name}'s wallet address has been updated.` });
+            toast({ title: 'Wallet Updated', description: `${user.telegramUser?.first_name || 'Browser User'}'s wallet address has been updated.` });
             setIsOpen(false);
         } catch (error) {
             console.error("Failed to update wallet address:", error);
@@ -134,7 +133,7 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Wallet for {user.telegramUser?.first_name}</DialogTitle>
+                    <DialogTitle>Edit Wallet for {user.telegramUser?.first_name || 'Browser User'}</DialogTitle>
                     <DialogDescription>
                         Set a new Solana wallet address for this user. This action should be used with caution.
                     </DialogDescription>
@@ -169,7 +168,7 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
     const { toast } = useToast();
 
     const handleSubmit = async () => {
-        if (!user.telegramUser) return;
+         if (!user.telegramUser && !user.id.startsWith('browser_')) return;
         
         const balanceValue = parseInt(newBalance, 10);
         if (isNaN(balanceValue) || balanceValue < 0) {
@@ -179,9 +178,10 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
 
         setIsSaving(true);
         try {
-            await updateUserBalance(user.telegramUser, balanceValue);
+            const userIdentifier = user.telegramUser || { id: user.id };
+            await updateUserBalance(userIdentifier, balanceValue);
             onBalanceUpdated(user.id, balanceValue);
-            toast({ title: 'Balance Updated', description: `${user.telegramUser.first_name}'s balance has been updated.` });
+            toast({ title: 'Balance Updated', description: `${user.telegramUser?.first_name || 'Browser User'}'s balance has been updated.` });
             setIsOpen(false);
         } catch (error) {
             console.error("Failed to update balance:", error);
@@ -200,7 +200,7 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Balance for {user.telegramUser?.first_name}</DialogTitle>
+                    <DialogTitle>Edit Balance for {user.telegramUser?.first_name || 'Browser User'}</DialogTitle>
                     <DialogDescription>
                         Set a new point balance for this user.
                     </DialogDescription>
@@ -361,13 +361,13 @@ const UserTable = ({
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="w-10 h-10">
-                                            <AvatarImage src={user.telegramUser?.photo_url} />
+                                            <AvatarImage src={user.customPhotoUrl || user.telegramUser?.photo_url} />
                                             <AvatarFallback>{getInitials(user)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Anonymous'}</p>
+                                            <p className="font-medium truncate max-w-[150px]">{user.telegramUser?.first_name || 'Browser User'}</p>
                                             <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
-                                            <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id}</p>
+                                            <p className="text-xs text-muted-foreground font-mono">ID: {user.telegramUser?.id || user.id}</p>
                                         </div>
                                     </div>
                                 </TableCell>
@@ -453,6 +453,8 @@ const UserTable = ({
 export default function AdminPage() {
     const [allUsers, setAllUsers] = useState<UserData[]>([]);
     const [totalUserCount, setTotalUserCount] = useState(0);
+    const [totalTelegramCount, setTotalTelegramCount] = useState(0);
+    const [totalBrowserCount, setTotalBrowserCount] = useState(0);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -494,10 +496,12 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalActivePoints] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
                 getAllUsers(),
                 getSocialTasks(),
                 getTotalUsersCount(),
+                getTotalTelegramUsersCount(),
+                getTotalBrowserUsersCount(),
                 getTotalActivePoints()
             ]);
             
@@ -519,6 +523,8 @@ export default function AdminPage() {
             setAllUsers(fetchedUsers);
             setSocialTasks(tasks);
             setTotalUserCount(totalCount);
+            setTotalTelegramCount(totalTgCount);
+            setTotalBrowserCount(totalBrowser);
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
         } catch (error) {
@@ -562,26 +568,30 @@ export default function AdminPage() {
             const walletAddress = user.walletAddress?.toLowerCase() || '';
             const username = user.telegramUser?.username?.toLowerCase() || '';
             const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
-            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term);
+            const browserId = user.id.startsWith('browser_') ? user.id.toLowerCase() : '';
+            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term) || browserId.includes(term);
         });
     }, [allUsers, searchTerm]);
     
-    const activeUsers = useMemo(() => filteredUsers.filter(u => u.status === 'active'), [filteredUsers]);
-    const bannedUsers = useMemo(() => filteredUsers.filter(u => u.status === 'banned'), [filteredUsers]);
+    const telegramUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('user_')), [filteredUsers]);
+    const browserUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('browser_')), [filteredUsers]);
+
+    const activeTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'active'), [telegramUsers]);
+    const bannedTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'banned'), [telegramUsers]);
+    const activeBrowserUsers = useMemo(() => browserUsers.filter(u => u.status === 'active'), [browserUsers]);
+    const bannedBrowserUsers = useMemo(() => browserUsers.filter(u => u.status === 'banned'), [browserUsers]);
 
     const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned', reason?: string) => {
-        if (!user.telegramUser) return;
+        const userIdentifier = user.telegramUser || { id: user.id };
 
         const originalUsers = allUsers;
         const updatedUsers = originalUsers.map(u =>
             u.id === user.id ? { ...u, status: status, banReason: reason } : u
         );
         setAllUsers(updatedUsers);
-
-        const oldStatus = user.status;
         
         try {
-            await updateUserStatus(user.telegramUser, status, reason);
+            await updateUserStatus(userIdentifier, status, reason);
             
             // Refetch total points
             const newTotalPoints = await getTotalActivePoints();
@@ -620,14 +630,14 @@ export default function AdminPage() {
     };
 
     const handleDeleteUser = async (user: UserData) => {
-        if (!user.telegramUser) return;
+        const userIdentifier = user.telegramUser || { id: user.id };
         
         const originalUsers = allUsers;
         setAllUsers(allUsers.filter(u => u.id !== user.id));
         setTotalUserCount(prev => prev - 1);
 
         try {
-            await deleteUser(user.telegramUser);
+            await deleteUser(userIdentifier);
             const newTotalPoints = await getTotalActivePoints();
             setTotalPoints(newTotalPoints);
             toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
@@ -703,6 +713,7 @@ export default function AdminPage() {
             } while (lastDoc);
 
             const userData = allUsersToExport.map(user => ({
+                userId: user.id,
                 telegramId: user.telegramUser?.id,
                 username: user.telegramUser?.username,
                 firstName: user.telegramUser?.first_name,
@@ -851,8 +862,8 @@ export default function AdminPage() {
                 <CardDescription>
                     Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop. Displaying {allUsers.length} of {totalUserCount} users.
                 </CardDescription>
-                <div className="grid gap-4 md:grid-cols-3 pt-4">
-                    <Card className="bg-primary/5">
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 pt-4">
+                     <Card className="bg-primary/5">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                             <Users className="h-4 w-4 text-primary" />
@@ -863,7 +874,25 @@ export default function AdminPage() {
                     </Card>
                     <Card className="bg-primary/5">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Points (Active Users)</CardTitle>
+                            <CardTitle className="text-sm font-medium">Telegram Users</CardTitle>
+                            <Bot className="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{totalTelegramCount.toLocaleString()}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-primary/5">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Browser Users</CardTitle>
+                            <Monitor className="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{totalBrowserCount.toLocaleString()}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-primary/5">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Points (Active)</CardTitle>
                             <Star className="h-4 w-4 text-primary" />
                         </CardHeader>
                         <CardContent>
@@ -903,14 +932,16 @@ export default function AdminPage() {
                         </Button>
                     </div>
                 </div>
-                <Tabs defaultValue="active">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="active">Active ({activeUsers.length})</TabsTrigger>
-                        <TabsTrigger value="banned">Banned ({bannedUsers.length})</TabsTrigger>
+                <Tabs defaultValue="tg-active" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+                        <TabsTrigger value="tg-active">Telegram - Active ({activeTelegramUsers.length})</TabsTrigger>
+                        <TabsTrigger value="tg-banned">Telegram - Banned ({bannedTelegramUsers.length})</TabsTrigger>
+                        <TabsTrigger value="browser-active">Browser - Active ({activeBrowserUsers.length})</TabsTrigger>
+                        <TabsTrigger value="browser-banned">Browser - Banned ({bannedBrowserUsers.length})</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="active" className="mt-4">
+                    <TabsContent value="tg-active" className="mt-4">
                         <UserTable
-                            users={activeUsers}
+                            users={activeTelegramUsers}
                             onUpdateStatus={handleUpdateStatus}
                             onDeleteUser={handleDeleteUser}
                             onCopy={handleCopy}
@@ -919,9 +950,31 @@ export default function AdminPage() {
                             onWalletUpdated={handleWalletUpdated}
                         />
                     </TabsContent>
-                    <TabsContent value="banned" className="mt-4">
+                    <TabsContent value="tg-banned" className="mt-4">
                         <UserTable
-                            users={bannedUsers}
+                            users={bannedTelegramUsers}
+                            onUpdateStatus={handleUpdateStatus}
+                            onDeleteUser={handleDeleteUser}
+                            onCopy={handleCopy}
+                            totalPoints={totalPoints}
+                            onBalanceUpdated={handleBalanceUpdated}
+                            onWalletUpdated={handleWalletUpdated}
+                        />
+                    </TabsContent>
+                    <TabsContent value="browser-active" className="mt-4">
+                        <UserTable
+                            users={activeBrowserUsers}
+                            onUpdateStatus={handleUpdateStatus}
+                            onDeleteUser={handleDeleteUser}
+                            onCopy={handleCopy}
+                            totalPoints={totalPoints}
+                            onBalanceUpdated={handleBalanceUpdated}
+                            onWalletUpdated={handleWalletUpdated}
+                        />
+                    </TabsContent>
+                     <TabsContent value="browser-banned" className="mt-4">
+                        <UserTable
+                            users={bannedBrowserUsers}
                             onUpdateStatus={handleUpdateStatus}
                             onDeleteUser={handleDeleteUser}
                             onCopy={handleCopy}
@@ -952,4 +1005,5 @@ export default function AdminPage() {
   );
 }
 
+    
     
