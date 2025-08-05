@@ -40,7 +40,8 @@ export default function ReferralPage({}: ReferralPageProps) {
   const { toast } = useToast();
 
   const botUrl = "https://t.me/Exnuspoint_bot";
-  const shareMessage = `Join me on Exnus Points and get a 50 point bonus! ✨\n\nUse my referral code to get started: ${referralCode}\n\n${botUrl}`;
+  const webUrl = "https://points.exnus.xyz";
+  const shareMessage = `Join me on Exnus Points and get a 50 point bonus! ✨\n\nUse my referral code to get started: ${referralCode}\n\nJoin via Telegram: ${botUrl}\nOr on the web: ${webUrl}`;
 
 
   useEffect(() => {
