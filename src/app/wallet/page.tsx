@@ -8,7 +8,7 @@ import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2 } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -199,6 +199,8 @@ export default function WalletPage({}: WalletPageProps) {
     return `${address.slice(0, 7)}****${address.slice(-7)}`;
   }
 
+  const isBrowserUser = user && typeof user.id !== 'number';
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
        <div className="flex-grow pb-20">
@@ -226,69 +228,83 @@ export default function WalletPage({}: WalletPageProps) {
 
                 <Separator />
 
-                <div className="space-y-6">
+                 <div className="space-y-6">
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                          Connect and save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
-                      </p>
+                      {isBrowserUser ? (
+                        <>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Connect and save your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
+                          </p>
 
-                      {!savedAddress && !connected ? (
-                          <div className="flex flex-col space-y-4 items-center">
-                              <WalletMultiButton />
-                          </div>
-                      ) : !savedAddress && connected ? (
-                            <div className="flex flex-col space-y-4 items-center">
-                               <p className="text-sm font-mono p-2 bg-primary/10 rounded-md break-all">{walletAddress}</p>
-                                <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                  <AlertDialogTrigger asChild>
-                                     <Button onClick={handleTriggerClick} disabled={!walletAddress.trim()} className="w-full">
-                                        <Save className="mr-2 h-4 w-4" /> Save Address
-                                     </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle className="flex items-center gap-2">
-                                        <AlertTriangle className="text-destructive" /> Are you absolutely sure?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
-                                      </AlertDialogDescription>
-                                      <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
-                                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        {isSaving ? 'Saving...' : 'Confirm & Save'}
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              {!isVerified && (
-                                <p className="text-xs text-destructive text-center">Please verify your account to save your wallet.</p>
-                              )}
-                          </div>
-                      ) : (
-                           <div className="space-y-4">
-                              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                                  <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
-                                  <div className="flex items-center space-x-2">
-                                      <WalletIcon className="w-5 h-5 text-primary" />
-                                      <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
-                                  </div>
+                          {!savedAddress && !connected ? (
+                              <div className="flex flex-col space-y-4 items-center">
+                                  <WalletMultiButton />
                               </div>
-                          </div>
+                          ) : !savedAddress && connected ? (
+                                <div className="flex flex-col space-y-4 items-center">
+                                   <p className="text-sm font-mono p-2 bg-primary/10 rounded-md break-all">{walletAddress}</p>
+                                    <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                      <AlertDialogTrigger asChild>
+                                         <Button onClick={handleTriggerClick} disabled={!walletAddress.trim()} className="w-full">
+                                            <Save className="mr-2 h-4 w-4" /> Save Address
+                                         </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle className="flex items-center gap-2">
+                                            <AlertTriangle className="text-destructive" /> Are you absolutely sure?
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
+                                          </AlertDialogDescription>
+                                          <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
+                                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            {isSaving ? 'Saving...' : 'Confirm & Save'}
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  {!isVerified && (
+                                    <p className="text-xs text-destructive text-center">Please verify your account to save your wallet.</p>
+                                  )}
+                              </div>
+                          ) : (
+                               <div className="space-y-4">
+                                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                                      <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
+                                      <div className="flex items-center space-x-2">
+                                          <WalletIcon className="w-5 h-5 text-primary" />
+                                          <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
+                                      </div>
+                                  </div>
+                                   <WalletMultiButton />
+                              </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="p-4 text-center bg-primary/5 border border-primary/10 rounded-lg">
+                           <Bot className="w-12 h-12 text-primary/50 mx-auto mb-4" />
+                           <p className="text-sm text-muted-foreground">
+                              Wallet integration for Telegram users is coming soon and will be handled directly through the bot. For now, just focus on earning E-points!
+                           </p>
+                        </div>
                       )}
                     </div>
 
-                     <Alert variant="destructive" className="mt-12">
-                        <AlertTriangle className="h-4 w-4" />
-                        <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
-                        <AlertBoxDescription>
-                        Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
-                        </AlertBoxDescription>
-                    </Alert>
+                     {isBrowserUser && (
+                        <Alert variant="destructive" className="mt-12">
+                            <AlertTriangle className="h-4 w-4" />
+                            <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
+                            <AlertBoxDescription>
+                            Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
+                            </AlertBoxDescription>
+                        </Alert>
+                     )}
                 </div>
             </div>
           )}
