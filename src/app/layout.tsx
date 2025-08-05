@@ -6,8 +6,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import WalletProvider from '@/components/wallet-provider';
 
 export const metadata: Metadata = {
-  title: 'Aetherium Points',
-  description: 'Forge Aether in the Aetherium ecosystem.',
+  title: 'Exnus Points',
+  description: 'Your gateway to the Exnus ecosystem.',
 };
 
 export default function RootLayout({
