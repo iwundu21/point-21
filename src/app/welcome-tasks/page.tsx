@@ -7,6 +7,7 @@ import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { useToast } from '@/hooks/use-toast';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
+import { v4 as uuidv4 } from 'uuid';
 
 declare global {
   interface Window {
@@ -14,12 +15,12 @@ declare global {
   }
 }
 
-interface TelegramUser {
-  id: number;
+interface User {
+  id: number | string;
   first_name: string;
   last_name?: string;
   username?: string;
-  language_code: string;
+  language_code?: string;
   is_premium?: boolean;
   photo_url?: string;
 }
@@ -50,7 +51,7 @@ const DiscordIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export default function WelcomeTasksPage() {
-    const [user, setUser] = useState<TelegramUser | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [tasks, setTasks] = useState<WelcomeTasks>({
         followedOnX: false,
         subscribedOnTelegram: false,
@@ -63,20 +64,24 @@ export default function WelcomeTasksPage() {
 
     useEffect(() => {
         const init = () => {
-            let telegramUser: TelegramUser | null = null;
-            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+            let currentUser: User | null = null;
+            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
                 const tg = window.Telegram.WebApp;
-                 if (tg.initDataUnsafe?.user) {
-                    telegramUser = tg.initDataUnsafe.user;
-                    tg.ready();
+                currentUser = tg.initDataUnsafe.user;
+                tg.ready();
+            } else if (typeof window !== 'undefined') {
+                let browserId = localStorage.getItem('browser_user_id');
+                if (!browserId) {
+                    browserId = uuidv4();
+                    localStorage.setItem('browser_user_id', browserId);
                 }
+                currentUser = { id: browserId, first_name: 'Browser User' };
             }
 
-            if (telegramUser) {
-                setUser(telegramUser);
+            if (currentUser) {
+                setUser(currentUser);
             } else {
-                const mockUser: TelegramUser = { id: 123, first_name: 'Dev', username: 'devuser', language_code: 'en' };
-                setUser(mockUser);
+                setIsLoading(false);
             }
         }
         init();
@@ -100,6 +105,8 @@ export default function WelcomeTasksPage() {
         }
         loadTaskData();
     }, [user]);
+    
+    const isBrowserUser = user?.first_name === 'Browser User';
 
     const handleTaskComplete = async (taskName: keyof WelcomeTasks, link: string, chatId?: string) => {
         if (!user || tasks[taskName] || verifyingTaskId) return;
@@ -108,7 +115,30 @@ export default function WelcomeTasksPage() {
         
         setVerifyingTaskId(taskName);
 
-        if (chatId) { // This is a Telegram task
+        // Browser user: complete immediately without verification
+        if (isBrowserUser) {
+             setTimeout(async () => {
+                 if (user) { 
+                    const userData = await getUserData(user);
+                    const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
+                    const updatedBalance = userData.balance + 300;
+                    
+                    await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+
+                    setTasks(updatedTasks);
+                    toast({ title: "Success!", description: "You've earned 300 E-points."});
+                }
+                setVerifyingTaskId(null);
+            }, 1000); // Short delay to simulate action
+            return;
+        }
+
+        // Telegram user verification logic
+        if (chatId) { // This is a Telegram task that needs verification
+            if (typeof user.id !== 'number') { // Should not happen if not browser user, but good check
+                 setVerifyingTaskId(null);
+                 return;
+            }
              try {
                 const result = await verifyTelegramTask({ userId: user.id, chatId: chatId });
                 if (result.isMember) {
@@ -128,7 +158,7 @@ export default function WelcomeTasksPage() {
                 setVerifyingTaskId(null);
             }
         } else {
-            // Fallback for non-telegram tasks
+            // Non-verifiable tasks for Telegram users (e.g., X, Discord)
             setTimeout(async () => {
                  if (user) { 
                     const userData = await getUserData(user);
@@ -141,7 +171,7 @@ export default function WelcomeTasksPage() {
                     toast({ title: "Success!", description: "You've earned 300 E-points."});
                 }
                 setVerifyingTaskId(null);
-            }, 9000);
+            }, 9000); // 9 second delay for user to perform action
         }
     };
 
