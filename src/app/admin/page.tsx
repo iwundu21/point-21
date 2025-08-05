@@ -52,7 +52,7 @@ import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 // NOTE: Add your Telegram user ID here for admin access
 const ADMIN_IDS = [123, 12345, 6954452147]; 
 const ADMIN_ACCESS_CODE = '202020';
-const USERS_PER_PAGE = 50;
+const USERS_PER_PAGE = 20;
 const TOTAL_AIRDROP = 105_000_000;
 
 
@@ -497,7 +497,7 @@ export default function AdminPage() {
         setIsLoadingTasks(true);
         try {
             const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
-                getAllUsers(),
+                getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
                 getTotalTelegramUsersCount(),
@@ -540,7 +540,7 @@ export default function AdminPage() {
         if (!lastVisible || isFetchingMore) return;
         setIsFetchingMore(true);
          try {
-            const { users: newUsers, lastVisible: newLastVisible } = await getAllUsers(lastVisible);
+            const { users: newUsers, lastVisible: newLastVisible } = await getAllUsers(lastVisible, USERS_PER_PAGE);
             setAllUsers(prevUsers => [...prevUsers, ...newUsers]);
             setLastVisible(newLastVisible);
         } catch (error) {
@@ -1005,5 +1005,6 @@ export default function AdminPage() {
   );
 }
 
+    
     
     
