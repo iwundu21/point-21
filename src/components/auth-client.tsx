@@ -25,16 +25,19 @@ export default function AuthClient() {
                 const walletAddress = publicKey.toBase58();
 
                 try {
-                    const userData = await findUserByWalletAddress(walletAddress);
+                    // This is the primary key for browser users now.
                     sessionStorage.setItem('connected_wallet', walletAddress);
-                    // Use a consistent ID format for browser users.
                     const browserId = `wallet_${walletAddress}`;
                     localStorage.setItem('browser_user_id', browserId);
+                    
+                    const userData = await findUserByWalletAddress(walletAddress);
 
                     if (userData && userData.walletAddress) {
+                        // User exists and has saved their wallet, go to dashboard
                         router.replace('/');
                     } else {
-                        // New user, send to save wallet page
+                        // This is a new user or a user who hasn't saved their wallet yet.
+                        // Send them to the wallet page to complete setup.
                         router.replace('/wallet');
                     }
                 } catch (e) {
