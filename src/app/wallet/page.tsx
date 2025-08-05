@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
-import { getUserData, getVerificationStatus, getBalance, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
+import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -107,18 +107,16 @@ export default function WalletPage({}: WalletPageProps) {
         if (user) {
             setIsLoading(true);
             try {
-                const [freshUserData, verificationStatus, userBalance] = await Promise.all([
-                    getUserData(user),
-                    getVerificationStatus(user),
-                    getBalance(user),
-                ]);
+                // For a new browser user, getUserData returns default data without hitting the DB for creation.
+                // For existing users, it fetches their data.
+                const freshUserData = await getUserData(user);
 
                 setUserData(freshUserData);
                 if (freshUserData.walletAddress) {
                     setSavedAddress(freshUserData.walletAddress);
                 }
-                setIsVerified(verificationStatus === 'verified');
-                setBalance(userBalance);
+                setIsVerified(freshUserData.verificationStatus === 'verified');
+                setBalance(freshUserData.balance);
 
             } catch (error) {
                 console.error("Failed to load user wallet data:", error);
@@ -150,7 +148,8 @@ export default function WalletPage({}: WalletPageProps) {
     if (trimmedAddress && user) {
         try {
             const existingUser = await findUserByWalletAddress(trimmedAddress);
-            const currentUserId = typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
+            const currentUserId = getUserId(user);
+
             if (existingUser && existingUser.id !== currentUserId) {
                 toast({
                     variant: 'destructive',
@@ -225,6 +224,12 @@ export default function WalletPage({}: WalletPageProps) {
     if (address.length < 14) return address;
     return `${address.slice(0, 7)}****${address.slice(-7)}`;
   }
+  
+  const getUserId = (user: { id: number | string } | null): string => {
+    if (!user) return 'guest';
+    // Prefix to distinguish between ID types
+    return typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
+  };
 
   const renderWalletUI = () => {
     if (isBrowserUser) {

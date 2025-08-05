@@ -193,20 +193,22 @@ export const getUserData = async (user: { id: number | string } | null): Promise
         
         return finalUserData;
     } else {
+        // For Telegram users, we create the user on first load.
+        // For Browser users, we wait until they save their wallet.
         const isTelegramUser = typeof user.id === 'number';
-        const newUser: Omit<UserData, 'id'> = {
-            ...defaultUserData(user),
-            referralCode: generateReferralCode(), // Generate code on creation
-        };
-        await setDoc(userRef, newUser);
-        await incrementUserCount();
         if (isTelegramUser) {
+            const newUser: Omit<UserData, 'id'> = {
+                ...defaultUserData(user),
+                referralCode: generateReferralCode(),
+            };
+            await setDoc(userRef, newUser);
+            await incrementUserCount();
             await incrementTelegramUserCount();
+            return { ...newUser, id: userId };
         } else {
-            await incrementBrowserUserCount();
+            // Return default data for a new browser user without saving to DB.
+            return { ...defaultUserData(user), id: userId };
         }
-        // New users start with 0 points, so no need to increment total points here.
-        return { ...newUser, id: userId };
     }
 };
 
@@ -214,6 +216,8 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     if (!user) return;
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
+    
+    // Check if the user exists before trying to get old data
     const oldSnap = await getDoc(userRef);
     const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user);
 
@@ -221,7 +225,7 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
 
     // If balance was updated, adjust total points
     if (data.balance !== undefined && data.balance !== oldData.balance) {
-         if (oldData.status === 'active') { // Only adjust if the user is active
+         if (oldData.status === 'active' || (oldSnap.exists() && oldSnap.data().status === 'active')) { // Check both old state and DB state
             const difference = data.balance - oldData.balance;
             await incrementTotalPoints(difference);
         }
@@ -522,7 +526,28 @@ export const saveVerificationStatus = async (user: { id: number | string } | nul
     }
 }
 export const getWalletAddress = async (user: { id: number | string } | null) => (await getUserData(user)).walletAddress;
-export const saveWalletAddress = async (user: { id: number | string } | null, address: string) => saveUserData(user, { walletAddress: address });
+export const saveWalletAddress = async (user: { id: number | string } | null, address: string) => {
+    if (!user) return;
+    const userId = getUserId(user);
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+        // This is a new browser user, create their record now.
+        const newUser: Omit<UserData, 'id'> = {
+            ...defaultUserData(user),
+            referralCode: generateReferralCode(),
+            walletAddress: address,
+        };
+        await setDoc(userRef, newUser);
+        await incrementUserCount();
+        await incrementBrowserUserCount();
+    } else {
+        // This is an existing user (Telegram or Browser) just updating their wallet.
+        await setDoc(userRef, { walletAddress: address }, { merge: true });
+    }
+}
+
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user)).referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
