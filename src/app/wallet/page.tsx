@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
-import { getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
+import { getUserData, getVerificationStatus, getWalletAddress, getBalance, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import { useWallet } from '@solana/wallet-adapter-react';
