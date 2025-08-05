@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor } from 'lucide-react';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -349,6 +349,7 @@ const UserTable = ({
                             <TableHead>Balance</TableHead>
                             <TableHead>Referrals</TableHead>
                             <TableHead>Airdrop Allocation</TableHead>
+                            <TableHead>Mining Status</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -356,6 +357,7 @@ const UserTable = ({
                     <TableBody>
                         {users.map((user) => {
                           const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                          const isMiningActive = user.forgingEndTime && user.forgingEndTime > Date.now();
                           return (
                             <TableRow key={user.id}>
                                 <TableCell>
@@ -412,6 +414,12 @@ const UserTable = ({
                                       <Coins className="w-4 h-4" />
                                       {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                   </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={isMiningActive ? 'default' : 'secondary'} className={cn('flex items-center gap-1', isMiningActive ? 'bg-green-500/80' : 'bg-gray-500/80')}>
+                                        <Zap className="w-3 h-3" />
+                                        {isMiningActive ? 'Active' : 'Inactive'}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
@@ -784,7 +792,7 @@ export default function AdminPage() {
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
             </div>
         ) : (
-        <div className="w-full max-w-6xl mx-auto space-y-6">
+        <div className="w-full max-w-7xl mx-auto space-y-6">
             <div className="text-center">
                 <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
                     <Shield className="w-8 h-8 text-primary" />
@@ -1004,7 +1012,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-    
-    
