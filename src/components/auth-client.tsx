@@ -1,6 +1,7 @@
 
 'use client';
 
+import '@solana/wallet-adapter-react-ui/styles.css';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
