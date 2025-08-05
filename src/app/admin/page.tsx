@@ -302,6 +302,7 @@ const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
                                 <SelectItem value="MessageCircle"><MessageCircle className="inline-block mr-2 h-4 w-4" /> Comment</SelectItem>
                                 <SelectItem value="ThumbsUp"><ThumbsUp className="inline-block mr-2 h-4 w-4" /> Like</SelectItem>
                                 <SelectItem value="Repeat"><Repeat className="inline-block mr-2 h-4 w-4" /> Retweet</SelectItem>
+                                <SelectItem value="Star"><Star className="inline-block mr-2 h-4 w-4" /> React</SelectItem>
                                 <SelectItem value="XIcon">X / Twitter</SelectItem>
                                 <SelectItem value="TelegramIcon">Telegram</SelectItem>
                             </SelectContent>

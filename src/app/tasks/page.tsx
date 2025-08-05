@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
-import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Info } from 'lucide-react';
+import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Info, Star } from 'lucide-react';
 import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData } from '@/lib/database';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import TaskItem from '@/components/task-item';
@@ -45,6 +45,7 @@ export const renderIcon = (iconName: string, className?: string) => {
         case 'MessageCircle': return <MessageCircle className={className} />;
         case 'ThumbsUp': return <ThumbsUp className={className} />;
         case 'Repeat': return <Repeat className={className} />;
+        case 'Star': return <Star className={className} />;
         case 'XIcon': return <XIcon className={className} />;
         case 'TelegramIcon': return <TelegramIcon className={className} />;
         default: return <Users className={className} />;
