@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldBan } from 'lucide-react';
+import { ShieldBan, Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 declare global {
@@ -75,7 +75,6 @@ export default function Home({}: {}) {
   const initializeUser = useCallback(async (currentUser: User) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      // Fetch user data and rank concurrently
       const [freshUserData, userRankInfo] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser)
@@ -156,28 +155,38 @@ export default function Home({}: {}) {
   useEffect(() => {
     const init = () => {
       let currentUser: User | null = null;
+      let isBrowserUser = false;
       
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
           const tg = window.Telegram.WebApp;
           currentUser = tg.initDataUnsafe.user;
           tg.ready();
       } else if (typeof window !== 'undefined') {
+          isBrowserUser = true;
+          const sessionWallet = sessionStorage.getItem('connected_wallet');
           let browserId = localStorage.getItem('browser_user_id');
-          if (!browserId) {
-              browserId = uuidv4();
-              localStorage.setItem('browser_user_id', browserId);
+          
+          if (!sessionWallet) {
+              router.replace('/auth');
+              return;
           }
+
+          if (!browserId) {
+             browserId = `wallet_${sessionWallet}`;
+             localStorage.setItem('browser_user_id', browserId);
+          }
+          
           currentUser = { id: browserId, first_name: 'Browser User' };
       }
       
       if (currentUser) {
           initializeUser(currentUser);
-      } else {
-          setIsLoading(false);
+      } else if (!isBrowserUser) {
+          setIsLoading(false); 
       }
     };
     init();
-  }, [initializeUser]);
+  }, [initializeUser, router]);
   
   const handleActivateForging = async () => {
     if (!hasRedeemedReferral) {
@@ -235,7 +244,11 @@ export default function Home({}: {}) {
   };
 
   if (isLoading) {
-    return null; 
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        </div>
+    );
   }
 
   if (userData?.status === 'banned') {
@@ -270,7 +283,7 @@ export default function Home({}: {}) {
   }
 
   if (!user) {
-      return null; // Or a more specific message for non-telegram users if needed
+      return null;
   }
 
 
