@@ -594,8 +594,8 @@ export default function AdminPage() {
         });
     }, [allUsers, searchTerm]);
     
-    const telegramUsers = useMemo(() => filteredUsers.filter(u => !!u.telegramUser), [filteredUsers]);
-    const browserUsers = useMemo(() => filteredUsers.filter(u => !u.telegramUser), [filteredUsers]);
+    const telegramUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('user_')), [filteredUsers]);
+    const browserUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('browser_')), [filteredUsers]);
 
     const activeTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'active'), [telegramUsers]);
     const bannedTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'banned'), [telegramUsers]);
