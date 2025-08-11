@@ -28,7 +28,7 @@ interface User {
 }
 
 const getInitials = (user: UserData) => {
-    if (user.telegramUser) {
+    if (user.telegramUser && user.telegramUser.first_name) {
         const firstNameInitial = user.telegramUser.first_name?.[0] || '';
         const lastNameInitial = user.telegramUser.last_name?.[0] || '';
         return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
@@ -37,7 +37,7 @@ const getInitials = (user: UserData) => {
 };
 
 const getDisplayName = (user: UserData) => {
-    if (user.telegramUser) {
+    if (user.telegramUser && user.telegramUser.first_name) {
         return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
     }
     return 'Browser User';
@@ -142,9 +142,15 @@ export default function LeaderboardPage() {
     );
     
     const currentUserRank = currentUser ? leaderboard.findIndex(u => {
-        const uId = u.id; // The ID from the database is already in the correct format (e.g., 'user_123' or 'browser_abc')
-        const currentId = typeof currentUser.id === 'number' ? `user_${currentUser.id}` : `browser_${currentUser.id}`;
-        return uId === currentId;
+        if (!u.telegramUser && typeof currentUser.id !== 'number') {
+            // It's a browser user
+            return u.id === `browser_${currentUser.id}`;
+        }
+        if (u.telegramUser && typeof currentUser.id === 'number') {
+            // It's a telegram user
+            return u.telegramUser.id === currentUser.id;
+        }
+        return false;
     }) : -1;
 
     const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
@@ -182,7 +188,17 @@ export default function LeaderboardPage() {
                 <div className="space-y-2">
                     {paginatedUsers.map((user, index) => {
                         const rank = (currentPage - 1) * USERS_PER_PAGE + index;
-                        const currentUserId = currentUser ? (typeof currentUser.id === 'number' ? `user_${currentUser.id}` : `browser_${currentUser.id}`) : null;
+                        
+                        let currentUserId = null;
+                        if(currentUser) {
+                           if (!user.telegramUser && typeof currentUser.id !== 'number') {
+                                currentUserId = `browser_${currentUser.id}`;
+                           }
+                           if(user.telegramUser && typeof currentUser.id === 'number') {
+                                currentUserId = `user_${currentUser.id}`;
+                           }
+                        }
+
                         const isCurrentUser = user.id === currentUserId;
 
                         return (
@@ -268,3 +284,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+

@@ -71,7 +71,7 @@ interface TelegramUser {
 }
 
 const getInitials = (user: UserData) => {
-    if (user.telegramUser) {
+    if (user.telegramUser && user.telegramUser.first_name) {
         const firstNameInitial = user.telegramUser.first_name?.[0] || '';
         const lastNameInitial = user.telegramUser.last_name?.[0] || '';
         return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
@@ -80,7 +80,7 @@ const getInitials = (user: UserData) => {
 };
 
 const getDisplayName = (user: UserData) => {
-    if (user.telegramUser) {
+    if (user.telegramUser && user.telegramUser.first_name) {
         return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
     }
     return 'Browser User';
@@ -369,7 +369,7 @@ const UserTable = ({
                         {users.map((user) => {
                           const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
                           const isMiningActive = user.forgingEndTime && user.forgingEndTime > Date.now();
-                          const userId = user.telegramUser?.id || user.id;
+                          const isBrowserUser = !user.telegramUser;
 
                           return (
                             <TableRow key={user.id}>
@@ -382,7 +382,7 @@ const UserTable = ({
                                         <div>
                                             <p className="font-medium truncate max-w-[150px]">{getDisplayName(user)}</p>
                                             <p className="text-xs text-muted-foreground">@{user.telegramUser?.username || 'N/A'}</p>
-                                            <p className="text-xs text-muted-foreground font-mono">ID: {userId}</p>
+                                            <p className="text-xs text-muted-foreground font-mono truncate max-w-[150px]">ID: {isBrowserUser ? user.id : user.telegramUser?.id}</p>
                                         </div>
                                     </div>
                                 </TableCell>
@@ -594,8 +594,8 @@ export default function AdminPage() {
         });
     }, [allUsers, searchTerm]);
     
-    const telegramUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('user_')), [filteredUsers]);
-    const browserUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('browser_')), [filteredUsers]);
+    const telegramUsers = useMemo(() => filteredUsers.filter(u => !!u.telegramUser), [filteredUsers]);
+    const browserUsers = useMemo(() => filteredUsers.filter(u => !u.telegramUser), [filteredUsers]);
 
     const activeTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'active'), [telegramUsers]);
     const bannedTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'banned'), [telegramUsers]);
@@ -1035,3 +1035,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
