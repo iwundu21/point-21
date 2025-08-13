@@ -470,42 +470,28 @@ export const banUser = async (user: {id: number | string} | null, reason?: strin
 }
 
 export const unbanAllUsers = async (): Promise<void> => {
-    let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
-    let totalPointsToAdd = 0;
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('status', '==', 'banned'));
+    const querySnapshot = await getDocs(q);
 
-    // Process all users in batches
-    while (true) {
-        const usersRef = collection(db, 'users');
-        let q;
-        if (lastDoc) {
-            q = query(usersRef, orderBy('__name__'), startAfter(lastDoc), limit(500));
-        } else {
-            q = query(usersRef, orderBy('__name__'), limit(500));
-        }
-
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-            break; // No more users to process
-        }
-
-        const batch = writeBatch(db);
-        querySnapshot.forEach(userDoc => {
-            const userData = userDoc.data() as UserData;
-            if (userData.status === 'banned') {
-                const userRef = doc(db, 'users', userDoc.id);
-                batch.update(userRef, { status: 'active', banReason: '' });
-                totalPointsToAdd += userData.balance || 0;
-            }
-        });
-        
-        await batch.commit();
-
-        lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+    if (querySnapshot.empty) {
+        return; // No users to unban
     }
     
-    // After all batches are committed, update the total points count
-    if (totalPointsToAdd > 0) {
-        await incrementTotalPoints(totalPointsToAdd);
+    let totalPointsToRestore = 0;
+    const batch = writeBatch(db);
+
+    querySnapshot.forEach(userDoc => {
+        const userData = userDoc.data() as UserData;
+        const userRef = doc(db, 'users', userDoc.id);
+        batch.update(userRef, { status: 'active', banReason: '' });
+        totalPointsToRestore += userData.balance || 0;
+    });
+
+    await batch.commit();
+    
+    if (totalPointsToRestore > 0) {
+        await incrementTotalPoints(totalPointsToRestore);
     }
 };
 
@@ -602,5 +588,6 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
