@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, getActiveTelegramUsersCount, getActiveBrowserUsersCount } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -320,7 +320,7 @@ const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                    <Button type="button" onClick={handleSubmit} disabled={isSaving}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save Task
                     </Button>
@@ -476,8 +476,6 @@ export default function AdminPage() {
     const [totalUserCount, setTotalUserCount] = useState(0);
     const [totalTelegramCount, setTotalTelegramCount] = useState(0);
     const [totalBrowserCount, setTotalBrowserCount] = useState(0);
-    const [activeTelegramCount, setActiveTelegramCount] = useState(0);
-    const [activeBrowserCount, setActiveBrowserCount] = useState(0);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -520,14 +518,12 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, activeTgCount, activeBrowser, totalActivePoints] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
                 getTotalTelegramUsersCount(),
                 getTotalBrowserUsersCount(),
-                getActiveTelegramUsersCount(),
-                getActiveBrowserUsersCount(),
                 getTotalActivePoints()
             ]);
             
@@ -543,8 +539,6 @@ export default function AdminPage() {
             setTotalUserCount(totalCount);
             setTotalTelegramCount(totalTgCount);
             setTotalBrowserCount(totalBrowser);
-            setActiveTelegramCount(activeTgCount);
-            setActiveBrowserCount(activeBrowser);
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
         } catch (error) {
@@ -601,6 +595,10 @@ export default function AdminPage() {
     const activeBrowserUsers = useMemo(() => browserUsers.filter(u => u.status === 'active'), [browserUsers]);
     const bannedBrowserUsers = useMemo(() => browserUsers.filter(u => u.status === 'banned'), [browserUsers]);
 
+    const activeTelegramCount = activeTelegramUsers.length;
+    const activeBrowserCount = activeBrowserUsers.length;
+
+
     const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned', reason?: string) => {
         const userIdentifier = user.telegramUser || { id: user.id };
 
@@ -613,12 +611,11 @@ export default function AdminPage() {
         try {
             await updateUserStatus(userIdentifier, status, reason);
             
-            // Refetch counts
             await fetchDashboardData();
 
             toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
         } catch(error) {
-            setAllUsers(originalUsers); // Revert on failure
+            setAllUsers(originalUsers); 
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update user status.' });
         }
     }
@@ -634,7 +631,6 @@ export default function AdminPage() {
         const sortedUsers = updatedUsers.sort((a, b) => b.balance - a.balance);
         setAllUsers(sortedUsers);
         
-        // Refetch total points as balance was changed
         const newTotalPoints = await getTotalActivePoints();
         setTotalPoints(newTotalPoints);
     };
@@ -656,11 +652,10 @@ export default function AdminPage() {
         
         try {
             await deleteUser(userIdentifier);
-             // Refetch counts after deletion
-            await fetchDashboardData();
+             await fetchDashboardData();
             toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
         } catch(error) {
-            setAllUsers(originalUsers); // Revert on error
+            setAllUsers(originalUsers); 
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete user.' });
         }
     }
