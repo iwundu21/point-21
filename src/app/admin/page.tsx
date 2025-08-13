@@ -489,6 +489,7 @@ export default function AdminPage() {
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [totalPoints, setTotalPoints] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
+    const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
 
     const { toast } = useToast();
 
@@ -701,32 +702,58 @@ export default function AdminPage() {
       };
 
 
-    const handleExportAirdrop = () => {
-        const airdropData = allUsers
-            .filter(user => user.walletAddress && user.status === 'active' && isValidSolanaAddress(user.walletAddress)) // Only include active users with a valid wallet address
-            .map(user => {
-                const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
-                return {
-                    walletAddress: user.walletAddress,
-                    airdropAmount: airdropAmount.toFixed(4) // Adjust precision as needed
-                };
-            });
+    const handleExportAirdrop = async () => {
+        setIsExportingAirdrop(true);
+        toast({ title: 'Exporting Airdrop List...', description: 'Fetching all user data. This may take a moment.' });
+        try {
+            let allUsersToExport: UserData[] = [];
+            let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
 
-        const csv = Papa.unparse(airdropData);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'airdrop_distribution_active_users.csv');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            do {
+                const response = await getAllUsers(lastDoc, 1000);
+                allUsersToExport = allUsersToExport.concat(response.users);
+                lastDoc = response.lastVisible as QueryDocumentSnapshot<DocumentData> | undefined;
+            } while (lastDoc);
+
+            const airdropData = allUsersToExport
+                .filter(user => user.walletAddress && user.status === 'active' && isValidSolanaAddress(user.walletAddress))
+                .map(user => {
+                    const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                    return {
+                        walletAddress: user.walletAddress,
+                        airdropAmount: airdropAmount.toFixed(4)
+                    };
+                });
+            
+            if (airdropData.length === 0) {
+                 toast({ variant: 'destructive', title: 'No Users Found', description: 'No active users with valid wallets found to export.' });
+                 setIsExportingAirdrop(false);
+                 return;
+            }
+
+            const csv = Papa.unparse(airdropData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'airdrop_distribution_active_users.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast({ title: 'Export Complete!', description: `${airdropData.length} users have been exported for the airdrop.` });
+
+        } catch (error) {
+            console.error("Failed to export airdrop data:", error);
+            toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not export airdrop data.' });
+        } finally {
+            setIsExportingAirdrop(false);
+        }
     };
     
     const handleExportAllUsers = async () => {
         setIsExporting(true);
-        toast({ title: 'Exporting...', description: 'Fetching all user data. This may take a moment.' });
+        toast({ title: 'Exporting All Users...', description: 'Fetching all user data. This may take a moment.' });
         try {
             let allUsersToExport: UserData[] = [];
             let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
@@ -953,8 +980,8 @@ export default function AdminPage() {
                         />
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                        <Button onClick={handleExportAirdrop} variant="outline" className="flex-shrink-0">
-                            <Download className="mr-2 h-4 w-4" />
+                        <Button onClick={handleExportAirdrop} disabled={isExportingAirdrop} variant="outline" className="flex-shrink-0">
+                            {isExportingAirdrop ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                             Export Airdrop List
                         </Button>
                          <Button onClick={handleExportAllUsers} disabled={isExporting} variant="outline" className="flex-shrink-0">
