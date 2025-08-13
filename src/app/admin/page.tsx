@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, ShieldAlert } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -490,32 +490,10 @@ export default function AdminPage() {
     const [totalPoints, setTotalPoints] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
-    const [isUnbanning, setIsUnbanning] = useState(false);
-
+    
     const { toast } = useToast();
 
-    useEffect(() => {
-        const init = () => {
-          let telegramUser: TelegramUser | null = null;
-          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-              const tg = window.Telegram.WebApp;
-              if (tg.initDataUnsafe?.user) {
-                  telegramUser = tg.initDataUnsafe.user;
-                  tg.ready();
-              }
-          }
-          
-          if (telegramUser) {
-              setCurrentUser(telegramUser);
-              if (ADMIN_IDS.includes(telegramUser.id)) {
-                setIsAdmin(true);
-              }
-          }
-        };
-        init();
-    }, []);
-    
-    const fetchDashboardData = async () => {
+    const fetchInitialData = async () => {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
@@ -568,8 +546,29 @@ export default function AdminPage() {
 
 
     useEffect(() => {
+        const init = () => {
+          let telegramUser: TelegramUser | null = null;
+          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+              const tg = window.Telegram.WebApp;
+              if (tg.initDataUnsafe?.user) {
+                  telegramUser = tg.initDataUnsafe.user;
+                  tg.ready();
+              }
+          }
+          
+          if (telegramUser) {
+              setCurrentUser(telegramUser);
+              if (ADMIN_IDS.includes(telegramUser.id)) {
+                setIsAdmin(true);
+              }
+          }
+        };
+        init();
+    }, []);
+
+    useEffect(() => {
       if(isAdmin || codeAuthenticated) {
-        fetchDashboardData();
+        fetchInitialData();
       } else {
         setIsLoading(false);
       }
@@ -588,8 +587,8 @@ export default function AdminPage() {
         });
     }, [allUsers, searchTerm]);
     
-    const telegramUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('user_')), [filteredUsers]);
-    const browserUsers = useMemo(() => filteredUsers.filter(u => u.id.startsWith('browser_')), [filteredUsers]);
+    const telegramUsers = useMemo(() => filteredUsers.filter(u => u.telegramUser), [filteredUsers]);
+    const browserUsers = useMemo(() => filteredUsers.filter(u => !u.telegramUser), [filteredUsers]);
 
     const activeTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'active'), [telegramUsers]);
     const bannedTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'banned'), [telegramUsers]);
@@ -612,7 +611,7 @@ export default function AdminPage() {
         try {
             await updateUserStatus(userIdentifier, status, reason);
             
-            await fetchDashboardData();
+            await fetchInitialData();
 
             toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
         } catch(error) {
@@ -653,7 +652,7 @@ export default function AdminPage() {
         
         try {
             await deleteUser(userIdentifier);
-             await fetchDashboardData();
+             await fetchInitialData();
             toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
         } catch(error) {
             setAllUsers(originalUsers); 
@@ -792,21 +791,6 @@ export default function AdminPage() {
             setIsExporting(false);
         }
     };
-    
-    const handleUnbanAllUsers = async () => {
-        setIsUnbanning(true);
-        toast({ title: 'Unbanning All Users...', description: 'This process may take some time depending on the number of users.' });
-        try {
-            await unbanAllUsers();
-            await fetchDashboardData(); // Refresh the entire dashboard
-            toast({ title: 'Success!', description: 'All users have been set to active status.' });
-        } catch (error) {
-             console.error("Failed to unban all users:", error);
-             toast({ variant: 'destructive', title: 'Unban Failed', description: 'An error occurred. Please check the console.' });
-        } finally {
-             setIsUnbanning(false);
-        }
-    };
 
     if (!isAdmin && !codeAuthenticated) {
         return (
@@ -862,7 +846,7 @@ export default function AdminPage() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Social Task Management</CardTitle>
-                    <AddTaskDialog onTaskAdded={fetchDashboardData} />
+                    <AddTaskDialog onTaskAdded={fetchInitialData} />
                 </div>
                 <CardDescription>Create and manage social engagement tasks for users.</CardDescription>
             </CardHeader>
@@ -988,28 +972,6 @@ export default function AdminPage() {
                         />
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" disabled={isUnbanning} className="flex-shrink-0">
-                                    {isUnbanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldAlert className="mr-2 h-4 w-4" />}
-                                    Unban All Users
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will unban ALL users in the database and set their status to 'active'. This action is meant to fix widespread accidental bans and cannot be easily undone.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleUnbanAllUsers} className={cn(buttonVariants({variant: 'destructive'}))}>
-                                        Yes, Unban All
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
                         <Button onClick={handleExportAirdrop} disabled={isExportingAirdrop} variant="outline" className="flex-shrink-0">
                             {isExportingAirdrop ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                             Export Airdrop List

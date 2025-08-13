@@ -469,33 +469,6 @@ export const banUser = async (user: {id: number | string} | null, reason?: strin
     await saveUserData(user, dataToSave);
 }
 
-export const unbanAllUsers = async (): Promise<void> => {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('status', '==', 'banned'));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-        return; // No users to unban
-    }
-    
-    let totalPointsToRestore = 0;
-    const batch = writeBatch(db);
-
-    querySnapshot.forEach(userDoc => {
-        const userData = userDoc.data() as UserData;
-        const userRef = doc(db, 'users', userDoc.id);
-        batch.update(userRef, { status: 'active', banReason: '' });
-        totalPointsToRestore += userData.balance || 0;
-    });
-
-    await batch.commit();
-    
-    if (totalPointsToRestore > 0) {
-        await incrementTotalPoints(totalPointsToRestore);
-    }
-};
-
-
 // --- Social Task Admin Functions ---
 export const addSocialTask = async (task: Omit<SocialTask, 'id' | 'createdAt' | 'completionCount'>) => {
     const tasksCollection = collection(db, 'socialTasks');
@@ -588,6 +561,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 
