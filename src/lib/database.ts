@@ -1,6 +1,6 @@
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch } from 'firebase/firestore';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
 
@@ -469,6 +469,46 @@ export const banUser = async (user: {id: number | string} | null, reason?: strin
     await saveUserData(user, dataToSave);
 }
 
+export const unbanAllUsers = async (): Promise<void> => {
+    let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+    let totalPointsToAdd = 0;
+
+    // Process all users in batches
+    while (true) {
+        const usersRef = collection(db, 'users');
+        let q;
+        if (lastDoc) {
+            q = query(usersRef, orderBy('__name__'), startAfter(lastDoc), limit(500));
+        } else {
+            q = query(usersRef, orderBy('__name__'), limit(500));
+        }
+
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            break; // No more users to process
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.forEach(userDoc => {
+            const userData = userDoc.data() as UserData;
+            if (userData.status === 'banned') {
+                const userRef = doc(db, 'users', userDoc.id);
+                batch.update(userRef, { status: 'active', banReason: '' });
+                totalPointsToAdd += userData.balance || 0;
+            }
+        });
+        
+        await batch.commit();
+
+        lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+    }
+    
+    // After all batches are committed, update the total points count
+    if (totalPointsToAdd > 0) {
+        await incrementTotalPoints(totalPointsToAdd);
+    }
+};
+
 
 // --- Social Task Admin Functions ---
 export const addSocialTask = async (task: Omit<SocialTask, 'id' | 'createdAt' | 'completionCount'>) => {
@@ -562,4 +602,5 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
