@@ -116,11 +116,11 @@ const MiningCircle: FC<MiningCircleProps> = ({
 
   const getHelperText = () => {
     if (isActivating) return 'Your mining rig is firing up...';
-    if (isActive) return 'Your 24-hour mining session is active. E-point will be added automatically.';
+    if (isActive) return 'Your 24-hour mining session is active. E-points will be added automatically.';
     if (!hasRedeemedReferral) return 'First, redeem a referral code to continue.';
     if (!hasCompletedWelcomeTasks) return 'Next, complete all the welcome tasks.';
     if (!isVerified) return 'Please complete face verification on your profile to start mining.';
-    return `Activate a 24-hour mining session to earn ${miningReward} E-point`;
+    return `Activate a 24-hour mining session to earn ${miningReward} E-points`;
   }
 
   const { disabled, text, icon, className: stateClassName } = getButtonState();
@@ -161,3 +161,5 @@ const MiningCircle: FC<MiningCircleProps> = ({
 };
 
 export default MiningCircle;
+
+    

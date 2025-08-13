@@ -53,8 +53,8 @@ const DiscordIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Home({}: {}) {
   const [balance, setBalance] = useState(0);
-  const [isForgingActive, setIsForgingActive] = useState(false);
-  const [forgingEndTime, setForgingEndTime] = useState<number | null>(null);
+  const [isMiningActive, setIsMiningActive] = useState(false);
+  const [miningEndTime, setMiningEndTime] = useState<number | null>(null);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [user, setUser] = useState<User | null>(null);
@@ -101,13 +101,13 @@ export default function Home({}: {}) {
       setHasCompletedWelcomeTasks(allWelcomeTasksDone);
       setIsVerified(freshUserData.verificationStatus === 'verified');
 
-      if (freshUserData.forgingEndTime && freshUserData.forgingEndTime > Date.now()) {
-        setIsForgingActive(true);
-        setForgingEndTime(freshUserData.forgingEndTime);
-      } else if (freshUserData.forgingEndTime) {
+      if (freshUserData.miningEndTime && freshUserData.miningEndTime > Date.now()) {
+        setIsMiningActive(true);
+        setMiningEndTime(freshUserData.miningEndTime);
+      } else if (freshUserData.miningEndTime) {
         const reward = typeof currentUser.id === 'number' ? 1000 : 700;
         currentBalance += reward;
-        freshUserData.forgingEndTime = null; 
+        freshUserData.miningEndTime = null; 
         shouldSave = true;
       }
 
@@ -129,7 +129,7 @@ export default function Home({}: {}) {
         await saveUserData(currentUser, { 
           balance: currentBalance, 
           dailyStreak: streakData, 
-          forgingEndTime: freshUserData.forgingEndTime 
+          miningEndTime: freshUserData.miningEndTime 
         });
         
       } else {
@@ -141,7 +141,7 @@ export default function Home({}: {}) {
       if (shouldSave) {
         await saveUserData(currentUser, { 
           balance: currentBalance, 
-          forgingEndTime: freshUserData.forgingEndTime 
+          miningEndTime: freshUserData.miningEndTime 
         });
       }
     } catch (error) {
@@ -196,7 +196,7 @@ export default function Home({}: {}) {
     init();
   }, [initializeUser, router]);
   
-  const handleActivateForging = async () => {
+  const handleActivateMining = async () => {
     if (!hasRedeemedReferral) {
        toast({
         variant: "destructive",
@@ -228,12 +228,12 @@ export default function Home({}: {}) {
     setIsActivating(true);
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     if (user) {
-        await saveUserData(user, { forgingEndTime: endTime });
-        setUserData(prev => prev ? {...prev, forgingEndTime: endTime} : null);
+        await saveUserData(user, { miningEndTime: endTime });
+        setUserData(prev => prev ? {...prev, miningEndTime: endTime} : null);
     }
     setTimeout(() => {
-        setIsForgingActive(true);
-        setForgingEndTime(endTime);
+        setIsMiningActive(true);
+        setMiningEndTime(endTime);
         setIsActivating(false);
     }, 4000);
   };
@@ -241,11 +241,11 @@ export default function Home({}: {}) {
   const handleSessionEnd = async () => {
     const newBalance = balance + miningReward;
     setBalance(newBalance);
-    setIsForgingActive(false);
-    setForgingEndTime(null);
+    setIsMiningActive(false);
+    setMiningEndTime(null);
     if(user){
-        await saveUserData(user, { balance: newBalance, forgingEndTime: null });
-        setUserData(prev => prev ? {...prev, balance: newBalance, forgingEndTime: null} : null);
+        await saveUserData(user, { balance: newBalance, miningEndTime: null });
+        setUserData(prev => prev ? {...prev, balance: newBalance, miningEndTime: null} : null);
     }
     setShowPointsAnimation(true);
     setTimeout(() => setShowPointsAnimation(false), 2000);
@@ -305,7 +305,7 @@ export default function Home({}: {}) {
                 user={user}
                 userData={userData}
             />
-            <MiningStatusIndicator isActive={isForgingActive} />
+            <MiningStatusIndicator isActive={isMiningActive} />
             </div>
             <BalanceCard balance={balance} animating={showPointsAnimation} miningReward={miningReward} />
         </header>
@@ -313,9 +313,9 @@ export default function Home({}: {}) {
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
             <MiningCircle 
-                isActive={isForgingActive}
-                endTime={forgingEndTime}
-                onActivate={handleActivateForging}
+                isActive={isMiningActive}
+                endTime={miningEndTime}
+                onActivate={handleActivateMining}
                 onSessionEnd={handleSessionEnd}
                 isActivating={isActivating}
                 hasRedeemedReferral={hasRedeemedReferral}
@@ -335,3 +335,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    

@@ -17,7 +17,7 @@ interface TelegramUser {
 export interface UserData {
     id: string; // Document ID
     balance: number;
-    forgingEndTime: number | null;
+    miningEndTime: number | null;
     dailyStreak: { count: number; lastLogin: string };
     verificationStatus: 'verified' | 'unverified' | 'failed';
     faceVerificationUri: string | null;
@@ -59,7 +59,7 @@ const getUserId = (user: { id: number | string } | null): string => {
 
 const defaultUserData = (user: { id: number | string, first_name?: string } | null): Omit<UserData, 'id'> => ({
     balance: 0,
-    forgingEndTime: null,
+    miningEndTime: null,
     dailyStreak: { count: 0, lastLogin: '' },
     verificationStatus: 'unverified',
     faceVerificationUri: null,
@@ -512,7 +512,7 @@ export const deleteSocialTask = async (taskId: string) => {
 // --- Specific Data Functions ---
 
 export const getBalance = async (user: { id: number | string } | null) => (await getUserData(user)).balance;
-export const getForgingEndTime = async (user: { id: number | string } | null) => (await getUserData(user)).forgingEndTime;
+export const getMiningEndTime = async (user: { id: number | string } | null) => (await getUserData(user)).miningEndTime;
 export const getDailyStreak = async (user: { id: number | string } | null) => (await getUserData(user)).dailyStreak;
 export const getVerificationStatus = async (user: { id: number | string } | null) => (await getUserData(user)).verificationStatus;
 export const saveVerificationStatus = async (user: { id: number | string } | null, status: 'verified' | 'unverified' | 'failed', imageUri?: string | null, faceFingerprint?: string | null) => {
@@ -552,4 +552,6 @@ export const saveReferralCode = async (user: { id: number | string } | null, cod
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
     
     
+    
+
     

@@ -368,7 +368,7 @@ const UserTable = ({
                     <TableBody>
                         {users.map((user) => {
                           const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
-                          const isMiningActive = user.forgingEndTime && user.forgingEndTime > Date.now();
+                          const isMiningActive = user.miningEndTime && user.miningEndTime > Date.now();
                           const isBrowserUser = !user.telegramUser;
 
                           return (
@@ -1036,3 +1036,4 @@ export default function AdminPage() {
   );
 }
 
+    
