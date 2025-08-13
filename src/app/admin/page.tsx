@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, getActiveTelegramUsersCount, getActiveBrowserUsersCount } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -476,6 +476,8 @@ export default function AdminPage() {
     const [totalUserCount, setTotalUserCount] = useState(0);
     const [totalTelegramCount, setTotalTelegramCount] = useState(0);
     const [totalBrowserCount, setTotalBrowserCount] = useState(0);
+    const [activeTelegramCount, setActiveTelegramCount] = useState(0);
+    const [activeBrowserCount, setActiveBrowserCount] = useState(0);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -518,12 +520,14 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, activeTgCount, activeBrowser, totalActivePoints] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
                 getTotalTelegramUsersCount(),
                 getTotalBrowserUsersCount(),
+                getActiveTelegramUsersCount(),
+                getActiveBrowserUsersCount(),
                 getTotalActivePoints()
             ]);
             
@@ -539,6 +543,8 @@ export default function AdminPage() {
             setTotalUserCount(totalCount);
             setTotalTelegramCount(totalTgCount);
             setTotalBrowserCount(totalBrowser);
+            setActiveTelegramCount(activeTgCount);
+            setActiveBrowserCount(activeBrowser);
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
         } catch (error) {
@@ -607,9 +613,8 @@ export default function AdminPage() {
         try {
             await updateUserStatus(userIdentifier, status, reason);
             
-            // Refetch total points
-            const newTotalPoints = await getTotalActivePoints();
-            setTotalPoints(newTotalPoints);
+            // Refetch counts
+            await fetchDashboardData();
 
             toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
         } catch(error) {
@@ -648,16 +653,14 @@ export default function AdminPage() {
         
         const originalUsers = allUsers;
         setAllUsers(allUsers.filter(u => u.id !== user.id));
-        setTotalUserCount(prev => prev - 1);
-
+        
         try {
             await deleteUser(userIdentifier);
-            const newTotalPoints = await getTotalActivePoints();
-            setTotalPoints(newTotalPoints);
+             // Refetch counts after deletion
+            await fetchDashboardData();
             toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
         } catch(error) {
             setAllUsers(originalUsers); // Revert on error
-            setTotalUserCount(prev => prev + 1);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete user.' });
         }
     }
@@ -984,10 +987,10 @@ export default function AdminPage() {
                 </div>
                 <Tabs defaultValue="tg-active" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-                        <TabsTrigger value="tg-active">Telegram - Active ({activeTelegramUsers.length})</TabsTrigger>
-                        <TabsTrigger value="tg-banned">Telegram - Banned ({bannedTelegramUsers.length})</TabsTrigger>
-                        <TabsTrigger value="browser-active">Browser - Active ({activeBrowserUsers.length})</TabsTrigger>
-                        <TabsTrigger value="browser-banned">Browser - Banned ({bannedBrowserUsers.length})</TabsTrigger>
+                        <TabsTrigger value="tg-active">Telegram - Active ({activeTelegramCount})</TabsTrigger>
+                        <TabsTrigger value="tg-banned">Telegram - Banned ({totalTelegramCount - activeTelegramCount})</TabsTrigger>
+                        <TabsTrigger value="browser-active">Browser - Active ({activeBrowserCount})</TabsTrigger>
+                        <TabsTrigger value="browser-banned">Browser - Banned ({totalBrowserCount - activeBrowserCount})</TabsTrigger>
                     </TabsList>
                     <TabsContent value="tg-active" className="mt-4">
                         <UserTable

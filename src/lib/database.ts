@@ -150,6 +150,18 @@ export const getTotalBrowserUsersCount = async (): Promise<number> => {
     return 0;
 }
 
+export const getActiveTelegramUsersCount = async (): Promise<number> => {
+    const q = query(collection(db, 'users'), where('status', '==', 'active'), where('telegramUser', '!=', null));
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+};
+
+export const getActiveBrowserUsersCount = async (): Promise<number> => {
+    const q = query(collection(db, 'users'), where('status', '==', 'active'), where('telegramUser', '==', null));
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+};
+
 
 // --- Total Points Management ---
 const pointsStatsRef = doc(db, 'app-stats', 'points-counter');
