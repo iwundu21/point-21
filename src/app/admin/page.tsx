@@ -80,7 +80,7 @@ const getInitials = (user: UserData) => {
 };
 
 const getDisplayName = (user: UserData) => {
-    if (user.telegramUser && user.telegramUser.first_name) {
+    if (user.telegramUser && user.telegramUser.first_name && user.telegramUser.first_name !== 'Browser User') {
         return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
     }
     return 'Browser User';
@@ -793,7 +793,7 @@ export default function AdminPage() {
                             onChange={(e) => setAccessCode(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
                         />
-                       <Button onClick={handleCodeSubmit} className="w-full">
+                       <Button type="button" onClick={handleCodeSubmit} className="w-full">
                            Submit
                        </Button>
                     </CardContent>
