@@ -37,7 +37,7 @@ const getInitials = (user: UserData) => {
 };
 
 const getDisplayName = (user: UserData) => {
-    if (user.telegramUser && user.telegramUser.first_name) {
+    if (user.telegramUser && user.telegramUser.first_name && user.telegramUser.first_name !== 'Browser User') {
         return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
     }
     return 'Browser User';
