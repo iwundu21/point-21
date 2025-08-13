@@ -910,7 +910,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>User Management</CardTitle>
                 <CardDescription>
-                    Search, manage, and export user data. The export button will generate a CSV of all active users eligible for the airdrop. Displaying {allUsers.length} of {totalUserCount} users.
+                    Search, manage, and export user data. The airdrop export includes only active users with a valid wallet. Displaying {allUsers.length} of {totalUserCount} users.
                 </CardDescription>
                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 pt-4">
                      <Card className="bg-primary/5">
@@ -1054,5 +1054,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
