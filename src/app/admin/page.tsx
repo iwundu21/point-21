@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, ShieldAlert } from 'lucide-react';
 import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -667,7 +667,8 @@ export default function AdminPage() {
         toast({ variant: 'destructive', title: 'Task Deleted'});
     }
     
-    const handleCodeSubmit = () => {
+    const handleCodeSubmit = (e: FormEvent) => {
+        e.preventDefault();
         if (accessCode === ADMIN_ACCESS_CODE) {
             setCodeAuthenticated(true);
         } else {
@@ -815,20 +816,21 @@ export default function AdminPage() {
                         <CardTitle className="flex items-center justify-center gap-2"><Lock className="w-6 h-6"/> Admin Access</CardTitle>
                         <CardDescription>Enter the access code to continue.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <p className="text-sm text-muted-foreground text-center px-2">
-                           This is the central hub for managing the Exnus Points application. From here, you can oversee user activity, manage the airdrop, create new social engagement tasks, and ensure the overall health of the ecosystem.
-                        </p>
-                       <Input 
-                            type="password"
-                            placeholder="Enter access code"
-                            value={accessCode}
-                            onChange={(e) => setAccessCode(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
-                        />
-                       <Button type="button" onClick={handleCodeSubmit} className="w-full">
-                           Submit
-                       </Button>
+                    <CardContent>
+                       <form onSubmit={handleCodeSubmit} className="space-y-4">
+                           <p className="text-sm text-muted-foreground text-center px-2">
+                              This is the central hub for managing the Exnus Points application. From here, you can oversee user activity, manage the airdrop, create new social engagement tasks, and ensure the overall health of the ecosystem.
+                           </p>
+                          <Input 
+                               type="password"
+                               placeholder="Enter access code"
+                               value={accessCode}
+                               onChange={(e) => setAccessCode(e.target.value)}
+                           />
+                          <Button type="submit" className="w-full">
+                              Submit
+                          </Button>
+                       </form>
                     </CardContent>
                 </Card>
             </div>
@@ -1090,3 +1092,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
