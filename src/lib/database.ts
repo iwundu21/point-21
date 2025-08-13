@@ -472,10 +472,11 @@ export const banUser = async (user: {id: number | string} | null, reason?: strin
 
 
 // --- Social Task Admin Functions ---
-export const addSocialTask = async (task: Omit<SocialTask, 'id' | 'createdAt'>) => {
+export const addSocialTask = async (task: Omit<SocialTask, 'id' | 'createdAt' | 'completionCount'>) => {
     const tasksCollection = collection(db, 'socialTasks');
     await addDoc(tasksCollection, {
         ...task,
+        completionCount: 0,
         createdAt: serverTimestamp()
     });
 };
@@ -488,6 +489,7 @@ export interface SocialTask {
     points: number;
     icon: string;
     createdAt: any; 
+    completionCount: number;
 }
 
 
@@ -506,6 +508,12 @@ export const deleteSocialTask = async (taskId: string) => {
     if (!taskId) return;
     const taskRef = doc(db, 'socialTasks', taskId);
     await deleteDoc(taskRef);
+};
+
+export const incrementTaskCompletionCount = async (taskId: string) => {
+    if (!taskId) return;
+    const taskRef = doc(db, 'socialTasks', taskId);
+    await setDoc(taskRef, { completionCount: increment(1) }, { merge: true });
 };
 
 

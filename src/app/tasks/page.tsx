@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
 import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Info, Star } from 'lucide-react';
-import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData } from '@/lib/database';
+import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData, incrementTaskCompletionCount } from '@/lib/database';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import TaskItem from '@/components/task-item';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -134,6 +134,7 @@ export default function TasksPage() {
                     completedSocialTasks: updatedCompletedTasks, 
                     balance: updatedBalance 
                 });
+                await incrementTaskCompletionCount(task.id);
                 
                 const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
                 setUserData(updatedData);

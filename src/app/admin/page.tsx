@@ -530,17 +530,9 @@ export default function AdminPage() {
             const fetchedUsers = usersResponse.users;
             const counts: {[taskId: string]: number} = {};
             tasks.forEach(task => {
-                counts[task.id] = 0;
+                counts[task.id] = task.completionCount || 0;
             });
             
-            fetchedUsers.forEach(user => {
-                user.completedSocialTasks?.forEach(taskId => {
-                    if (counts[taskId] !== undefined) {
-                        counts[taskId]++;
-                    }
-                })
-            });
-
             setTaskCompletionCounts(counts);
             setAllUsers(fetchedUsers);
             setSocialTasks(tasks);
