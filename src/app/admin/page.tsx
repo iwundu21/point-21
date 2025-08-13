@@ -514,7 +514,7 @@ export default function AdminPage() {
         init();
     }, []);
     
-    const fetchInitialData = async () => {
+    const fetchDashboardData = async () => {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
@@ -568,7 +568,7 @@ export default function AdminPage() {
 
     useEffect(() => {
       if(isAdmin || codeAuthenticated) {
-        fetchInitialData();
+        fetchDashboardData();
       } else {
         setIsLoading(false);
       }
@@ -846,7 +846,7 @@ export default function AdminPage() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Social Task Management</CardTitle>
-                    <AddTaskDialog onTaskAdded={fetchInitialData} />
+                    <AddTaskDialog onTaskAdded={fetchDashboardData} />
                 </div>
                 <CardDescription>Create and manage social engagement tasks for users.</CardDescription>
             </CardHeader>
@@ -1054,6 +1054,8 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
 
