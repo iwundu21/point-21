@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -110,7 +111,7 @@ export default function WelcomeTasksPage() {
             if (user) {
                 setIsLoading(true);
                 try {
-                    const userData = await getUserData(user);
+                    const { userData } = await getUserData(user);
                     if(userData.welcomeTasks) {
                         setTasks(userData.welcomeTasks);
                     }
@@ -137,7 +138,7 @@ export default function WelcomeTasksPage() {
         if (isBrowserUser) {
              setTimeout(async () => {
                  if (user) { 
-                    const userData = await getUserData(user);
+                    const { userData } = await getUserData(user);
                     const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
                     const updatedBalance = userData.balance + 300;
                     
@@ -160,7 +161,7 @@ export default function WelcomeTasksPage() {
              try {
                 const result = await verifyTelegramTask({ userId: user.id, chatId: chatId });
                 if (result.isMember) {
-                    const userData = await getUserData(user);
+                    const { userData } = await getUserData(user);
                     const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
                     const updatedBalance = userData.balance + 300;
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
@@ -179,7 +180,7 @@ export default function WelcomeTasksPage() {
             // Non-verifiable tasks for Telegram users (e.g., X, Discord)
             setTimeout(async () => {
                  if (user) { 
-                    const userData = await getUserData(user);
+                    const { userData } = await getUserData(user);
                     const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
                     const updatedBalance = userData.balance + 300;
                     

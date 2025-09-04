@@ -179,8 +179,8 @@ export const getTotalActivePoints = async (): Promise<number> => {
 };
 
 
-export const getUserData = async (user: { id: number | string } | null): Promise<UserData> => {
-    if (!user) return { ...defaultUserData(null), id: 'guest' };
+export const getUserData = async (user: { id: number | string } | null): Promise<{ userData: UserData, isNewUser: boolean }> => {
+    if (!user) return { userData: { ...defaultUserData(null), id: 'guest' }, isNewUser: false };
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
@@ -202,7 +202,7 @@ export const getUserData = async (user: { id: number | string } | null): Promise
             await setDoc(userRef, { referralCode: finalUserData.referralCode }, { merge: true });
         }
         
-        return finalUserData;
+        return { userData: finalUserData, isNewUser: false };
     } else {
         // For Telegram users, we create the user on first load.
         // For Browser users, we wait until they save their wallet.
@@ -214,10 +214,10 @@ export const getUserData = async (user: { id: number | string } | null): Promise
             };
             await setDoc(userRef, newUser);
             await incrementUserCount('telegram');
-            return { ...newUser, id: userId };
+            return { userData: { ...newUser, id: userId }, isNewUser: true };
         } else {
             // Return default data for a new browser user without saving to DB.
-            return { ...defaultUserData(user), id: userId };
+            return { userData: { ...defaultUserData(user), id: userId }, isNewUser: true };
         }
     }
 };
@@ -308,7 +308,8 @@ export const applyReferralBonus = async (newUser: { id: number | string }, refer
             await incrementTotalPoints(200); // For referrer
             await incrementTotalPoints(50); // For new user
 
-            return await getUserData(newUser);
+            const { userData } = await getUserData(newUser);
+            return userData;
         } catch (error) {
             console.error("Transaction failed: ", error);
             return null;
@@ -336,7 +337,7 @@ export const getLeaderboardUsers = async (): Promise<{ users: UserData[]}> => {
 export const getUserRank = async (user: { id: number | string } | null): Promise<{ rank: number; league: string }> => {
     if (!user) return { rank: 0, league: 'Unranked' };
 
-    const currentUserData = await getUserData(user);
+    const { userData: currentUserData } = await getUserData(user);
     if (!currentUserData) {
         return { rank: 0, league: 'Unranked' };
     }
@@ -528,13 +529,14 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
     
     const telegramUserId = getUserId(telegramUser);
     const telegramUserRef = doc(db, 'users', telegramUserId);
+    const { userData: telegramData } = await getUserData(telegramUser);
 
     // Prepare merged data
     const mergedData: Partial<UserData> = {
-        balance: (browserUserData.balance || 0),
-        referrals: (browserUserData.referrals || 0),
-        referredBy: browserUserData.referredBy,
-        referralBonusApplied: browserUserData.referralBonusApplied,
+        balance: (telegramData.balance || 0) + (browserUserData.balance || 0),
+        referrals: (telegramData.referrals || 0) + (browserUserData.referrals || 0),
+        referredBy: telegramData.referredBy || browserUserData.referredBy,
+        referralBonusApplied: telegramData.referralBonusApplied || browserUserData.referralBonusApplied,
         hasMergedBrowserAccount: true, // Mark as merged
     };
     
@@ -545,16 +547,17 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
     await deleteUser({ id: browserUserData.id.replace('browser_', '') });
     
     // Return the updated telegram user data
-    return await getUserData(telegramUser);
+    const { userData } = await getUserData(telegramUser);
+    return userData;
 }
 
 
 // --- Specific Data Functions ---
 
-export const getBalance = async (user: { id: number | string } | null) => (await getUserData(user)).balance;
-export const getMiningEndTime = async (user: { id: number | string } | null) => (await getUserData(user)).miningEndTime;
-export const getDailyStreak = async (user: { id: number | string } | null) => (await getUserData(user)).dailyStreak;
-export const getVerificationStatus = async (user: { id: number | string } | null) => (await getUserData(user)).verificationStatus;
+export const getBalance = async (user: { id: number | string } | null) => (await getUserData(user)).userData.balance;
+export const getMiningEndTime = async (user: { id: number | string } | null) => (await getUserData(user)).userData.miningEndTime;
+export const getDailyStreak = async (user: { id: number | string } | null) => (await getUserData(user)).userData.dailyStreak;
+export const getVerificationStatus = async (user: { id: number | string } | null) => (await getUserData(user)).userData.verificationStatus;
 export const saveVerificationStatus = async (user: { id: number | string } | null, status: 'verified' | 'unverified' | 'failed', imageUri?: string | null, faceFingerprint?: string | null) => {
     const data: Partial<UserData> = { verificationStatus: status };
     if (status === 'verified') {
@@ -565,7 +568,7 @@ export const saveVerificationStatus = async (user: { id: number | string } | nul
       await saveUserData(user, data);
     }
 }
-export const getWalletAddress = async (user: { id: number | string } | null) => (await getUserData(user)).walletAddress;
+export const getWalletAddress = async (user: { id: number | string } | null) => (await getUserData(user)).userData.walletAddress;
 export const saveWalletAddress = async (user: { id: number | string } | null, address: string) => {
     if (!user) return;
     const userId = getUserId(user);
@@ -587,7 +590,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
     }
 }
 
-export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user)).referralCode;
+export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
     
@@ -595,6 +598,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 

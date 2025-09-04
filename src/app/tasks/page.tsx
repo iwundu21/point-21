@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -112,11 +113,11 @@ export default function TasksPage() {
             if (user) {
                 setIsLoading(true);
                 try {
-                    const [userData, socialTasks] = await Promise.all([
+                    const [userDataResponse, socialTasks] = await Promise.all([
                         getUserData(user),
                         getSocialTasks()
                     ]);
-                    setUserData(userData);
+                    setUserData(userDataResponse.userData);
                     setAllTasks(socialTasks);
                 } catch(error) {
                     console.error("Failed to load task data:", error);
@@ -138,7 +139,7 @@ export default function TasksPage() {
 
         const completeTask = async () => {
              try {
-                const freshUserData = await getUserData(user);
+                const { userData: freshUserData } = await getUserData(user);
                 if (freshUserData.completedSocialTasks?.includes(task.id)) {
                     setVerifyingTaskId(null);
                     return; 

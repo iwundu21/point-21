@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -104,7 +105,7 @@ export default function WalletPage({}: WalletPageProps) {
         if (user) {
             setIsLoading(true);
             try {
-                const freshUserData = await getUserData(user);
+                const { userData: freshUserData } = await getUserData(user);
 
                 setUserData(freshUserData);
                 if (freshUserData.walletAddress) {

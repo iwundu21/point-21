@@ -106,16 +106,18 @@ export default function Home({}: {}) {
   const initializeUser = useCallback(async (currentUser: User) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      const [freshUserData, userRankInfo] = await Promise.all([
+      const [dataResponse, userRankInfo] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser)
       ]);
+      const { userData: freshUserData, isNewUser } = dataResponse;
+
 
       // --- MERGE FLOW FOR NEW TELEGRAM USERS ---
-      // This will trigger for any TG user that does not have the `hasMergedBrowserAccount` flag set.
+      // This will trigger for any brand new TG user that does not have the `hasMergedBrowserAccount` flag set.
       // Existing users will already have it (or it will be added), new users won't.
       const isTelegramUser = typeof currentUser.id === 'number';
-      if (isTelegramUser && !freshUserData.hasMergedBrowserAccount) {
+      if (isTelegramUser && isNewUser) {
           router.replace('/merge');
           return; // Stop initialization until merge flow is complete
       }
@@ -476,6 +478,7 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
 
 
 

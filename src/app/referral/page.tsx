@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -91,7 +92,7 @@ export default function ReferralPage({}: ReferralPageProps) {
         if (user) {
             setIsLoading(true);
             try {
-                const userData = await getUserData(user); 
+                const { userData } = await getUserData(user); 
                 setReferralCode(userData.referralCode || '');
                 setFriendsReferred(userData.referrals || 0);
                 setBonusApplied(userData.referralBonusApplied);
@@ -116,7 +117,7 @@ export default function ReferralPage({}: ReferralPageProps) {
     setIsRedeeming(true);
 
     try {
-        const currentUserData = await getUserData(user);
+        const { userData: currentUserData } = await getUserData(user);
         if (currentUserData.referralBonusApplied) {
             showDialog('Bonus Already Applied', 'You have already redeemed a referral bonus.');
             setIsRedeeming(false);

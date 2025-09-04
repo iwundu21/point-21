@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -76,7 +77,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   const loadInitialData = useCallback(async (currentUser: User) => {
       setIsLoading(true);
       try {
-          const data = await getUserData(currentUser);
+          const { userData: data } = await getUserData(currentUser);
           setUserData(data);
           setAccountStatus(data.verificationStatus);
       } catch (error) {
