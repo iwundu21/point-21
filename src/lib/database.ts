@@ -529,22 +529,42 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
     
     const telegramUserId = getUserId(telegramUser);
     const telegramUserRef = doc(db, 'users', telegramUserId);
-    const { userData: telegramData } = await getUserData(telegramUser);
+    
+    await runTransaction(db, async (transaction) => {
+        const telegramUserDoc = await transaction.get(telegramUserRef);
+        
+        const telegramData = telegramUserDoc.exists() ? telegramUserDoc.data() : defaultUserData(telegramUser);
 
-    // Prepare merged data
-    const mergedData: Partial<UserData> = {
-        balance: (telegramData.balance || 0) + (browserUserData.balance || 0),
-        referrals: (telegramData.referrals || 0) + (browserUserData.referrals || 0),
-        referredBy: telegramData.referredBy || browserUserData.referredBy,
-        referralBonusApplied: telegramData.referralBonusApplied || browserUserData.referralBonusApplied,
-        hasMergedBrowserAccount: true, // Mark as merged
-    };
-    
-    // Save merged data to Telegram user
-    await setDoc(telegramUserRef, mergedData, { merge: true });
-    
-    // Delete the old browser user
-    await deleteUser({ id: browserUserData.id.replace('browser_', '') });
+        // Combine data
+        const mergedBalance = (telegramData.balance || 0) + (browserUserData.balance || 0);
+        const mergedReferrals = (telegramData.referrals || 0) + (browserUserData.referrals || 0);
+
+        // Prepare merged data, prioritizing browser user's referral info if TG user's is blank
+        const mergedData: Partial<UserData> = {
+            ...browserUserData, // Start with browser data
+            telegramUser: telegramUser, // Overwrite with TG user object
+            balance: mergedBalance,
+            referrals: mergedReferrals,
+            referredBy: telegramData.referredBy || browserUserData.referredBy,
+            referralBonusApplied: telegramData.referralBonusApplied || browserUserData.referralBonusApplied,
+            referralCode: telegramData.referralCode || browserUserData.referralCode, // Keep TG user's new code
+            hasMergedBrowserAccount: true, // Mark as merged
+        };
+        
+        // Remove fields that should not be merged
+        delete (mergedData as any).id; 
+
+        // Update the telegram user document with the fully merged data
+        transaction.set(telegramUserRef, mergedData);
+        
+        // Delete the old browser user document
+        const browserUserRef = doc(db, 'users', browserUserData.id);
+        transaction.delete(browserUserRef);
+    });
+
+    // Adjust total points. Since browser user is deleted, their points are effectively moved.
+    // No net change to total points, but we must decrement the browser user count.
+    await decrementUserCount('browser');
     
     // Return the updated telegram user data
     const { userData } = await getUserData(telegramUser);
@@ -598,6 +618,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 
