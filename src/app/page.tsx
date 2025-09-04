@@ -462,6 +462,7 @@ export default function Home({}: {}) {
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>{dialogContent.title}</AlertDialogTitle>
+
                     <AlertDialogDescription>
                         {dialogContent.description}
                     </AlertDialogDescription>
@@ -475,5 +476,6 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
 
 
