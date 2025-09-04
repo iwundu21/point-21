@@ -247,23 +247,27 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
-  const handleBoost = async (cost: number, newRate: number) => {
-    if (!user || !userData) return;
-    if (userData.balance < cost) {
-      showDialog("Insufficient Balance", "You do not have enough points to purchase this boost.");
-      return;
-    }
-     if (newRate <= (userData.miningRate || 0)) {
-      showDialog("Boost Not Available", "You already have this boost or a better one active.");
-      return;
-    }
+    const handleBoost = async (cost: number, newRate: number, invoiceId: string) => {
+      if (!user || !userData) return;
+      if (newRate <= (userData.miningRate || 0)) {
+        showDialog("Boost Not Available", "You already have this boost or a better one active.");
+        return;
+      }
+      
+      const tg = window.Telegram.WebApp;
 
-    const newBalance = userData.balance - cost;
-    await saveUserData(user, { balance: newBalance, miningRate: newRate });
-    setBalance(newBalance);
-    setMiningRate(newRate);
-    setUserData(prev => prev ? {...prev, balance: newBalance, miningRate: newRate} : null);
-    showDialog("Boost Activated!", `Your mining rate is now ${newRate.toLocaleString()} points per day.`);
+      tg.openInvoice(invoiceId, async (status: 'paid' | 'failed' | 'cancelled' | 'pending') => {
+          if (status === 'paid') {
+              const newBalance = userData.balance;
+              await saveUserData(user, { balance: newBalance, miningRate: newRate });
+              setBalance(newBalance);
+              setMiningRate(newRate);
+              setUserData(prev => prev ? {...prev, balance: newBalance, miningRate: newRate} : null);
+              showDialog("Boost Activated!", `Your mining rate is now ${newRate.toLocaleString()} points per day.`);
+          } else {
+              showDialog("Payment Failed", "Your payment was not successful. Please try again.");
+          }
+      });
   };
 
   if (isLoading) {
@@ -395,7 +399,7 @@ export default function Home({}: {}) {
                                     Cost: 150 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(150, 4000)} disabled={miningRate >= 4000}>
+                            <Button onClick={() => handleBoost(150, 4000, 'invoice-4k')} disabled={miningRate >= 4000}>
                                 {miningRate >= 4000 ? 'Active' : 'Buy'}
                             </Button>
                         </Card>
@@ -406,7 +410,7 @@ export default function Home({}: {}) {
                                     Cost: 250 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(250, 6500)} disabled={miningRate >= 6500}>
+                            <Button onClick={() => handleBoost(250, 6500, 'invoice-6k')} disabled={miningRate >= 6500}>
                                {miningRate >= 6500 ? 'Active' : 'Buy'}
                             </Button>
                         </Card>
@@ -439,3 +443,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
