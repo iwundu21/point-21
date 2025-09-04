@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldBan, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShieldBan, Loader2, Bot, ArrowRight, Wallet } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 declare global {
@@ -279,12 +280,37 @@ export default function Home({}: {}) {
 
   if (!user) {
       return (
-         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
-            <h1 className="text-xl font-bold mb-4">Welcome to Exnus Points</h1>
-            <p className="text-muted-foreground">Please open this app within the Telegram app to continue.</p>
-             <a href="https://t.me/Exnuspoint_bot" className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-                Open in Telegram
-            </a>
+         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+            <Card className="max-w-md w-full text-center">
+                <CardHeader>
+                    <div className="flex justify-center mb-4">
+                        <Bot className="w-16 h-16 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl">Our App Has Moved to Telegram!</CardTitle>
+                    <CardDescription>
+                        For a better, faster, and more integrated experience, Exnus Points is now exclusively available inside Telegram.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div>
+                        <h3 className="font-semibold text-lg mb-2">How to Access Your Account:</h3>
+                        <ol className="text-sm text-muted-foreground space-y-2 text-left list-decimal list-inside">
+                            <li>Click the button below to open our bot in Telegram.</li>
+                            <li>Start the bot and open the app from the menu.</li>
+                            <li>You'll be prompted to enter your Solana wallet address.</li>
+                            <li>Your points and referral data will be automatically recovered!</li>
+                        </ol>
+                    </div>
+                    <a href="https://t.me/Exnuspoint_bot" className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                        <ArrowRight className="w-5 h-5 mr-2"/>
+                        Migrate to Telegram
+                    </a>
+                    <div className="flex items-center justify-center pt-2">
+                        <Wallet className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Have your browser wallet address ready!</p>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
       );
   }
@@ -328,3 +354,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
