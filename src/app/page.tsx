@@ -84,7 +84,7 @@ export default function Home({}: {}) {
       ]);
 
       // --- NEW MERGE FLOW ---
-      const isNewTelegramUser = typeof currentUser.id === 'number' && freshUserData.balance === 0 && !freshUserData.hasMergedBrowserAccount;
+      const isNewTelegramUser = typeof currentUser.id === 'number' && !freshUserData.hasMergedBrowserAccount && !freshUserData.walletAddress;
       if (isNewTelegramUser) {
           router.replace('/merge');
           return;
