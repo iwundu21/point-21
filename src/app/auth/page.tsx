@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect } from 'react';
@@ -22,13 +23,13 @@ export default function AuthPage() {
             <Card className="max-w-sm w-full">
                 <CardHeader className="text-center space-y-4">
                      <div className="flex justify-center">
-                         <Loader2 className="w-12 h-12 text-primary animate-spin mt-4" />
+                         <Bot className="w-12 h-12 text-primary" />
                     </div>
-                     <CardTitle>Loading Application</CardTitle>
-                     <CardDescription>Redirecting you to the main page...</CardDescription>
+                     <CardTitle>App Unavailable</CardTitle>
+                     <CardDescription>This app is only available within Telegram.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center space-y-4 h-[60px]">
-                    <p className="text-sm text-muted-foreground text-center">If you are not redirected, please open this app inside Telegram.</p>
+                    <p className="text-sm text-muted-foreground text-center">Click the button below to open it in Telegram.</p>
                      <a href="https://t.me/Exnuspoint_bot" className="flex items-center gap-2 text-primary hover:underline">
                         <Bot className="w-5 h-5"/>
                         Open in Telegram
@@ -38,3 +39,5 @@ export default function AuthPage() {
         </div>
     );
 }
+
+    

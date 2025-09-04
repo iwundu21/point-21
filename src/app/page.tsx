@@ -80,6 +80,7 @@ export default function Home({}: {}) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
+  const [isTelegram, setIsTelegram] = useState(false);
   
   // New state for sequential tasks
   const [hasRedeemedReferral, setHasRedeemedReferral] = useState(false);
@@ -200,24 +201,17 @@ export default function Home({}: {}) {
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
           const tg = window.Telegram.WebApp;
           currentUser = tg.initDataUnsafe.user;
+          setIsTelegram(true);
           tg.ready();
           initializeUser(currentUser);
-      } else if (typeof window !== 'undefined') {
-          // It's a browser user
-          let browserId = localStorage.getItem('browser_user_id');
-          if (!browserId) {
-              browserId = uuidv4();
-              localStorage.setItem('browser_user_id', browserId);
-          }
-          currentUser = { id: browserId, first_name: 'Browser User' };
-          initializeUser(currentUser);
       } else {
-          // Fallback if no context is found
+          // It's a browser user or an environment without Telegram
+          setIsTelegram(false);
           setIsLoading(false); 
       }
     };
     init();
-  }, [initializeUser, router]);
+  }, [initializeUser]);
   
   const handleActivateMining = async () => {
     if (!hasRedeemedReferral) {
@@ -321,6 +315,31 @@ export default function Home({}: {}) {
         </div>
     );
   }
+  
+  if (!isTelegram) {
+      return (
+         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+            <Card className="max-w-md w-full text-center">
+                <CardHeader>
+                    <div className="flex justify-center mb-4">
+                        <Bot className="w-16 h-16 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl">App Unavailable</CardTitle>
+                    <CardDescription>
+                       This application is designed to work exclusively inside the Telegram app. Please open it there to continue.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <a href="https://t.me/Exnuspoint_bot" className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                        <Bot className="w-5 h-5 mr-2"/>
+                        Open in Telegram
+                    </a>
+                </CardContent>
+            </Card>
+        </div>
+      );
+  }
+
 
   if (userData?.status === 'banned') {
     return (
@@ -477,3 +496,6 @@ export default function Home({}: {}) {
   );
 }
 
+
+
+    
