@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -247,18 +248,17 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
-    const handleBoost = async (cost: number, newRate: number, title: string) => {
+    const handleBoost = async (boostId: string, cost: number, boostAmount: number, title: string) => {
         if (!user || !userData || !window.Telegram?.WebApp) return;
 
-        if (newRate <= (userData.miningRate || 0)) {
-            showDialog("Boost Not Available", "You already have this boost or a better one active.");
+        if (userData.purchasedBoosts?.includes(boostId)) {
+            showDialog("Boost Already Active", "You have already purchased this boost.");
             return;
         }
 
         const tg = window.Telegram.WebApp;
 
         try {
-            // Show a temporary "processing" dialog, which will be replaced by the Telegram invoice UI
             showDialog("Processing Boost...", "Please wait while we create your payment invoice.");
 
             const response = await fetch('/api/create-invoice', {
@@ -266,8 +266,8 @@ export default function Home({}: {}) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title: title,
-                    description: `Boost your mining rate to ${newRate.toLocaleString()} points per day.`,
-                    payload: `boost-${newRate}-${user.id}`,
+                    description: `Boost your mining rate by ${boostAmount.toLocaleString()} points per day.`,
+                    payload: `${boostId}-${user.id}`,
                     currency: 'XTR',
                     amount: cost,
                 }),
@@ -275,7 +275,6 @@ export default function Home({}: {}) {
 
             const { invoiceUrl, error } = await response.json();
             
-            // Close our temporary dialog before showing Telegram's
             setDialogOpen(false);
             
             if (error) {
@@ -284,16 +283,19 @@ export default function Home({}: {}) {
 
             tg.openInvoice(invoiceUrl, async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                 if (status === 'paid') {
-                    await saveUserData(user, { miningRate: newRate });
+                    const currentRate = userData.miningRate || 0;
+                    const newRate = currentRate + boostAmount;
+                    const updatedBoosts = [...(userData.purchasedBoosts || []), boostId];
+
+                    await saveUserData(user, { miningRate: newRate, purchasedBoosts: updatedBoosts });
                     setMiningRate(newRate);
-                    setUserData(prev => prev ? { ...prev, miningRate: newRate } : null);
-                    showDialog("Boost Activated!", `Your mining rate is now ${newRate.toLocaleString()} points per day.`);
+                    setUserData(prev => prev ? { ...prev, miningRate: newRate, purchasedBoosts: updatedBoosts } : null);
+                    showDialog("Boost Activated!", `Your mining rate has increased by ${boostAmount.toLocaleString()} points per day.`);
                 } else {
                     showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                 }
             });
         } catch (e: any) {
-            // Close any open dialogs on error
             setDialogOpen(false);
             console.error("Boost error:", e);
             showDialog("Error", `Could not process the boost payment: ${e.message}. Please try again later.`);
@@ -349,7 +351,7 @@ export default function Home({}: {}) {
                     </div>
                     <CardTitle className="text-2xl">We are migrating to Telegram!</CardTitle>
                     <CardDescription>
-                       We are migrating all browser users to our new, more secure Telegram app to make our airdrop system fair and available to everyone.
+                       To make our airdrop system fair and available for everyone, we are migrating all users to our new, more secure Telegram app.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -418,30 +420,30 @@ export default function Home({}: {}) {
                     <DialogHeader>
                         <DialogTitle>Boost Your Mining Speed</DialogTitle>
                         <DialogDescription>
-                            Increase your daily E-point earnings by purchasing a boost with Telegram Stars.
+                            Increase your daily E-point earnings by purchasing a boost with Telegram Stars. Boosts are stackable.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <Card className="p-4 flex justify-between items-center">
                             <div>
-                                <p className="font-bold">4,000 Points Daily</p>
+                                <p className="font-bold">+4,000 Points Daily</p>
                                 <p className="text-sm text-muted-foreground flex items-center">
                                     Cost: 150 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(150, 4000, 'Booster Pack 1')} disabled={miningRate >= 4000}>
-                                {miningRate >= 4000 ? 'Active' : 'Buy'}
+                            <Button onClick={() => handleBoost('boost_1', 150, 4000, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
+                                {userData?.purchasedBoosts?.includes('boost_1') ? 'Active' : 'Buy'}
                             </Button>
                         </Card>
                         <Card className="p-4 flex justify-between items-center">
                             <div>
-                                <p className="font-bold">6,500 Points Daily</p>
+                                <p className="font-bold">+6,500 Points Daily</p>
                                 <p className="text-sm text-muted-foreground flex items-center">
                                     Cost: 250 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(250, 6500, 'Booster Pack 2')} disabled={miningRate >= 6500}>
-                               {miningRate >= 6500 ? 'Active' : 'Buy'}
+                            <Button onClick={() => handleBoost('boost_2', 250, 6500, 'Booster Pack 2')} disabled={userData?.purchasedBoosts?.includes('boost_2')}>
+                               {userData?.purchasedBoosts?.includes('boost_2') ? 'Active' : 'Buy'}
                             </Button>
                         </Card>
                     </div>
@@ -473,3 +475,4 @@ export default function Home({}: {}) {
     </div>
   );
 }
+

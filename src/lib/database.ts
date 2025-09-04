@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch } from 'firebase/firestore';
 
@@ -47,6 +48,7 @@ export interface UserData {
     status: 'active' | 'banned';
     banReason?: string;
     hasMergedBrowserAccount?: boolean;
+    purchasedBoosts: string[];
 }
 
 const generateReferralCode = () => {
@@ -90,6 +92,7 @@ const defaultUserData = (user: { id: number | string, first_name?: string } | nu
     completedSocialTasks: [],
     status: 'active',
     hasMergedBrowserAccount: false,
+    purchasedBoosts: [],
 });
 
 // --- User Count Management ---
@@ -592,6 +595,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 
