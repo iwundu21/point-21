@@ -82,6 +82,14 @@ export default function Home({}: {}) {
         getUserData(currentUser),
         getUserRank(currentUser)
       ]);
+
+      // --- NEW MERGE FLOW ---
+      const isNewTelegramUser = typeof currentUser.id === 'number' && freshUserData.balance === 0 && !freshUserData.hasMergedBrowserAccount;
+      if (isNewTelegramUser) {
+          router.replace('/merge');
+          return;
+      }
+      // --- END NEW MERGE FLOW ---
       
       setUserData(freshUserData);
       setUser(currentUser);
@@ -154,7 +162,7 @@ export default function Home({}: {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, router]);
 
   useEffect(() => {
     const init = () => {

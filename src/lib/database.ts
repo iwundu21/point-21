@@ -45,6 +45,7 @@ export interface UserData {
     completedSocialTasks: string[]; // Array of completed task IDs
     status: 'active' | 'banned';
     banReason?: string;
+    hasMergedBrowserAccount?: boolean;
 }
 
 const generateReferralCode = () => {
@@ -86,6 +87,7 @@ const defaultUserData = (user: { id: number | string, first_name?: string } | nu
     },
     completedSocialTasks: [],
     status: 'active',
+    hasMergedBrowserAccount: false,
 });
 
 // --- User Count Management ---
@@ -514,6 +516,33 @@ export const incrementTaskCompletionCount = async (taskId: string) => {
     await setDoc(taskRef, { completionCount: increment(1) }, { merge: true });
 };
 
+export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, browserUserData: UserData): Promise<UserData> => {
+    if (!browserUserData || !telegramUser) {
+        throw new Error("Invalid user data provided for merge.");
+    }
+    
+    const telegramUserId = getUserId(telegramUser);
+    const telegramUserRef = doc(db, 'users', telegramUserId);
+
+    // Prepare merged data
+    const mergedData: Partial<UserData> = {
+        balance: (browserUserData.balance || 0),
+        referrals: (browserUserData.referrals || 0),
+        referredBy: browserUserData.referredBy,
+        referralBonusApplied: browserUserData.referralBonusApplied,
+        hasMergedBrowserAccount: true, // Mark as merged
+    };
+    
+    // Save merged data to Telegram user
+    await setDoc(telegramUserRef, mergedData, { merge: true });
+    
+    // Delete the old browser user
+    await deleteUser({ id: browserUserData.id.replace('browser_', '') });
+    
+    // Return the updated telegram user data
+    return await getUserData(telegramUser);
+}
+
 
 // --- Specific Data Functions ---
 
@@ -561,6 +590,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 
