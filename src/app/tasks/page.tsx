@@ -9,8 +9,16 @@ import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import TaskItem from '@/components/task-item';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 declare global {
   interface Window {
@@ -63,7 +71,16 @@ export default function TasksPage() {
     const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
     const [availableCurrentPage, setAvailableCurrentPage] = useState(1);
     const [completedCurrentPage, setCompletedCurrentPage] = useState(1);
-    const { toast } = useToast();
+    
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState('');
+    const [dialogDescription, setDialogDescription] = useState('');
+
+    const showDialog = (title: string, description: string) => {
+        setDialogTitle(title);
+        setDialogDescription(description);
+        setDialogOpen(true);
+    };
 
     useEffect(() => {
         const init = () => {
@@ -138,10 +155,10 @@ export default function TasksPage() {
                 
                 const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
                 setUserData(updatedData);
-                toast({ title: "Success!", description: `You've earned ${task.points} E-points.`});
+                showDialog("Success!", `You've earned ${task.points} E-points.`);
             } catch (error) {
                  console.error("Error completing task:", error);
-                 toast({ variant: 'destructive', title: "Error", description: "Could not complete the task."});
+                 showDialog("Error", "Could not complete the task.");
             } finally {
                 setVerifyingTaskId(null);
             }
@@ -161,12 +178,12 @@ export default function TasksPage() {
                 if (result.isMember) {
                     await completeTask();
                 } else {
-                    toast({ variant: 'destructive', title: "Verification Failed", description: result.error || "You must join the channel first."});
+                    showDialog("Verification Failed", result.error || "You must join the channel first.");
                     setVerifyingTaskId(null);
                 }
             } catch (e) {
                  console.error(e);
-                 toast({ variant: 'destructive', title: "Error", description: "Could not verify task completion."});
+                 showDialog("Error", "Could not verify task completion.");
                  setVerifyingTaskId(null);
             }
         } else {
@@ -313,6 +330,21 @@ export default function TasksPage() {
         </main>
        </div>
       <Footer />
+       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{dialogTitle}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {dialogDescription}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setDialogOpen(false)}>OK</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
+
+    

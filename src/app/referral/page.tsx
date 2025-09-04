@@ -4,12 +4,20 @@
 import { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { Gift, Copy, MessageSquarePlus, CheckCircle, Loader2 } from 'lucide-react';
 import { getUserData, saveUserData, applyReferralBonus } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 declare global {
   interface Window {
@@ -37,11 +45,20 @@ export default function ReferralPage({}: ReferralPageProps) {
   const [friendsReferred, setFriendsReferred] = useState(0);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [bonusApplied, setBonusApplied] = useState(false);
-  const { toast } = useToast();
+  
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogDescription, setDialogDescription] = useState('');
 
   const botUrl = "https://t.me/Exnuspoint_bot";
   const webUrl = "https://points.exnus.xyz";
   const shareMessage = `Join me on Exnus Points and get a 50 point bonus! ✨\n\nUse my referral code to get started: ${referralCode}\n\nJoin via Telegram: ${botUrl}\nOr on the web: ${webUrl}`;
+
+  const showDialog = (title: string, description: string) => {
+    setDialogTitle(title);
+    setDialogDescription(description);
+    setDialogOpen(true);
+  };
 
 
   useEffect(() => {
@@ -90,10 +107,7 @@ export default function ReferralPage({}: ReferralPageProps) {
 
   const handleCopy = (textToCopy: string, successMessage: string) => {
     navigator.clipboard.writeText(textToCopy);
-    toast({
-      title: 'Copied to Clipboard!',
-      description: successMessage,
-    });
+    showDialog('Copied to Clipboard!', successMessage);
   };
 
   const handleRedeemCode = async () => {
@@ -104,13 +118,13 @@ export default function ReferralPage({}: ReferralPageProps) {
     try {
         const currentUserData = await getUserData(user);
         if (currentUserData.referralBonusApplied) {
-            toast({ variant: 'destructive', title: 'Bonus Already Applied', description: 'You have already redeemed a referral bonus.' });
+            showDialog('Bonus Already Applied', 'You have already redeemed a referral bonus.');
             setIsRedeeming(false);
             return;
         }
 
         if(currentUserData.referralCode?.toLowerCase() === enteredCode.trim().toLowerCase()){
-            toast({ variant: 'destructive', title: 'Invalid Code', description: 'You cannot use your own referral code.' });
+            showDialog('Invalid Code', 'You cannot use your own referral code.');
             setIsRedeeming(false);
             return;
         }
@@ -119,13 +133,13 @@ export default function ReferralPage({}: ReferralPageProps) {
 
         if (updatedUser) {
             setBonusApplied(true);
-            toast({ title: 'Success!', description: 'You have received a 50 E-point bonus!' });
+            showDialog('Success!', 'You have received a 50 E-point bonus!');
         } else {
-            toast({ variant: 'destructive', title: 'Invalid Code', description: 'The referral code you entered is not valid or does not exist.' });
+            showDialog('Invalid Code', 'The referral code you entered is not valid or does not exist.');
         }
     } catch (error) {
         console.error("Redemption error:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred during redemption.' });
+        showDialog('Error', 'An unexpected error occurred during redemption.');
     } finally {
         setIsRedeeming(false);
         setEnteredCode('');
@@ -224,6 +238,21 @@ export default function ReferralPage({}: ReferralPageProps) {
         </main>
        </div>
       <Footer />
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{dialogTitle}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {dialogDescription}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setDialogOpen(false)}>OK</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </div>
   );
 }
+
+    

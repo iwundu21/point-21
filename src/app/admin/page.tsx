@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -985,9 +985,9 @@ export default function AdminPage() {
                 <Tabs defaultValue="tg-active" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                         <TabsTrigger value="tg-active">Telegram - Active ({activeTelegramCount})</TabsTrigger>
-                        <TabsTrigger value="tg-banned">Telegram - Banned ({totalTelegramCount - activeTelegramCount})</TabsTrigger>
+                        <TabsTrigger value="tg-banned">Telegram - Banned ({bannedTelegramUsers.length})</TabsTrigger>
                         <TabsTrigger value="browser-active">Browser - Active ({activeBrowserCount})</TabsTrigger>
-                        <TabsTrigger value="browser-banned">Browser - Banned ({totalBrowserCount - activeBrowserCount})</TabsTrigger>
+                        <TabsTrigger value="browser-banned">Browser - Banned ({bannedBrowserUsers.length})</TabsTrigger>
                     </TabsList>
                     <TabsContent value="tg-active" className="mt-4">
                         <UserTable
@@ -1054,6 +1054,8 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
 

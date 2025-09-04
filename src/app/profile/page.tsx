@@ -9,12 +9,19 @@ import { Button } from '@/components/ui/button';
 import { Camera, CheckCircle, XCircle, Loader2, Copy, Upload } from 'lucide-react';
 import Webcam from "react-webcam";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
 import { verifyHumanFace } from '@/ai/flows/face-verification-flow';
-import { Toaster } from '@/components/ui/toaster';
 import { getUserData, saveVerificationStatus, UserData, saveUserPhotoUrl } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 
 declare global {
@@ -54,7 +61,17 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogDescription, setDialogDescription] = useState('');
+
+  const showDialog = (title: string, description: string) => {
+    setDialogTitle(title);
+    setDialogDescription(description);
+    setDialogOpen(true);
+  };
+
 
   const loadInitialData = useCallback(async (currentUser: User) => {
       setIsLoading(true);
@@ -64,11 +81,11 @@ export default function ProfilePage({}: ProfilePageProps) {
           setAccountStatus(data.verificationStatus);
       } catch (error) {
           console.error("Failed to load user data:", error);
-          toast({ variant: 'destructive', title: 'Error', description: 'Failed to load user data.' });
+          showDialog('Error', 'Failed to load user data.');
       } finally {
           setIsLoading(false);
       }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     const init = () => {
@@ -106,11 +123,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   
   const handleStartVerification = () => {
       if (user?.first_name === 'Browser User' && !userData?.customPhotoUrl) {
-        toast({
-            variant: 'destructive',
-            title: 'Avatar Required',
-            description: 'Please upload an avatar by clicking on your profile picture before starting verification.',
-        });
+        showDialog('Avatar Required', 'Please upload an avatar by clicking on your profile picture before starting verification.');
         return;
       }
       
@@ -127,20 +140,12 @@ export default function ProfilePage({}: ProfilePageProps) {
                 console.error("Camera access denied:", error);
                 setHasCameraPermission(false);
                 setIsVerificationInProgress(false);
-                toast({
-                    variant: 'destructive',
-                    title: 'Camera Access Denied',
-                    description: 'Please enable camera permissions in your browser settings.',
-                });
+                showDialog('Camera Access Denied', 'Please enable camera permissions in your browser settings.');
             }
         } else {
             setHasCameraPermission(false);
             setIsVerificationInProgress(false);
-            toast({
-                variant: 'destructive',
-                title: 'Camera Not Supported',
-                description: 'Your browser does not support camera access.',
-            });
+            showDialog('Camera Not Supported', 'Your browser does not support camera access.');
         }
         setIsVerifying(false);
       }, 1000);
@@ -167,10 +172,7 @@ export default function ProfilePage({}: ProfilePageProps) {
             setAccountStatus('verified');
             // This is the key change: save all data after successful verification
             await saveVerificationStatus(user, 'verified', result.faceVerificationUri, result.faceFingerprint);
-             toast({
-              title: 'Verification Successful',
-              description: 'Your account has been verified.',
-            });
+            showDialog('Verification Successful', 'Your account has been verified.');
           } else {
             setAccountStatus('failed');
             setFailureReason(result.reason || 'Verification failed. Please try again.');
@@ -185,7 +187,7 @@ export default function ProfilePage({}: ProfilePageProps) {
             setIsProcessingVerification(false);
         }
     }
-  }, [webcamRef, toast, user]);
+  }, [webcamRef, user]);
   
   const handleDone = () => {
     setVerificationSuccess(false);
@@ -208,7 +210,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   
   const handleCopy = (textToCopy: string) => {
     navigator.clipboard.writeText(textToCopy);
-    toast({ title: 'Copied to Clipboard!' });
+    showDialog('Copied!', 'Copied to Clipboard!');
   };
   
   const handleAvatarClick = () => {
@@ -254,10 +256,10 @@ export default function ProfilePage({}: ProfilePageProps) {
                 try {
                     await saveUserPhotoUrl(user, dataUrl);
                     setUserData(prev => prev ? { ...prev, customPhotoUrl: dataUrl } : null);
-                    toast({ title: 'Avatar Updated!' });
+                    showDialog('Avatar Updated!', 'Your new avatar has been saved.');
                 } catch (error) {
                     console.error("Failed to save avatar:", error);
-                    toast({ variant: 'destructive', title: 'Error', description: 'Could not update your avatar.' });
+                    showDialog('Error', 'Could not update your avatar.');
                 } finally {
                     setIsUploading(false);
                     if (fileInputRef.current) {
@@ -411,7 +413,6 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-      <Toaster />
       <div className="flex-grow pb-32">
         {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
@@ -495,6 +496,21 @@ export default function ProfilePage({}: ProfilePageProps) {
          </div>
       </div>
       <Footer />
+       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{dialogTitle}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {dialogDescription}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setDialogOpen(false)}>OK</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
+
+    

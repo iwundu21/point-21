@@ -1,7 +1,6 @@
 
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import WalletProvider from '@/components/wallet-provider';
 
@@ -26,10 +25,11 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <WalletProvider>
             {children}
-            <Toaster />
             <SpeedInsights/>
         </WalletProvider>
       </body>
     </html>
   );
 }
+
+    

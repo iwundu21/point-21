@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,9 +6,17 @@ import Footer from '@/components/footer';
 import { Gift, CheckCircle } from 'lucide-react';
 import { getUserData, saveUserData } from '@/lib/database';
 import TaskItem from '@/components/task-item';
-import { useToast } from '@/hooks/use-toast';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 declare global {
   interface Window {
@@ -60,7 +69,16 @@ export default function WelcomeTasksPage() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [verifyingTaskId, setVerifyingTaskId] = useState<keyof WelcomeTasks | null>(null);
-    const { toast } = useToast();
+    
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState('');
+    const [dialogDescription, setDialogDescription] = useState('');
+
+    const showDialog = (title: string, description: string) => {
+        setDialogTitle(title);
+        setDialogDescription(description);
+        setDialogOpen(true);
+    };
 
     useEffect(() => {
         const init = () => {
@@ -126,7 +144,7 @@ export default function WelcomeTasksPage() {
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    toast({ title: "Success!", description: "You've earned 300 E-points."});
+                    showDialog("Success!", "You've earned 300 E-points.");
                 }
                 setVerifyingTaskId(null);
             }, 10000); // 10 second delay to simulate action
@@ -147,13 +165,13 @@ export default function WelcomeTasksPage() {
                     const updatedBalance = userData.balance + 300;
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
                     setTasks(updatedTasks);
-                    toast({ title: "Success!", description: "You've earned 300 E-points."});
+                    showDialog("Success!", "You've earned 300 E-points.");
                 } else {
-                    toast({ variant: 'destructive', title: "Verification Failed", description: result.error || "You must join the channel first."});
+                    showDialog("Verification Failed", result.error || "You must join the channel first.");
                 }
             } catch (e) {
                 console.error(e);
-                toast({ variant: 'destructive', title: "Error", description: "Could not verify task completion."});
+                showDialog("Error", "Could not verify task completion.");
             } finally {
                 setVerifyingTaskId(null);
             }
@@ -168,7 +186,7 @@ export default function WelcomeTasksPage() {
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    toast({ title: "Success!", description: "You've earned 300 E-points."});
+                    showDialog("Success!", "You've earned 300 E-points.");
                 }
                 setVerifyingTaskId(null);
             }, 9000); // 9 second delay for user to perform action
@@ -249,6 +267,21 @@ export default function WelcomeTasksPage() {
                 </main>
             </div>
             <Footer />
+            <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>{dialogTitle}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          {dialogDescription}
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogAction onClick={() => setDialogOpen(false)}>OK</AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
         </div>
     );
 }
+
+    

@@ -8,7 +8,6 @@ import MiningCircle from '@/components/mining-circle';
 import MissionsCard from '@/components/missions-card';
 import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
@@ -16,6 +15,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldBan, Loader2, Bot, ArrowRight, Wallet } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 declare global {
   interface Window {
@@ -71,7 +79,15 @@ export default function Home({}: {}) {
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
 
   const router = useRouter();
-  const { toast } = useToast();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', description: '', action: null as React.ReactNode | null });
+
+  const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
+    setDialogContent({ title, description, action });
+    setDialogOpen(true);
+  };
+
 
   const isBrowserUser = user?.first_name === 'Browser User';
   const miningReward = isBrowserUser ? 700 : 1000;
@@ -157,15 +173,11 @@ export default function Home({}: {}) {
       }
     } catch (error) {
       console.error("Initialization failed:", error);
-      toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not load user data. Please try again later.",
-      });
+      showDialog("Error", "Could not load user data. Please try again later.");
     } finally {
       setIsLoading(false);
     }
-  }, [toast, router]);
+  }, [router]);
 
   useEffect(() => {
     const init = () => {
@@ -186,30 +198,15 @@ export default function Home({}: {}) {
   
   const handleActivateMining = async () => {
     if (!hasRedeemedReferral) {
-       toast({
-        variant: "destructive",
-        title: "Referral Code Required",
-        description: "Please redeem a referral code to unlock the next step.",
-        action: <Button onClick={() => router.push('/referral')}>Go to Referrals</Button>,
-       });
+       showDialog("Referral Code Required", "Please redeem a referral code to unlock the next step.", <Button onClick={() => router.push('/referral')}>Go to Referrals</Button>);
        return;
     }
      if (!hasCompletedWelcomeTasks) {
-       toast({
-        variant: "destructive",
-        title: "Welcome Tasks Required",
-        description: "Please complete all welcome tasks to continue.",
-        action: <Button onClick={() => router.push('/welcome-tasks')}>Go to Tasks</Button>,
-       });
+       showDialog("Welcome Tasks Required", "Please complete all welcome tasks to continue.", <Button onClick={() => router.push('/welcome-tasks')}>Go to Tasks</Button>);
        return;
     }
     if (!isVerified) {
-       toast({
-        variant: "destructive",
-        title: "Verification Required",
-        description: "Please verify your account on the profile page to start mining.",
-        action: <Button onClick={() => router.push('/profile')}>Go to Profile</Button>,
-       });
+       showDialog("Verification Required", "Please verify your account on the profile page to start mining.", <Button onClick={() => router.push('/profile')}>Go to Profile</Button>);
        return;
     }
 
@@ -286,9 +283,9 @@ export default function Home({}: {}) {
                     <div className="flex justify-center mb-4">
                         <Bot className="w-16 h-16 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl">Important Platform Update</CardTitle>
+                    <CardTitle className="text-2xl">Platform Migration to Telegram</CardTitle>
                     <CardDescription>
-                        We are migrating all browser users to our new, more secure Telegram app to make our airdrop system available to everyone fairly.
+                       We are migrating all browser users to our new, more secure Telegram app. This move helps us make our airdrop system fair and available to everyone.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -351,6 +348,22 @@ export default function Home({}: {}) {
             </div>
         </main>
         <Footer />
+        <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{dialogContent.title}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {dialogContent.description}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    {dialogContent.action}
+                    <AlertDialogAction onClick={() => setDialogOpen(false)}>OK</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
+
+    

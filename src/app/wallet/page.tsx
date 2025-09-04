@@ -8,7 +8,6 @@ import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info } from 'lucide-react';
 import {
   AlertDialog,
@@ -57,11 +56,17 @@ export default function WalletPage({}: WalletPageProps) {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [balance, setBalance] = useState(0);
-  const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const [alertDialog, setAlertDialog] = useState({ open: false, title: '', description: '' });
+
+  const showDialog = (title: string, description: string) => {
+    setAlertDialog({ open: true, title, description });
+  };
+
 
   useEffect(() => {
     const init = () => {
@@ -116,11 +121,7 @@ export default function WalletPage({}: WalletPageProps) {
     const trimmedAddress = manualAddress.trim();
 
     if (!isValidSolanaAddress(trimmedAddress)) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Solana Address',
-            description: 'Please enter a valid Solana wallet address.',
-        });
+        showDialog('Invalid Solana Address', 'Please enter a valid Solana wallet address.');
         setIsSaving(false);
         return;
     }
@@ -132,11 +133,7 @@ export default function WalletPage({}: WalletPageProps) {
             const currentUserId = getUserId(user);
 
             if (existingUser && existingUser.id !== currentUserId) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Wallet Address In Use',
-                    description: 'This Solana wallet is already registered to another account.',
-                });
+                showDialog('Wallet Address In Use', 'This Solana wallet is already registered to another account.');
                 setIsSaving(false);
                 return;
             }
@@ -145,40 +142,25 @@ export default function WalletPage({}: WalletPageProps) {
 
             setTimeout(() => {
                 setSavedAddress(trimmedAddress);
-                toast({
-                    title: 'Wallet Address Saved',
-                    description: 'Your wallet address has been saved successfully.',
-                });
+                showDialog('Wallet Address Saved', 'Your wallet address has been saved successfully.');
                 setIsSaving(false);
                 setIsDialogOpen(false); 
             }, 1000);
 
         } catch (error) {
             console.error("Error saving wallet address:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not save wallet address.',
-            });
+            showDialog('Error', 'Could not save wallet address.');
             setIsSaving(false);
         }
     } else {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Address',
-            description: 'Please provide a wallet address.',
-        });
+        showDialog('Invalid Address', 'Please provide a wallet address.');
         setIsSaving(false);
     }
   };
   
   const handleTriggerClick = () => {
     if (!isValidSolanaAddress(manualAddress.trim())) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Solana Address',
-            description: 'Please enter a valid Solana wallet address.',
-        });
+        showDialog('Invalid Solana Address', 'Please enter a valid Solana wallet address.');
         return;
     }
     
@@ -304,6 +286,21 @@ export default function WalletPage({}: WalletPageProps) {
         </main>
        </div>
       <Footer />
+       <AlertDialog open={alertDialog.open} onOpenChange={(open) => setAlertDialog(prev => ({...prev, open}))}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{alertDialog.title}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {alertDialog.description}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setAlertDialog(prev => ({...prev, open: false}))}>OK</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
+
+    
