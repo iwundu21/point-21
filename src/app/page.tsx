@@ -286,14 +286,14 @@ export default function Home({}: {}) {
                     <div className="flex justify-center mb-4">
                         <Bot className="w-16 h-16 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl">Our App Has Moved to Telegram!</CardTitle>
+                    <CardTitle className="text-2xl">Important Platform Update</CardTitle>
                     <CardDescription>
-                        To enhance security, prevent airdrop abuse, and provide a more integrated experience, Exnus Points is now exclusively available inside Telegram.
+                        We are migrating all browser users to our new, more secure Telegram app to make our airdrop system available to everyone fairly.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div>
-                        <h3 className="font-semibold text-lg mb-2">How to Access Your Account:</h3>
+                        <h3 className="font-semibold text-lg mb-2">How to Migrate Your Account:</h3>
                         <ol className="text-sm text-muted-foreground space-y-2 text-left list-decimal list-inside">
                             <li>Click the button below to open our bot in Telegram.</li>
                             <li>Start the bot and open the app from the menu.</li>
@@ -354,5 +354,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    
