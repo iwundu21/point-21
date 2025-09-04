@@ -288,7 +288,7 @@ export default function Home({}: {}) {
                     </div>
                     <CardTitle className="text-2xl">Our App Has Moved to Telegram!</CardTitle>
                     <CardDescription>
-                        For a better, faster, and more integrated experience, Exnus Points is now exclusively available inside Telegram.
+                        To enhance security, prevent airdrop abuse, and provide a more integrated experience, Exnus Points is now exclusively available inside Telegram.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
