@@ -247,24 +247,51 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
-    const handleBoost = async (cost: number, newRate: number) => {
-      if (!user || !userData) return;
-      if (newRate <= (userData.miningRate || 0)) {
-        showDialog("Boost Not Available", "You already have this boost or a better one active.");
-        return;
-      }
-      
-      // Simulate payment for now
-      showDialog("Processing Boost...", "Please wait while we activate your boost.");
+    const handleBoost = async (cost: number, newRate: number, title: string) => {
+        if (!user || !userData) return;
+        if (newRate <= (userData.miningRate || 0)) {
+            showDialog("Boost Not Available", "You already have this boost or a better one active.");
+            return;
+        }
 
-      setTimeout(async () => {
-        const newBalance = userData.balance; // In a real scenario, you'd deduct stars, not points
-        await saveUserData(user, { balance: newBalance, miningRate: newRate });
-        setBalance(newBalance);
-        setMiningRate(newRate);
-        setUserData(prev => prev ? {...prev, balance: newBalance, miningRate: newRate} : null);
-        showDialog("Boost Activated!", `Your mining rate is now ${newRate.toLocaleString()} points per day.`);
-      }, 2000);
+        const tg = window.Telegram.WebApp;
+
+        // Note: For real payments, you need a backend to create the invoice_link
+        // and handle the post-payment logic via webhooks.
+        try {
+            showDialog("Processing Boost...", "Please wait while we create your payment invoice.");
+            const response = await fetch('/api/create-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title,
+                    description: `Boost your mining rate to ${newRate.toLocaleString()} points per day.`,
+                    payload: `boost-${newRate}-${user.id}`,
+                    currency: 'XTR',
+                    amount: cost,
+                }),
+            });
+
+            const { invoiceUrl, error } = await response.json();
+
+            if (error) {
+                throw new Error(error);
+            }
+
+            tg.openInvoice(invoiceUrl, async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
+                if (status === 'paid') {
+                    await saveUserData(user, { miningRate: newRate });
+                    setMiningRate(newRate);
+                    setUserData(prev => prev ? { ...prev, miningRate: newRate } : null);
+                    showDialog("Boost Activated!", `Your mining rate is now ${newRate.toLocaleString()} points per day.`);
+                } else {
+                    showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
+                }
+            });
+        } catch (e) {
+            console.error("Boost error:", e);
+            showDialog("Error", "Could not process the boost payment. Please try again later.");
+        }
   };
 
   if (isLoading) {
@@ -396,7 +423,7 @@ export default function Home({}: {}) {
                                     Cost: 150 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(150, 4000)} disabled={miningRate >= 4000}>
+                            <Button onClick={() => handleBoost(150, 4000, 'Booster Pack 1')} disabled={miningRate >= 4000}>
                                 {miningRate >= 4000 ? 'Active' : 'Buy'}
                             </Button>
                         </Card>
@@ -407,7 +434,7 @@ export default function Home({}: {}) {
                                     Cost: 250 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(250, 6500)} disabled={miningRate >= 6500}>
+                            <Button onClick={() => handleBoost(250, 6500, 'Booster Pack 2')} disabled={miningRate >= 6500}>
                                {miningRate >= 6500 ? 'Active' : 'Buy'}
                             </Button>
                         </Card>
