@@ -484,6 +484,8 @@ export default function AdminPage() {
     const [socialTasks, setSocialTasks] = useState<SocialTask[]>([]);
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchedUsers, setSearchedUsers] = useState<UserData[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
     const [taskCompletionCounts, setTaskCompletionCounts] = useState<{[taskId: string]: number}>({});
     const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -573,27 +575,54 @@ export default function AdminPage() {
         setIsLoading(false);
       }
     }, [isAdmin, codeAuthenticated]);
-    
-    const filteredUsers = useMemo(() => {
-        if (!searchTerm) return allUsers;
-        return allUsers.filter(user => {
-            const term = searchTerm.toLowerCase();
-            const telegramId = user.telegramUser?.id.toString() || '';
-            const walletAddress = user.walletAddress?.toLowerCase() || '';
-            const username = user.telegramUser?.username?.toLowerCase() || '';
-            const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
-            const browserId = user.id.toLowerCase(); // Search the full user.id (e.g., 'browser_...' or 'user_...')
+
+    const handleSearch = async (term: string) => {
+        setSearchTerm(term);
+        if (!term.trim()) {
+            setSearchedUsers([]);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            let allFetchedUsers: UserData[] = [];
+            let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+
+            // Loop through all pages of users
+            do {
+                const response = await getAllUsers(lastDoc, 1000); // Fetch in large chunks for searching
+                allFetchedUsers = allFetchedUsers.concat(response.users);
+                lastDoc = response.lastVisible as QueryDocumentSnapshot<DocumentData> | undefined;
+            } while (lastDoc);
             
-            return telegramId.includes(term) || 
-                   walletAddress.includes(term) || 
-                   username.includes(term) || 
-                   firstName.includes(term) || 
-                   browserId.includes(term);
-        });
-    }, [allUsers, searchTerm]);
+            const lowercasedTerm = term.toLowerCase();
+            const filtered = allFetchedUsers.filter(user => {
+                 const telegramId = user.telegramUser?.id.toString() || '';
+                 const walletAddress = user.walletAddress?.toLowerCase() || '';
+                 const username = user.telegramUser?.username?.toLowerCase() || '';
+                 const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
+                 const browserId = user.id.toLowerCase();
+            
+                 return telegramId.includes(lowercasedTerm) || 
+                        walletAddress.includes(lowercasedTerm) || 
+                        username.includes(lowercasedTerm) || 
+                        firstName.includes(lowercasedTerm) || 
+                        browserId.includes(lowercasedTerm);
+            });
+            setSearchedUsers(filtered);
+
+        } catch (error) {
+             console.error("Failed to search users:", error);
+             toast({ variant: 'destructive', title: 'Error', description: 'Could not perform user search.' });
+        } finally {
+            setIsSearching(false);
+        }
+    };
     
-    const telegramUsers = useMemo(() => filteredUsers.filter(u => u.telegramUser), [filteredUsers]);
-    const browserUsers = useMemo(() => filteredUsers.filter(u => !u.telegramUser), [filteredUsers]);
+    const usersToDisplay = searchTerm.trim() ? searchedUsers : allUsers;
+
+    const telegramUsers = useMemo(() => usersToDisplay.filter(u => u.telegramUser), [usersToDisplay]);
+    const browserUsers = useMemo(() => usersToDisplay.filter(u => !u.telegramUser), [usersToDisplay]);
 
     const activeTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'active'), [telegramUsers]);
     const bannedTelegramUsers = useMemo(() => telegramUsers.filter(u => u.status === 'banned'), [telegramUsers]);
@@ -607,34 +636,38 @@ export default function AdminPage() {
     const handleUpdateStatus = async (user: UserData, status: 'active' | 'banned', reason?: string) => {
         const userIdentifier = user.telegramUser || { id: user.id };
 
-        const originalUsers = allUsers;
+        const originalUsers = searchTerm.trim() ? searchedUsers : allUsers;
+        const setUsers = searchTerm.trim() ? setSearchedUsers : setAllUsers;
+        
         const updatedUsers = originalUsers.map(u =>
             u.id === user.id ? { ...u, status: status, banReason: reason } : u
         );
-        setAllUsers(updatedUsers);
+        setUsers(updatedUsers);
         
         try {
             await updateUserStatus(userIdentifier, status, reason);
             
-            await fetchInitialData();
+            await fetchInitialData(); // Refetch all data to keep stats consistent
 
             toast({ title: `User ${status === 'active' ? 'unbanned' : 'banned'}.`});
         } catch(error) {
-            setAllUsers(originalUsers); 
+            setUsers(originalUsers); 
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update user status.' });
         }
     }
 
     const handleBalanceUpdated = async (userId: string, newBalance: number) => {
-        const updatedUsers = allUsers.map(u => {
-            if (u.id === userId) {
-                return { ...u, balance: newBalance };
-            }
-            return u;
-        });
+         const setUsers = searchTerm.trim() ? setSearchedUsers : setAllUsers;
 
-        const sortedUsers = updatedUsers.sort((a, b) => b.balance - a.balance);
-        setAllUsers(sortedUsers);
+        setUsers(currentUsers => {
+            const updated = currentUsers.map(u => {
+                if (u.id === userId) {
+                    return { ...u, balance: newBalance };
+                }
+                return u;
+            });
+            return updated.sort((a, b) => b.balance - a.balance);
+        });
         
         const newTotalPoints = await getTotalActivePoints();
         setTotalPoints(newTotalPoints);
@@ -642,7 +675,8 @@ export default function AdminPage() {
 
 
     const handleWalletUpdated = (userId: string, newAddress: string) => {
-        setAllUsers(currentUsers =>
+         const setUsers = searchTerm.trim() ? setSearchedUsers : setAllUsers;
+        setUsers(currentUsers =>
             currentUsers.map(u =>
                 u.id === userId ? { ...u, walletAddress: newAddress } : u
             )
@@ -652,15 +686,17 @@ export default function AdminPage() {
     const handleDeleteUser = async (user: UserData) => {
         const userIdentifier = user.telegramUser || { id: user.id };
         
-        const originalUsers = allUsers;
-        setAllUsers(allUsers.filter(u => u.id !== user.id));
+        const originalUsers = searchTerm.trim() ? searchedUsers : allUsers;
+        const setUsers = searchTerm.trim() ? setSearchedUsers : setAllUsers;
+
+        setUsers(originalUsers.filter(u => u.id !== user.id));
         
         try {
             await deleteUser(userIdentifier);
              await fetchInitialData();
             toast({ variant: 'destructive', title: 'User Deleted', description: 'The user has been permanently removed.'});
         } catch(error) {
-            setAllUsers(originalUsers); 
+            setUsers(originalUsers); 
             toast({ variant: 'destructive', title: 'Error', description: 'Could not delete user.' });
         }
     }
@@ -756,7 +792,7 @@ export default function AdminPage() {
             
             // Loop through all pages of users
             do {
-                const response = await getAllUsers(lastDoc, 1000); // Fetch in larger chunks for export
+                const response = await getAllUsers(lastDoc, 1000); // Fetch in large chunks for export
                 allUsersToExport = allUsersToExport.concat(response.users);
                 lastDoc = response.lastVisible as QueryDocumentSnapshot<DocumentData> | undefined;
             } while (lastDoc);
@@ -915,7 +951,9 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>User Management</CardTitle>
                 <CardDescription>
-                    Search, manage, and export user data. The airdrop export includes only active users with a valid wallet. Displaying {allUsers.length} of {totalUserCount} users.
+                    {searchTerm.trim() 
+                        ? `Displaying ${usersToDisplay.length} search results.` 
+                        : `Search, manage, and export user data. The airdrop export includes only active users with a valid wallet. Displaying ${allUsers.length} of ${totalUserCount} users.`}
                 </CardDescription>
                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 pt-4">
                      <Card className="bg-primary/5">
@@ -973,8 +1011,9 @@ export default function AdminPage() {
                             placeholder="Search by ID, Wallet, Username..."
                             className="pl-9 w-full"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => handleSearch(e.target.value)}
                         />
+                         {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <Button onClick={handleExportAirdrop} disabled={isExportingAirdrop} variant="outline" className="flex-shrink-0">
@@ -1039,7 +1078,7 @@ export default function AdminPage() {
                         />
                     </TabsContent>
                 </Tabs>
-                {lastVisible && allUsers.length < totalUserCount && !searchTerm && (
+                {lastVisible && allUsers.length < totalUserCount && !searchTerm.trim() && (
                      <div className="flex justify-center mt-4">
                         <Button onClick={fetchMoreUsers} disabled={isFetchingMore}>
                             {isFetchingMore ? (
