@@ -248,7 +248,8 @@ export default function Home({}: {}) {
   };
 
     const handleBoost = async (cost: number, newRate: number, title: string) => {
-        if (!user || !userData) return;
+        if (!user || !userData || !window.Telegram?.WebApp) return;
+
         if (newRate <= (userData.miningRate || 0)) {
             showDialog("Boost Not Available", "You already have this boost or a better one active.");
             return;
@@ -256,10 +257,10 @@ export default function Home({}: {}) {
 
         const tg = window.Telegram.WebApp;
 
-        // Note: For real payments, you need a backend to create the invoice_link
-        // and handle the post-payment logic via webhooks.
         try {
+            // Show a temporary "processing" dialog, which will be replaced by the Telegram invoice UI
             showDialog("Processing Boost...", "Please wait while we create your payment invoice.");
+
             const response = await fetch('/api/create-invoice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -273,7 +274,10 @@ export default function Home({}: {}) {
             });
 
             const { invoiceUrl, error } = await response.json();
-
+            
+            // Close our temporary dialog before showing Telegram's
+            setDialogOpen(false);
+            
             if (error) {
                 throw new Error(error);
             }
@@ -288,9 +292,11 @@ export default function Home({}: {}) {
                     showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                 }
             });
-        } catch (e) {
+        } catch (e: any) {
+            // Close any open dialogs on error
+            setDialogOpen(false);
             console.error("Boost error:", e);
-            showDialog("Error", "Could not process the boost payment. Please try again later.");
+            showDialog("Error", `Could not process the boost payment: ${e.message}. Please try again later.`);
         }
   };
 
