@@ -432,7 +432,7 @@ export default function Home({}: {}) {
                                 </p>
                             </div>
                             <Button onClick={() => handleBoost('boost_1', 150, 4000, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
-                                {userData?.purchasedBoosts?.includes('boost_1') ? 'Activate' : 'Buy'}
+                                {userData?.purchasedBoosts?.includes('boost_1') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
                         <Card className="p-4 flex justify-between items-center">
@@ -443,7 +443,7 @@ export default function Home({}: {}) {
                                 </p>
                             </div>
                             <Button onClick={() => handleBoost('boost_2', 250, 6500, 'Booster Pack 2')} disabled={userData?.purchasedBoosts?.includes('boost_2')}>
-                               {userData?.purchasedBoosts?.includes('boost_2') ? 'Activate' : 'Buy'}
+                               {userData?.purchasedBoosts?.includes('boost_2') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
                     </div>
@@ -476,6 +476,7 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
 
 
 
