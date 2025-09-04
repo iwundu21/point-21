@@ -25,8 +25,6 @@ import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/
 import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 
 declare global {
@@ -65,10 +63,6 @@ export default function WalletPage({}: WalletPageProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { publicKey, connected } = useWallet();
-  const walletAddress = useMemo(() => publicKey?.toBase58() || '', [publicKey]);
-
-
   useEffect(() => {
     const init = () => {
         let currentUser: User | null = null;
@@ -76,19 +70,10 @@ export default function WalletPage({}: WalletPageProps) {
             const tg = window.Telegram.WebApp;
             currentUser = tg.initDataUnsafe.user;
             tg.ready();
-        } else if (typeof window !== 'undefined') {
-            const sessionWallet = sessionStorage.getItem('connected_wallet');
-            if (!sessionWallet) {
-                router.replace('/auth');
-                return;
-            }
-            let browserId = localStorage.getItem('browser_user_id');
-            if (!browserId) {
-                // This is a fallback. The auth page should set this.
-                browserId = `wallet_${sessionWallet}`;
-                localStorage.setItem('browser_user_id', browserId);
-            }
-            currentUser = { id: browserId, first_name: 'Browser User' };
+        } else {
+           // Redirect if not in telegram
+           router.replace('/');
+           return;
         }
 
         if (currentUser) {
@@ -100,15 +85,12 @@ export default function WalletPage({}: WalletPageProps) {
     init();
   }, [router]);
 
-  const isBrowserUser = useMemo(() => user && typeof user.id !== 'number', [user]);
 
   useEffect(() => {
     const loadUserData = async () => {
         if (user) {
             setIsLoading(true);
             try {
-                // For a new browser user, getUserData returns default data without hitting the DB for creation.
-                // For existing users, it fetches their data.
                 const freshUserData = await getUserData(user);
 
                 setUserData(freshUserData);
@@ -131,14 +113,13 @@ export default function WalletPage({}: WalletPageProps) {
   const handleSaveAddress = async () => {
     setIsSaving(true);
     
-    const addressToSave = isBrowserUser ? walletAddress : manualAddress;
-    const trimmedAddress = addressToSave.trim();
+    const trimmedAddress = manualAddress.trim();
 
     if (!isValidSolanaAddress(trimmedAddress)) {
         toast({
             variant: 'destructive',
             title: 'Invalid Solana Address',
-            description: 'Please enter or connect a valid Solana wallet address.',
+            description: 'Please enter a valid Solana wallet address.',
         });
         setIsSaving(false);
         return;
@@ -170,10 +151,6 @@ export default function WalletPage({}: WalletPageProps) {
                 });
                 setIsSaving(false);
                 setIsDialogOpen(false); 
-                // Redirect home after successful save for new browser users
-                if(isBrowserUser) {
-                    router.push('/');
-                }
             }, 1000);
 
         } catch (error) {
@@ -196,8 +173,7 @@ export default function WalletPage({}: WalletPageProps) {
   };
   
   const handleTriggerClick = () => {
-    const addressToSave = isBrowserUser ? walletAddress : manualAddress;
-    if (!isValidSolanaAddress(addressToSave.trim())) {
+    if (!isValidSolanaAddress(manualAddress.trim())) {
         toast({
             variant: 'destructive',
             title: 'Invalid Solana Address',
@@ -222,66 +198,6 @@ export default function WalletPage({}: WalletPageProps) {
   };
 
   const renderWalletUI = () => {
-    if (isBrowserUser) {
-        if (savedAddress) {
-          return (
-             <div className="space-y-4">
-                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                      <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
-                      <div className="flex items-center space-x-2">
-                          <WalletIcon className="w-5 h-5 text-primary" />
-                          <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
-                      </div>
-                  </div>
-              </div>
-          )
-        }
-        if (connected) {
-             return (
-                <div className="flex flex-col space-y-4 items-center">
-                    <p className="text-sm font-mono p-2 bg-primary/10 rounded-md break-all">{walletAddress}</p>
-                    <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                      <AlertDialogTrigger asChild>
-                         <Button onClick={handleTriggerClick} disabled={!walletAddress.trim()} className="w-full">
-                            <Save className="mr-2 h-4 w-4" /> Save Address
-                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="flex items-center gap-2">
-                            <AlertTriangle className="text-destructive" /> Are you absolutely sure?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
-                          </AlertDialogDescription>
-                          <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{walletAddress}</div>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isSaving ? 'Saving...' : 'Confirm & Save'}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  {!isVerified && (
-                    <p className="text-xs text-destructive text-center">Please verify your account to save your wallet.</p>
-                  )}
-              </div>
-            )
-        }
-        // This case should not be hit often because the /auth page handles connection,
-        // but it's a good fallback.
-        return (
-            <div className="flex flex-col items-center space-y-2 text-center">
-                 <p className="text-sm text-muted-foreground">Please connect your wallet.</p>
-                 <WalletMultiButton />
-            </div>
-        )
-    }
-
-    // ---- Telegram User UI ----
     return (
         <>
             <p className="text-sm text-muted-foreground mb-4">
@@ -369,17 +285,6 @@ export default function WalletPage({}: WalletPageProps) {
                 </Card>
 
                 <Separator />
-                
-                 {userData && !userData?.walletAddress && isBrowserUser && (
-                     <Alert variant="default" className="border-yellow-500/50 text-yellow-400">
-                          <Info className="h-4 w-4 !text-yellow-400" />
-                          <CardTitle className="text-base text-yellow-300">Action Required</CardTitle>
-                          <AlertBoxDescription>
-                           Please save your wallet address to complete your account setup and ensure you are eligible for airdrops.
-                          </AlertBoxDescription>
-                      </Alert>
-                )}
-
 
                  <div className="space-y-6">
                     <div>
@@ -402,5 +307,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
-    

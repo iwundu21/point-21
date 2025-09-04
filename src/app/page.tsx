@@ -84,7 +84,7 @@ export default function Home({}: {}) {
       ]);
 
       // --- NEW MERGE FLOW ---
-      const isNewTelegramUser = typeof currentUser.id === 'number' && !freshUserData.hasMergedBrowserAccount && !freshUserData.walletAddress;
+      const isNewTelegramUser = typeof currentUser.id === 'number' && !freshUserData.hasMergedBrowserAccount;
       if (isNewTelegramUser) {
           router.replace('/merge');
           return;
@@ -167,37 +167,15 @@ export default function Home({}: {}) {
   useEffect(() => {
     const init = () => {
       let currentUser: User | null = null;
-      let isBrowser = false;
       
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
           const tg = window.Telegram.WebApp;
           currentUser = tg.initDataUnsafe.user;
           tg.ready();
-      } else if (typeof window !== 'undefined') {
-          isBrowser = true;
-          const sessionWallet = sessionStorage.getItem('connected_wallet');
-          
-          if (!sessionWallet) {
-              router.replace('/auth');
-              return; // Stop execution until authenticated
-          }
-          
-          const browserId = localStorage.getItem('browser_user_id');
-          // The browserId should have been set during the auth flow.
-          if (browserId) {
-             currentUser = { id: browserId, first_name: 'Browser User' };
-          } else {
-             // This is a fallback, but the user should be redirected to auth.
-             router.replace('/auth');
-             return;
-          }
-      }
-      
-      if (currentUser) {
           initializeUser(currentUser);
-      } else if (!isBrowser) {
-          // Fallback for Telegram if user object is not available for some reason.
-          // Or we can show a message "Please open in Telegram".
+      } else {
+          // If not in telegram, maybe show a "Please use our Telegram bot" message or redirect.
+          // For now, we will just show a loading state and do nothing.
           setIsLoading(false); 
       }
     };
@@ -301,7 +279,12 @@ export default function Home({}: {}) {
   if (!user) {
       // This case should ideally be handled by the redirect in useEffect,
       // but it's good practice to have a fallback.
-      return null;
+      return (
+         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+            <h1 className="text-xl font-bold">Welcome to Exnus Points</h1>
+            <p className="text-muted-foreground mt-2">Please open this app within the Telegram app to continue.</p>
+        </div>
+      );
   }
 
 
@@ -343,5 +326,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    
