@@ -63,7 +63,7 @@ export default function MergeAccountPage() {
             if (result.success) {
                 toast({
                     title: 'Account Merged!',
-                    description: `Your balance of ${result.mergedBalance} points has been transferred.`
+                    description: `Your balance of ${result.mergedBalance?.toLocaleString()} points has been transferred.`
                 });
                 router.replace('/');
             } else {

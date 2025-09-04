@@ -83,13 +83,15 @@ export default function Home({}: {}) {
         getUserRank(currentUser)
       ]);
 
-      // --- NEW MERGE FLOW ---
-      const isNewTelegramUser = typeof currentUser.id === 'number' && !freshUserData.hasMergedBrowserAccount;
-      if (isNewTelegramUser) {
+      // --- MERGE FLOW FOR NEW TELEGRAM USERS ---
+      // This will trigger for any TG user that does not have the `hasMergedBrowserAccount` flag set.
+      // Existing users will already have it (or it will be added), new users won't.
+      const isTelegramUser = typeof currentUser.id === 'number';
+      if (isTelegramUser && !freshUserData.hasMergedBrowserAccount) {
           router.replace('/merge');
-          return;
+          return; // Stop initialization until merge flow is complete
       }
-      // --- END NEW MERGE FLOW ---
+      // --- END MERGE FLOW ---
       
       setUserData(freshUserData);
       setUser(currentUser);
@@ -174,8 +176,7 @@ export default function Home({}: {}) {
           tg.ready();
           initializeUser(currentUser);
       } else {
-          // If not in telegram, maybe show a "Please use our Telegram bot" message or redirect.
-          // For now, we will just show a loading state and do nothing.
+          // If not in telegram, show "Open in Telegram" message.
           setIsLoading(false); 
       }
     };
@@ -277,12 +278,13 @@ export default function Home({}: {}) {
   }
 
   if (!user) {
-      // This case should ideally be handled by the redirect in useEffect,
-      // but it's good practice to have a fallback.
       return (
-         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-            <h1 className="text-xl font-bold">Welcome to Exnus Points</h1>
-            <p className="text-muted-foreground mt-2">Please open this app within the Telegram app to continue.</p>
+         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
+            <h1 className="text-xl font-bold mb-4">Welcome to Exnus Points</h1>
+            <p className="text-muted-foreground">Please open this app within the Telegram app to continue.</p>
+             <a href="https://t.me/Exnuspoint_bot" className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                Open in Telegram
+            </a>
         </div>
       );
   }
