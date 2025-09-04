@@ -75,6 +75,14 @@ export default function WalletPage({}: WalletPageProps) {
             const tg = window.Telegram.WebApp;
             currentUser = tg.initDataUnsafe.user;
             tg.ready();
+        } else if (typeof window !== 'undefined') {
+            let browserId = localStorage.getItem('browser_user_id');
+            if (browserId) {
+                currentUser = { id: browserId, first_name: 'Browser User' };
+            } else {
+                 router.replace('/');
+                 return;
+            }
         } else {
            // Redirect if not in telegram
            router.replace('/');
@@ -101,6 +109,7 @@ export default function WalletPage({}: WalletPageProps) {
                 setUserData(freshUserData);
                 if (freshUserData.walletAddress) {
                     setSavedAddress(freshUserData.walletAddress);
+                    setManualAddress(freshUserData.walletAddress);
                 }
                 setIsVerified(freshUserData.verificationStatus === 'verified');
                 setBalance(freshUserData.balance);
@@ -186,52 +195,40 @@ export default function WalletPage({}: WalletPageProps) {
                 Enter your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
             </p>
 
-            {savedAddress ? (
-                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <h4 className="font-semibold text-primary/90 mb-2">Saved Address:</h4>
-                    <div className="flex items-center space-x-2">
-                        <WalletIcon className="w-5 h-5 text-primary" />
-                        <p className="text-sm text-muted-foreground font-mono">{truncateAddress(savedAddress)}</p>
-                    </div>
-                </div>
-            ) : (
-                <div className="flex flex-col space-y-4 items-center">
-                    <Input 
-                        placeholder="Paste your Solana wallet address"
-                        value={manualAddress}
-                        onChange={(e) => setManualAddress(e.target.value)}
-                        className="text-center"
-                    />
-                     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <AlertDialogTrigger asChild>
-                            <Button onClick={handleTriggerClick} disabled={!manualAddress.trim()} className="w-full">
-                                <Save className="mr-2 h-4 w-4" /> Save Address
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle className="flex items-center gap-2">
-                            <AlertTriangle className="text-destructive" /> Are you absolutely sure?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                            This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
-                            </AlertDialogDescription>
-                            <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{manualAddress}</div>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isSaving ? 'Saving...' : 'Confirm & Save'}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                    {!isVerified && (
-                        <p className="text-xs text-destructive text-center">Please verify your account on the profile page to unlock all features.</p>
-                    )}
-                </div>
-            )}
+            <div className="flex flex-col space-y-4 items-center">
+                <Input 
+                    placeholder="Paste your Solana wallet address"
+                    value={manualAddress}
+                    onChange={(e) => setManualAddress(e.target.value)}
+                    className="text-center"
+                    disabled={!!savedAddress} // Disable if an address is already saved
+                />
+                 <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                        <Button onClick={handleTriggerClick} disabled={!manualAddress.trim() || !!savedAddress} className="w-full">
+                            <Save className="mr-2 h-4 w-4" /> {savedAddress ? 'Address Saved' : 'Save Address'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="text-destructive" /> Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                        This action cannot be undone. Please double-check your wallet address before saving. An incorrect address may result in permanent loss of airdrops.
+                        </AlertDialogDescription>
+                        <div className="font-bold break-all mt-2 p-2 bg-primary/10 rounded-md">{manualAddress}</div>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isSaving ? 'Saving...' : 'Confirm & Save'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
         </>
     )
   }
