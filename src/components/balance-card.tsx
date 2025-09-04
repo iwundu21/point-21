@@ -28,7 +28,7 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating, miningReward })
             "absolute -top-6 right-0 text-lg sm:text-xl font-medium text-gold transition-all duration-1000 ease-out",
             animating ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
           )}>
-            +{miningReward}
+            +{miningReward.toLocaleString()}
           </span>
         </div>
       </CardContent>

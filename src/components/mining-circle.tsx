@@ -120,7 +120,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
     if (!hasRedeemedReferral) return 'First, redeem a referral code to continue.';
     if (!hasCompletedWelcomeTasks) return 'Next, complete all the welcome tasks.';
     if (!isVerified) return 'Please complete face verification on your profile to start mining.';
-    return `Activate a 24-hour mining session to earn ${miningReward} E-points`;
+    return `Activate a 24-hour mining session to earn ${miningReward.toLocaleString()} E-points`;
   }
 
   const { disabled, text, icon, className: stateClassName } = getButtonState();
@@ -145,7 +145,7 @@ const MiningCircle: FC<MiningCircleProps> = ({
             {icon}
              {isActive ? (
               <div className="mt-2 text-center">
-                 <p className="text-xl sm:text-2xl font-bold tracking-tighter">{earnedPoints}/{miningReward}</p>
+                 <p className="text-xl sm:text-2xl font-bold tracking-tighter">{earnedPoints.toLocaleString()}/{miningReward.toLocaleString()}</p>
                  <p className="text-xl sm:text-2xl font-mono font-bold tracking-wider">{formatTime(timeLeft)}</p>
               </div>
             ) : (
@@ -161,5 +161,3 @@ const MiningCircle: FC<MiningCircleProps> = ({
 };
 
 export default MiningCircle;
-
-    

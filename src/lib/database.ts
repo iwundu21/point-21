@@ -18,6 +18,7 @@ export interface UserData {
     id: string; // Document ID
     balance: number;
     miningEndTime: number | null;
+    miningRate: number; // Daily mining points
     dailyStreak: { count: number; lastLogin: string };
     verificationStatus: 'verified' | 'unverified' | 'failed';
     faceVerificationUri: string | null;
@@ -61,6 +62,7 @@ const getUserId = (user: { id: number | string } | null): string => {
 const defaultUserData = (user: { id: number | string, first_name?: string } | null): Omit<UserData, 'id'> => ({
     balance: 0,
     miningEndTime: null,
+    miningRate: user && typeof user.id === 'number' ? 1000 : 700,
     dailyStreak: { count: 0, lastLogin: '' },
     verificationStatus: 'unverified',
     faceVerificationUri: null,
@@ -590,6 +592,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 

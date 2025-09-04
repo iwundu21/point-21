@@ -13,7 +13,7 @@ import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldBan, Loader2, Bot, ArrowRight, Wallet } from 'lucide-react';
+import { ShieldBan, Loader2, Bot, ArrowRight, Wallet, Zap, Star } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AlertDialog,
@@ -24,6 +24,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
+
 
 declare global {
   interface Window {
@@ -75,6 +84,7 @@ export default function Home({}: {}) {
   const [hasRedeemedReferral, setHasRedeemedReferral] = useState(false);
   const [hasCompletedWelcomeTasks, setHasCompletedWelcomeTasks] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [miningRate, setMiningRate] = useState(1000);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
 
@@ -90,7 +100,7 @@ export default function Home({}: {}) {
 
 
   const isBrowserUser = user?.first_name === 'Browser User';
-  const miningReward = isBrowserUser ? 700 : 1000;
+  const miningReward = userData?.miningRate || (isBrowserUser ? 700 : 1000);
 
   const initializeUser = useCallback(async (currentUser: User) => {
     try {
@@ -113,6 +123,7 @@ export default function Home({}: {}) {
       setUserData(freshUserData);
       setUser(currentUser);
       setRankInfo(userRankInfo || { rank: 0, league: 'Unranked' });
+      setMiningRate(freshUserData.miningRate || (isTelegramUser ? 1000 : 700));
       
       if (freshUserData.status === 'banned') {
         setIsLoading(false);
@@ -132,7 +143,7 @@ export default function Home({}: {}) {
         setIsMiningActive(true);
         setMiningEndTime(freshUserData.miningEndTime);
       } else if (freshUserData.miningEndTime) {
-        const reward = typeof currentUser.id === 'number' ? 1000 : 700;
+        const reward = freshUserData.miningRate || (typeof currentUser.id === 'number' ? 1000 : 700);
         currentBalance += reward;
         freshUserData.miningEndTime = null; 
         shouldSave = true;
@@ -236,6 +247,21 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
+  const handleBoost = async (cost: number, newRate: number) => {
+    if (!user || !userData) return;
+    if (userData.balance < cost) {
+      showDialog("Insufficient Balance", "You do not have enough points to purchase this boost.");
+      return;
+    }
+
+    const newBalance = userData.balance - cost;
+    await saveUserData(user, { balance: newBalance, miningRate: newRate });
+    setBalance(newBalance);
+    setMiningRate(newRate);
+    setUserData(prev => prev ? {...prev, balance: newBalance, miningRate: newRate} : null);
+    showDialog("Boost Activated!", `Your mining rate is now ${newRate} points per day.`);
+  };
+
   if (isLoading) {
     return (
         <div className="flex justify-center items-center h-screen">
@@ -328,17 +354,54 @@ export default function Home({}: {}) {
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
-            <MiningCircle 
-                isActive={isMiningActive}
-                endTime={miningEndTime}
-                onActivate={handleActivateMining}
-                onSessionEnd={handleSessionEnd}
-                isActivating={isActivating}
-                hasRedeemedReferral={hasRedeemedReferral}
-                hasCompletedWelcomeTasks={hasCompletedWelcomeTasks}
-                isVerified={isVerified}
-                miningReward={miningReward}
-            />
+              <div className="flex items-center justify-center space-x-2">
+                <MiningCircle 
+                    isActive={isMiningActive}
+                    endTime={miningEndTime}
+                    onActivate={handleActivateMining}
+                    onSessionEnd={handleSessionEnd}
+                    isActivating={isActivating}
+                    hasRedeemedReferral={hasRedeemedReferral}
+                    hasCompletedWelcomeTasks={hasCompletedWelcomeTasks}
+                    isVerified={isVerified}
+                    miningReward={miningReward}
+                />
+              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" className="mt-4 animate-heartbeat">
+                        <Zap className="w-4 h-4 mr-2 text-gold" /> Boost
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Boost Your Mining Speed</DialogTitle>
+                        <DialogDescription>
+                            Increase your daily E-point earnings by boosting your mining power.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <Card className="p-4 flex justify-between items-center">
+                            <div>
+                                <p className="font-bold">4,000 Points Daily</p>
+                                <p className="text-sm text-muted-foreground flex items-center">
+                                    Cost: 150 <Star className="w-4 h-4 ml-1 text-gold" />
+                                </p>
+                            </div>
+                            <Button onClick={() => handleBoost(150, 4000)} disabled={balance < 150}>Buy</Button>
+                        </Card>
+                        <Card className="p-4 flex justify-between items-center">
+                            <div>
+                                <p className="font-bold">6,500 Points Daily</p>
+                                <p className="text-sm text-muted-foreground flex items-center">
+                                    Cost: 250 <Star className="w-4 h-4 ml-1 text-gold" />
+                                </p>
+                            </div>
+                            <Button onClick={() => handleBoost(250, 6500)} disabled={balance < 250}>Buy</Button>
+                        </Card>
+                    </div>
+                </DialogContent>
+               </Dialog>
             </div>
 
             <Separator className="w-full max-w-sm my-4 bg-primary/10" />
