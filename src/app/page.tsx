@@ -253,13 +253,17 @@ export default function Home({}: {}) {
       showDialog("Insufficient Balance", "You do not have enough points to purchase this boost.");
       return;
     }
+     if (newRate <= (userData.miningRate || 0)) {
+      showDialog("Boost Not Available", "You already have this boost or a better one active.");
+      return;
+    }
 
     const newBalance = userData.balance - cost;
     await saveUserData(user, { balance: newBalance, miningRate: newRate });
     setBalance(newBalance);
     setMiningRate(newRate);
     setUserData(prev => prev ? {...prev, balance: newBalance, miningRate: newRate} : null);
-    showDialog("Boost Activated!", `Your mining rate is now ${newRate} points per day.`);
+    showDialog("Boost Activated!", `Your mining rate is now ${newRate.toLocaleString()} points per day.`);
   };
 
   if (isLoading) {
@@ -369,7 +373,10 @@ export default function Home({}: {}) {
               </div>
               <Dialog>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="mt-4 animate-heartbeat">
+                    <Button 
+                        variant="outline" 
+                        className="mt-4 animate-heartbeat bg-sky-500/10 border-sky-500/20 text-sky-400 hover:bg-sky-500/20 hover:text-sky-300"
+                    >
                         <Zap className="w-4 h-4 mr-2 text-gold" /> Boost
                     </Button>
                 </DialogTrigger>
@@ -377,7 +384,7 @@ export default function Home({}: {}) {
                     <DialogHeader>
                         <DialogTitle>Boost Your Mining Speed</DialogTitle>
                         <DialogDescription>
-                            Increase your daily E-point earnings by boosting your mining power.
+                            Increase your daily E-point earnings by purchasing a boost with Telegram Stars.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -385,19 +392,23 @@ export default function Home({}: {}) {
                             <div>
                                 <p className="font-bold">4,000 Points Daily</p>
                                 <p className="text-sm text-muted-foreground flex items-center">
-                                    Cost: 150 <Star className="w-4 h-4 ml-1 text-gold" />
+                                    Cost: 150 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(150, 4000)} disabled={balance < 150}>Buy</Button>
+                            <Button onClick={() => handleBoost(150, 4000)} disabled={miningRate >= 4000}>
+                                {miningRate >= 4000 ? 'Active' : 'Buy'}
+                            </Button>
                         </Card>
                         <Card className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-bold">6,500 Points Daily</p>
                                 <p className="text-sm text-muted-foreground flex items-center">
-                                    Cost: 250 <Star className="w-4 h-4 ml-1 text-gold" />
+                                    Cost: 250 <Star className="w-4 h-4 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost(250, 6500)} disabled={balance < 250}>Buy</Button>
+                            <Button onClick={() => handleBoost(250, 6500)} disabled={miningRate >= 6500}>
+                               {miningRate >= 6500 ? 'Active' : 'Buy'}
+                            </Button>
                         </Card>
                     </div>
                 </DialogContent>
@@ -428,5 +439,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    
