@@ -46,6 +46,9 @@ export async function getChatMember(userId: number, chatId: string): Promise<{ i
             // This can happen if the user hasn't started the bot. For our purpose, it means they aren't in the channel.
              return { isMember: false, error: "Please start a chat with the bot first." };
         }
+        if (parsedData.data.description?.includes('member list is inaccessible')) {
+            return { isMember: false, error: "Verification failed: The bot must be an administrator in the channel." };
+        }
        console.warn("Telegram API error:", parsedData.data.description);
        return { isMember: false, error: `Telegram API Error: ${parsedData.data.description}` };
     }
