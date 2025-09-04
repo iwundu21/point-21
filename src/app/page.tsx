@@ -285,9 +285,10 @@ export default function Home({}: {}) {
 
             tg.openInvoice(invoiceUrl, async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                 if (status === 'paid') {
-                    const currentRate = userData.miningRate || 0;
+                    const { userData: freshUserData } = await getUserData(user);
+                    const currentRate = freshUserData.miningRate || 0;
                     const newRate = currentRate + boostAmount;
-                    const updatedBoosts = [...(userData.purchasedBoosts || []), boostId];
+                    const updatedBoosts = [...(freshUserData.purchasedBoosts || []), boostId];
 
                     await saveUserData(user, { miningRate: newRate, purchasedBoosts: updatedBoosts });
                     setMiningRate(newRate);
@@ -478,10 +479,4 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-
-
-
-
-
 
