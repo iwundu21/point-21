@@ -582,8 +582,13 @@ export default function AdminPage() {
             const walletAddress = user.walletAddress?.toLowerCase() || '';
             const username = user.telegramUser?.username?.toLowerCase() || '';
             const firstName = user.telegramUser?.first_name?.toLowerCase() || '';
-            const browserId = user.id.startsWith('browser_') ? user.id.toLowerCase() : '';
-            return telegramId.includes(term) || walletAddress.includes(term) || username.includes(term) || firstName.includes(term) || browserId.includes(term);
+            const browserId = user.id.toLowerCase(); // Search the full user.id (e.g., 'browser_...' or 'user_...')
+            
+            return telegramId.includes(term) || 
+                   walletAddress.includes(term) || 
+                   username.includes(term) || 
+                   firstName.includes(term) || 
+                   browserId.includes(term);
         });
     }, [allUsers, searchTerm]);
     
@@ -1054,9 +1059,5 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-
-    
 
     
