@@ -49,7 +49,7 @@ const mergeAccountsFlow = ai.defineFlow(
     
     // Prevent merging a telegram account with itself if wallet was added there first.
     const telegramUserData = await getUserData(telegramUser);
-    if(telegramUserData.walletAddress === browserWalletAddress){
+    if(telegramUserData.userData.walletAddress === browserWalletAddress){
          return {
             success: false,
             reason: 'This wallet is already associated with your Telegram account.'

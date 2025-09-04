@@ -529,41 +529,36 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
     
     const telegramUserId = getUserId(telegramUser);
     const telegramUserRef = doc(db, 'users', telegramUserId);
+    const browserUserRef = doc(db, 'users', browserUserData.id);
     
     await runTransaction(db, async (transaction) => {
         const telegramUserDoc = await transaction.get(telegramUserRef);
+        const browserUserDoc = await transaction.get(browserUserRef);
+
+        if (!browserUserDoc.exists()) {
+             throw new Error("Browser user does not exist.");
+        }
         
         const telegramData = telegramUserDoc.exists() ? telegramUserDoc.data() : defaultUserData(telegramUser);
 
-        // Combine data
+        // Calculate the new balance. This is the only data being transferred.
         const mergedBalance = (telegramData.balance || 0) + (browserUserData.balance || 0);
-        const mergedReferrals = (telegramData.referrals || 0) + (browserUserData.referrals || 0);
-
-        // Prepare merged data, prioritizing browser user's referral info if TG user's is blank
-        const mergedData: Partial<UserData> = {
-            ...browserUserData, // Start with browser data
-            telegramUser: telegramUser, // Overwrite with TG user object
+       
+        // Update the Telegram user document with the new balance and mark as merged.
+        // All other data for the Telegram user (like their new referral code) is retained.
+        transaction.set(telegramUserRef, { 
             balance: mergedBalance,
-            referrals: mergedReferrals,
-            referredBy: telegramData.referredBy || browserUserData.referredBy,
-            referralBonusApplied: telegramData.referralBonusApplied || browserUserData.referralBonusApplied,
-            referralCode: telegramData.referralCode || browserUserData.referralCode, // Keep TG user's new code
-            hasMergedBrowserAccount: true, // Mark as merged
-        };
-        
-        // Remove fields that should not be merged
-        delete (mergedData as any).id; 
-
-        // Update the telegram user document with the fully merged data
-        transaction.set(telegramUserRef, mergedData);
+            walletAddress: browserUserData.walletAddress, // Also bring over the wallet address
+            hasMergedBrowserAccount: true,
+        }, { merge: true });
         
         // Delete the old browser user document
-        const browserUserRef = doc(db, 'users', browserUserData.id);
         transaction.delete(browserUserRef);
     });
 
-    // Adjust total points. Since browser user is deleted, their points are effectively moved.
-    // No net change to total points, but we must decrement the browser user count.
+    // Since the browser user is deleted, their points were part of the total.
+    // The points are now owned by the TG user. The total points count does not need to change.
+    // However, we must decrement the browser user count.
     await decrementUserCount('browser');
     
     // Return the updated telegram user data
@@ -618,6 +613,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 
