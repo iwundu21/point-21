@@ -539,16 +539,16 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
              throw new Error("Browser user does not exist.");
         }
         
-        const telegramData = telegramUserDoc.exists() ? telegramUserDoc.data() : defaultUserData(telegramUser);
+        const telegramData = telegramUserDoc.exists() ? telegramUserDoc.data() as UserData : defaultUserData(telegramUser);
 
-        // Calculate the new balance. This is the only data being transferred.
+        // Calculate the new balance by summing the two accounts.
         const mergedBalance = (telegramData.balance || 0) + (browserUserData.balance || 0);
        
-        // Update the Telegram user document with the new balance and mark as merged.
+        // Update the Telegram user document with the new balance, the browser wallet, and mark as merged.
         // All other data for the Telegram user (like their new referral code) is retained.
         transaction.set(telegramUserRef, { 
             balance: mergedBalance,
-            walletAddress: browserUserData.walletAddress, // Also bring over the wallet address
+            walletAddress: browserUserData.walletAddress, // Bring over the wallet address
             hasMergedBrowserAccount: true,
         }, { merge: true });
         
@@ -613,6 +613,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 
