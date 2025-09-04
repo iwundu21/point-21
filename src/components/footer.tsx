@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield } from 'lucide-react';
+import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { getUserData, getSocialTasks } from '@/lib/database';
@@ -80,7 +80,7 @@ const Footer = () => {
     { href: '/referral', label: 'Ref', icon: Handshake },
     { href: '/welcome-tasks', label: 'Wel', icon: Gift },
     { href: '/leaderboard', label: 'Leader', icon: Trophy },
-    { href: '/wallet', label: 'Wallet', icon: Wallet },
+    { href: '/wallet', label: 'Airdrop', icon: Coins },
     { href: '/profile', label: 'Profile', icon: User },
   ];
 

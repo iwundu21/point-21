@@ -249,8 +249,8 @@ export default function WalletPage({}: WalletPageProps) {
              <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <WalletIcon className="w-8 h-8 text-primary" />
-                        Wallet
+                        <Coins className="w-8 h-8 text-primary" />
+                        Airdrop
                     </h1>
                 </div>
                 
@@ -302,5 +302,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
-    
