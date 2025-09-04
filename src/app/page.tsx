@@ -202,8 +202,17 @@ export default function Home({}: {}) {
           currentUser = tg.initDataUnsafe.user;
           tg.ready();
           initializeUser(currentUser);
+      } else if (typeof window !== 'undefined') {
+          // It's a browser user
+          let browserId = localStorage.getItem('browser_user_id');
+          if (!browserId) {
+              browserId = uuidv4();
+              localStorage.setItem('browser_user_id', browserId);
+          }
+          currentUser = { id: browserId, first_name: 'Browser User' };
+          initializeUser(currentUser);
       } else {
-          // If not in telegram, show "Open in Telegram" message.
+          // Fallback if no context is found
           setIsLoading(false); 
       }
     };
@@ -345,36 +354,24 @@ export default function Home({}: {}) {
   }
 
   if (!user) {
+      // This state should ideally not be reached if the init logic is correct, but it's a safe fallback.
       return (
          <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
             <Card className="max-w-md w-full text-center">
                 <CardHeader>
                     <div className="flex justify-center mb-4">
-                        <Bot className="w-16 h-16 text-primary" />
+                        <Loader2 className="w-16 h-16 text-primary animate-spin" />
                     </div>
-                    <CardTitle className="text-2xl">We are migrating to Telegram!</CardTitle>
+                    <CardTitle className="text-2xl">Loading Application</CardTitle>
                     <CardDescription>
-                       To make our airdrop system fair and available for everyone, we are migrating all users to our new, more secure Telegram app.
+                       If the app does not load, please try refreshing the page or opening it inside Telegram.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div>
-                        <h3 className="font-semibold text-lg mb-2">How to Migrate Your Account:</h3>
-                        <ol className="text-sm text-muted-foreground space-y-2 text-left list-decimal list-inside">
-                            <li>Click the button below to open our bot in Telegram.</li>
-                            <li>Start the bot and open the app from the menu.</li>
-                            <li>You'll be prompted to enter your Solana wallet address.</li>
-                            <li>Your points and referral data will be automatically recovered!</li>
-                        </ol>
-                    </div>
+                <CardContent>
                     <a href="https://t.me/Exnuspoint_bot" className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-                        <ArrowRight className="w-5 h-5 mr-2"/>
-                        Migrate to Telegram
+                        <Bot className="w-5 h-5 mr-2"/>
+                        Open in Telegram
                     </a>
-                    <div className="flex items-center justify-center pt-2">
-                        <Wallet className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">Have your browser wallet address ready!</p>
-                    </div>
                 </CardContent>
             </Card>
         </div>

@@ -78,14 +78,13 @@ export default function WalletPage({}: WalletPageProps) {
             tg.ready();
         } else if (typeof window !== 'undefined') {
             let browserId = localStorage.getItem('browser_user_id');
-            if (browserId) {
-                currentUser = { id: browserId, first_name: 'Browser User' };
-            } else {
-                 router.replace('/');
-                 return;
+            if (!browserId) {
+                browserId = uuidv4();
+                localStorage.setItem('browser_user_id', browserId);
             }
+            currentUser = { id: browserId, first_name: 'Browser User' };
         } else {
-           // Redirect if not in telegram
+           // Fallback if no context at all
            router.replace('/');
            return;
         }
@@ -300,3 +299,4 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
+
