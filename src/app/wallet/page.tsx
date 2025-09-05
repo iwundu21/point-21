@@ -179,7 +179,7 @@ export default function WalletPage({}: WalletPageProps) {
   const truncateAddress = (address: string) => {
     if (!address) return '';
     if (address.length < 14) return address;
-    return `${address.slice(0, 7)}****${address.slice(-7)}`;
+    return `${address.slice(0, 6)}****${address.slice(-6)}`;
   }
   
   const getUserId = (user: { id: number | string } | null): string => {
@@ -189,6 +189,20 @@ export default function WalletPage({}: WalletPageProps) {
   };
 
   const renderWalletUI = () => {
+    if (savedAddress) {
+        return (
+            <>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Your Solana wallet address is saved and will be used for future airdrops.
+                </p>
+                <div className="flex items-center justify-center p-4 bg-primary/10 rounded-lg border border-primary/20 space-x-3">
+                    <WalletIcon className="w-6 h-6 text-primary flex-shrink-0" />
+                    <span className="font-mono text-lg font-bold text-foreground break-all">{truncateAddress(savedAddress)}</span>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <p className="text-sm text-muted-foreground mb-4">
@@ -201,12 +215,11 @@ export default function WalletPage({}: WalletPageProps) {
                     value={manualAddress}
                     onChange={(e) => setManualAddress(e.target.value)}
                     className="text-center"
-                    disabled={!!savedAddress} // Disable if an address is already saved
                 />
                  <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <AlertDialogTrigger asChild>
-                        <Button onClick={handleTriggerClick} disabled={!manualAddress.trim() || !!savedAddress} className="w-full">
-                            <Save className="mr-2 h-4 w-4" /> {savedAddress ? 'Address Saved' : 'Save Address'}
+                        <Button onClick={handleTriggerClick} disabled={!manualAddress.trim()} className="w-full">
+                            <Save className="mr-2 h-4 w-4" /> Save Address
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -299,4 +312,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
