@@ -49,6 +49,7 @@ export interface UserData {
     banReason?: string;
     hasMergedBrowserAccount?: boolean;
     purchasedBoosts: string[];
+    miningActivationCount: number;
 }
 
 const generateReferralCode = () => {
@@ -93,6 +94,7 @@ const defaultUserData = (user: { id: number | string, first_name?: string } | nu
     status: 'active',
     hasMergedBrowserAccount: false,
     purchasedBoosts: [],
+    miningActivationCount: 0,
 });
 
 // --- User Count Management ---
@@ -613,6 +615,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
     
 
     
+
 
 
 

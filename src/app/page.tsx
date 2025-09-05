@@ -33,6 +33,7 @@ import {
     DialogTitle,
     DialogTrigger,
   } from "@/components/ui/dialog"
+import { increment } from 'firebase/firestore';
 
 
 declare global {
@@ -230,8 +231,8 @@ export default function Home({}: {}) {
     setIsActivating(true);
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     if (user) {
-        await saveUserData(user, { miningEndTime: endTime });
-        setUserData(prev => prev ? {...prev, miningEndTime: endTime} : null);
+        await saveUserData(user, { miningEndTime: endTime, miningActivationCount: increment(1) as any });
+        setUserData(prev => prev ? {...prev, miningEndTime: endTime, miningActivationCount: (prev.miningActivationCount || 0) + 1} : null);
     }
     setTimeout(() => {
         setIsMiningActive(true);
