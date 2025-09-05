@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import FullScreenLoader from './full-screen-loader';
 
 interface LoaderContextType {
@@ -22,17 +22,27 @@ export const useLoader = () => {
 export const LoaderProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const showLoader = useCallback((path: string) => {
+    // Don't show loader if navigating to the same page
+    if (path === pathname) return;
+
     setIsLoading(true);
+    router.push(path);
+
+    // Set a timeout to hide the loader after a fixed duration.
+    // By this time, the new page should be fetched and ready to render.
     setTimeout(() => {
-      router.push(path);
-      // A short delay to allow the new page to start rendering before hiding the loader
-      setTimeout(() => {
-          setIsLoading(false);
-      }, 500); 
-    }, 2000); // Keep loader on for 2 seconds
-  }, [router]);
+      setIsLoading(false);
+    }, 1200); // Adjusted for a quicker yet smooth feel
+  }, [router, pathname]);
+  
+   // This effect handles hiding the loader if the user uses browser back/forward buttons
+   useEffect(() => {
+    setIsLoading(false);
+  }, [pathname]);
+
 
   return (
     <LoaderContext.Provider value={{ showLoader }}>
