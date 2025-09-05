@@ -3,6 +3,8 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import WalletProvider from '@/components/wallet-provider';
+import { LoaderProvider } from '@/components/loader-provider';
+import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'Exnus Points',
@@ -23,13 +25,14 @@ export default function RootLayout({
         <script src="https://telegram.org/js/telegram-web-app.js" async></script>
       </head>
       <body className="font-body antialiased">
-        <WalletProvider>
-            {children}
-            <SpeedInsights/>
-        </WalletProvider>
+        <LoaderProvider>
+            <WalletProvider>
+                {children}
+                <Toaster />
+                <SpeedInsights/>
+            </WalletProvider>
+        </LoaderProvider>
       </body>
     </html>
   );
 }
-
-    

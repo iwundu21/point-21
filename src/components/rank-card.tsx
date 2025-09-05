@@ -3,7 +3,7 @@
 import type { FC } from 'react';
 import { Crown } from 'lucide-react';
 import StatCard from './stat-card';
-import { useRouter } from 'next/navigation';
+import { useLoader } from './loader-provider';
 
 interface RankCardProps {
   rank: number;
@@ -11,7 +11,7 @@ interface RankCardProps {
 }
 
 const RankCard: FC<RankCardProps> = ({ rank, league }) => {
-  const router = useRouter();
+  const { showLoader } = useLoader();
 
   const getRankDisplay = (rank: number) => {
     if (rank <= 0) {
@@ -30,7 +30,7 @@ const RankCard: FC<RankCardProps> = ({ rank, league }) => {
   };
 
   return (
-    <div onClick={() => router.push('/leaderboard')} className="cursor-pointer">
+    <div onClick={() => showLoader('/leaderboard')} className="cursor-pointer">
        <StatCard 
             icon={<Crown className="w-10 h-10 text-muted-foreground" />}
             title={league}

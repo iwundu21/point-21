@@ -1,13 +1,13 @@
 
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { getUserData, getSocialTasks } from '@/lib/database';
 import { v4 as uuidv4 } from 'uuid';
+import { useLoader } from './loader-provider';
 
 // NOTE: Add your Telegram user ID here to see the Admin link
 const ADMIN_IDS = [123, 12345, 6954452147]; 
@@ -27,6 +27,7 @@ const Footer = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [availableTaskCount, setAvailableTaskCount] = useState(0);
+  const { showLoader } = useLoader();
 
   useEffect(() => {
     let user: User | null = null;
@@ -59,7 +60,7 @@ const Footer = () => {
   useEffect(() => {
     const checkTasks = async () => {
         if(currentUser) {
-            const userData = await getUserData(currentUser);
+            const { userData } = await getUserData(currentUser);
             const socialTasks = await getSocialTasks();
             const completedCount = userData.completedSocialTasks?.length || 0;
             const availableCount = socialTasks.length - completedCount;
@@ -92,7 +93,7 @@ const Footer = () => {
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link key={item.href} href={item.href} className="relative flex flex-col items-center justify-center text-sm w-full p-1">
+            <div key={item.href} onClick={() => showLoader(item.href)} className="relative flex flex-col items-center justify-center text-sm w-full p-1 cursor-pointer">
               <item.icon className={cn("w-6 h-6 mb-1", isActive ? 'text-primary' : 'text-muted-foreground')} />
               <span className={cn("text-xs", isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>
                 {item.label}
@@ -102,16 +103,16 @@ const Footer = () => {
                     {item.badge}
                 </span>
               )}
-            </Link>
+            </div>
           );
         })}
          {isAdmin && (
-            <Link key={adminItem.href} href={adminItem.href} className="flex flex-col items-center justify-center text-sm w-full p-1">
+            <div onClick={() => showLoader(adminItem.href)} className="flex flex-col items-center justify-center text-sm w-full p-1 cursor-pointer">
               <adminItem.icon className={cn("w-6 h-6 mb-1", pathname === adminItem.href ? 'text-primary' : 'text-muted-foreground')} />
               <span className={cn("text-xs", pathname === adminItem.href ? 'text-primary font-semibold' : 'text-muted-foreground')}>
                 {adminItem.label}
               </span>
-            </Link>
+            </div>
         )}
       </div>
     </footer>
