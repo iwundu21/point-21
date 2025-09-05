@@ -35,7 +35,7 @@ export const LoaderProvider = ({ children }: { children: ReactNode }) => {
     // By this time, the new page should be fetched and ready to render.
     setTimeout(() => {
       setIsLoading(false);
-    }, 1200); // Adjusted for a quicker yet smooth feel
+    }, 4000); 
   }, [router, pathname]);
   
    // This effect handles hiding the loader if the user uses browser back/forward buttons
