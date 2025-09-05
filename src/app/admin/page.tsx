@@ -510,6 +510,7 @@ export default function AdminPage() {
             
             const fetchedUsers = usersResponse.users;
             const counts: {[taskId: string]: number} = {};
+            // The `completionCount` is now directly on the task object from the database.
             tasks.forEach(task => {
                 counts[task.id] = task.completionCount || 0;
             });
