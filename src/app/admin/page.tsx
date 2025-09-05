@@ -53,7 +53,7 @@ import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 const ADMIN_IDS = [123, 12345, 6954452147]; 
 const ADMIN_ACCESS_CODE = '202020';
 const USERS_PER_PAGE = 20;
-const TOTAL_AIRDROP = 105_000_000;
+const TOTAL_AIRDROP = 200_000_000;
 
 
 declare global {
