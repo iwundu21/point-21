@@ -9,7 +9,7 @@ import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info, CheckCircle, XCircle, UserCheck } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,7 @@ import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/
 import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
+import { cn } from '@/lib/utils';
 
 
 declare global {
@@ -49,6 +50,17 @@ const isValidSolanaAddress = (address: string): boolean => {
     const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
     return solanaAddressRegex.test(address);
 };
+
+const EligibilityItem = ({ text, isMet }: { text: string, isMet: boolean }) => (
+    <div className="flex items-center space-x-3">
+        {isMet ? (
+            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+        ) : (
+            <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+        )}
+        <span className={cn("text-sm", isMet ? "text-foreground" : "text-muted-foreground")}>{text}</span>
+    </div>
+);
 
 export default function WalletPage({}: WalletPageProps) {
   const [savedAddress, setSavedAddress] = useState('');
@@ -283,14 +295,27 @@ export default function WalletPage({}: WalletPageProps) {
                       <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
                         {renderWalletUI()}
                     </div>
-                      <Alert variant="destructive" className="mt-12">
-                          <AlertTriangle className="h-4 w-4" />
-                          <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
-                          <AlertBoxDescription>
-                          Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
-                          </AlertBoxDescription>
-                      </Alert>
-                </div>
+                 </div>
+
+                 <Card className="bg-primary/5 border-primary/10">
+                    <CardHeader>
+                        <CardTitle className="text-base">Airdrop Eligibility</CardTitle>
+                        <CardDescription className="text-xs">You must meet all criteria to be eligible for the airdrop.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <EligibilityItem text="Wallet address submitted" isMet={!!savedAddress} />
+                        <EligibilityItem text="Account verified" isMet={isVerified} />
+                        <EligibilityItem text="Active user status" isMet={userData?.status === 'active'} />
+                    </CardContent>
+                </Card>
+
+                <Alert variant="destructive" className="mt-12">
+                    <AlertTriangle className="h-4 w-4" />
+                    <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
+                    <AlertBoxDescription>
+                    Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
+                    </AlertBoxDescription>
+                </Alert>
             </div>
           )}
         </main>
