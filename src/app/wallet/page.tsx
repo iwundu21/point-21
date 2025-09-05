@@ -9,7 +9,7 @@ import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info, CheckCircle, XCircle, UserCheck } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info, CheckCircle, XCircle, UserCheck, Star } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -306,6 +306,7 @@ export default function WalletPage({}: WalletPageProps) {
                         <EligibilityItem text="Wallet address submitted" isMet={!!savedAddress} />
                         <EligibilityItem text="Account verified" isMet={isVerified} />
                         <EligibilityItem text="Active user status" isMet={userData?.status === 'active'} />
+                        <EligibilityItem text="Purchased Boost Pack 1" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} />
                     </CardContent>
                 </Card>
 
@@ -337,3 +338,5 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
+
+    
