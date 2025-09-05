@@ -3,8 +3,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, Music } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, getAppSettings, saveAppSettings } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -493,8 +493,6 @@ export default function AdminPage() {
     const [totalPoints, setTotalPoints] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
-    const [backgroundMusicUrl, setBackgroundMusicUrl] = useState('');
-    const [isSavingSettings, setIsSavingSettings] = useState(false);
     
     const { toast } = useToast();
 
@@ -502,14 +500,13 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, appSettings] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
                 getTotalTelegramUsersCount(),
                 getTotalBrowserUsersCount(),
                 getTotalActivePoints(),
-                getAppSettings(),
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -527,7 +524,6 @@ export default function AdminPage() {
             setTotalBrowserCount(totalBrowser);
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
-            setBackgroundMusicUrl(appSettings.backgroundMusicUrl || '');
 
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -847,18 +843,6 @@ export default function AdminPage() {
         }
     };
     
-    const handleSaveSettings = async () => {
-        setIsSavingSettings(true);
-        try {
-            await saveAppSettings({ backgroundMusicUrl });
-            toast({ title: 'Settings Saved', description: 'App settings have been updated.' });
-        } catch (error) {
-             console.error("Failed to save settings:", error);
-             toast({ variant: 'destructive', title: 'Error', description: 'Could not save app settings.' });
-        } finally {
-            setIsSavingSettings(false);
-        }
-    };
 
     if (!isAdmin && !codeAuthenticated) {
         return (
@@ -909,40 +893,6 @@ export default function AdminPage() {
                     </Button>
                 )}
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Settings className="w-5 h-5" />
-                        App Settings
-                    </CardTitle>
-                    <CardDescription>Manage global application settings like background music.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
-                        <Label htmlFor="music-url" className="md:text-right">
-                           <div className="flex items-center gap-2">
-                                <Music className="w-4 h-4"/>
-                                Background Music URL
-                           </div>
-                        </Label>
-                        <Input 
-                            id="music-url" 
-                            placeholder="Enter URL to a music file (e.g., .mp3)" 
-                            value={backgroundMusicUrl}
-                            onChange={(e) => setBackgroundMusicUrl(e.target.value)}
-                            className="md:col-span-2"
-                        />
-                    </div>
-                     <div className="flex justify-end">
-                        <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
-                           {isSavingSettings && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                           Save Settings
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
 
             <Card>
             <CardHeader>
