@@ -220,7 +220,7 @@ export default function Home({}: {}) {
   useEffect(() => {
     // Generate song only once on mount if in Telegram
     if (isTelegram && !audioUrl) {
-        generateAirdropSong('Welcome to the Exnus Airdrop! Get ready to earn points and claim your rewards. The future is now!')
+        generateAirdropSong('Exnus, Exnus, on the beat, airdrop points, oh so sweet. Tap the circle, feel the power, earning rewards, every hour. Exnus, Exnus, shinning bright, lighting up the future, with all its might!')
             .then(result => {
                 if (result.media) {
                     setAudioUrl(result.media);
