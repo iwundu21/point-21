@@ -22,7 +22,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["node", "@types/papaparse", "@types/uuid"]
+    "types": ["node", "@types/papaparse", "@types/uuid", "@types/wav"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

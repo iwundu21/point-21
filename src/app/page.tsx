@@ -34,6 +34,7 @@ import {
     DialogTrigger,
   } from "@/components/ui/dialog"
 import { increment } from 'firebase/firestore';
+import { generateAirdropSong } from '@/ai/flows/tts-flow';
 
 
 declare global {
@@ -90,6 +91,8 @@ export default function Home({}: {}) {
   const [miningRate, setMiningRate] = useState(1000);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
 
   const router = useRouter();
 
@@ -213,6 +216,19 @@ export default function Home({}: {}) {
     };
     init();
   }, [initializeUser]);
+
+  useEffect(() => {
+    // Generate song only once on mount if in Telegram
+    if (isTelegram && !audioUrl) {
+        generateAirdropSong('Welcome to the Exnus Airdrop! Get ready to earn points and claim your rewards. The future is now!')
+            .then(result => {
+                if (result.media) {
+                    setAudioUrl(result.media);
+                }
+            })
+            .catch(console.error);
+    }
+  }, [isTelegram, audioUrl]);
   
   const handleActivateMining = async () => {
     if (!hasRedeemedReferral) {
@@ -411,6 +427,9 @@ export default function Home({}: {}) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+        {audioUrl && (
+            <audio src={audioUrl} autoPlay hidden />
+        )}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
             <div className="flex justify-between items-start">
             <UserCard 
