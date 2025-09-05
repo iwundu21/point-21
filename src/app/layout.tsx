@@ -1,10 +1,12 @@
 
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import WalletProvider from '@/components/wallet-provider';
 import { LoaderProvider } from '@/components/loader-provider';
 import { Toaster } from '@/components/ui/toaster';
+import AppMusicPlayer from '@/components/app-music-player';
 
 export const metadata: Metadata = {
   title: 'Exnus Points',
@@ -27,6 +29,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <LoaderProvider>
             <WalletProvider>
+                <AppMusicPlayer />
                 {children}
                 <Toaster />
                 <SpeedInsights/>

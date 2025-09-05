@@ -1,5 +1,6 @@
 
 
+
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch } from 'firebase/firestore';
 
@@ -50,6 +51,10 @@ export interface UserData {
     hasMergedBrowserAccount?: boolean;
     purchasedBoosts: string[];
     miningActivationCount: number;
+}
+
+export interface AppSettings {
+    backgroundMusicUrl?: string;
 }
 
 const generateReferralCode = () => {
@@ -611,10 +616,24 @@ export const getReferralCode = async (user: { id: number | string } | null) => (
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
     
-    
+// --- App Settings ---
+const appSettingsRef = doc(db, 'app-stats', 'settings');
+
+export const saveAppSettings = async (settings: AppSettings) => {
+    await setDoc(appSettingsRef, settings, { merge: true });
+};
+
+export const getAppSettings = async (): Promise<AppSettings> => {
+    const settingsSnap = await getDoc(appSettingsRef);
+    if (settingsSnap.exists()) {
+        return settingsSnap.data() as AppSettings;
+    }
+    return {};
+};
     
 
     
+
 
 
 
