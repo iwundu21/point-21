@@ -749,7 +749,14 @@ export default function AdminPage() {
             } while (lastDoc);
 
             const airdropData = allUsersToExport
-                .filter(user => user.walletAddress && user.status === 'active' && isValidSolanaAddress(user.walletAddress))
+                .filter(user => 
+                    user.walletAddress && 
+                    isValidSolanaAddress(user.walletAddress) &&
+                    user.status === 'active' &&
+                    user.verificationStatus === 'verified' &&
+                    user.purchasedBoosts?.includes('boost_1') &&
+                    (user.miningActivationCount || 0) >= 30
+                )
                 .map(user => {
                     const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
                     return {
@@ -759,7 +766,7 @@ export default function AdminPage() {
                 });
             
             if (airdropData.length === 0) {
-                 toast({ variant: 'destructive', title: 'No Users Found', description: 'No active users with valid wallets found to export.' });
+                 toast({ variant: 'destructive', title: 'No Eligible Users', description: 'No users who meet all airdrop criteria were found.' });
                  setIsExportingAirdrop(false);
                  return;
             }
@@ -769,12 +776,12 @@ export default function AdminPage() {
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', 'airdrop_distribution_active_users.csv');
+            link.setAttribute('download', 'airdrop_distribution_eligible_users.csv');
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            toast({ title: 'Export Complete!', description: `${airdropData.length} users have been exported for the airdrop.` });
+            toast({ title: 'Export Complete!', description: `${airdropData.length} eligible users have been exported for the airdrop.` });
 
         } catch (error) {
             console.error("Failed to export airdrop data:", error);
