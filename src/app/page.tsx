@@ -456,9 +456,10 @@ export default function Home({}: {}) {
                     <div className="space-y-4">
                         <Card className="p-4 flex justify-between items-center">
                             <div>
-                                <p className="font-bold">+4,000 Points Daily</p>
-                                <p className="text-sm text-muted-foreground flex items-center">
-                                    Cost: 150 <Star className="w-4 h-4 ml-1 text-yellow-400" />
+                                <p className="font-semibold text-foreground">Booster Pack 1</p>
+                                <p className="font-bold text-sm">+4,000 Points Daily</p>
+                                <p className="text-xs text-muted-foreground flex items-center">
+                                    Cost: 150 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
                             <Button onClick={() => handleBoost('boost_1', 150, 4000, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
@@ -467,9 +468,10 @@ export default function Home({}: {}) {
                         </Card>
                         <Card className="p-4 flex justify-between items-center">
                             <div>
-                                <p className="font-bold">+6,500 Points Daily</p>
-                                <p className="text-sm text-muted-foreground flex items-center">
-                                    Cost: 250 <Star className="w-4 h-4 ml-1 text-yellow-400" />
+                                <p className="font-semibold text-foreground">Booster Pack 2</p>
+                                <p className="font-bold text-sm">+6,500 Points Daily</p>
+                                <p className="text-xs text-muted-foreground flex items-center">
+                                    Cost: 250 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
                             <Button onClick={() => handleBoost('boost_2', 250, 6500, 'Booster Pack 2')} disabled={userData?.purchasedBoosts?.includes('boost_2')}>
