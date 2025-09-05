@@ -52,7 +52,7 @@ export default function ReferralPage({}: ReferralPageProps) {
   const [dialogDescription, setDialogDescription] = useState('');
 
   const botUrl = "https://t.me/Exnuspoint_bot";
-  const shareMessage = `Join me on Exnus Points and get a 50 point bonus! ✨\n\nUse my referral code to get started: ${referralCode}\n\nJoin via Telegram: ${botUrl}`;
+  const shareMessage = `🚀 Join me on the Exnus Points mission! Get a 50 E-point welcome bonus when you use my code. ✨\n\nThe official TGE is coming in December 2025 - let's start earning together!\n\nMy referral code: ${referralCode}\n\nJoin here: ${botUrl}`;
 
   const showDialog = (title: string, description: string) => {
     setDialogTitle(title);
