@@ -275,6 +275,14 @@ export default function WalletPage({}: WalletPageProps) {
                         Airdrop
                     </h1>
                 </div>
+
+                <Alert className="border-primary/20 bg-primary/5 text-center">
+                    <Info className="h-4 w-4" />
+                    <CardTitle className="text-primary text-base">Airdrop Coming Soon!</CardTitle>
+                    <AlertBoxDescription>
+                        The official Exnus EXN airdrop is scheduled for Q4 2025.
+                    </AlertBoxDescription>
+                </Alert>
                 
                  <Card className="w-full bg-primary/5 border-primary/10">
                     <CardHeader className="p-4">
