@@ -755,7 +755,7 @@ export default function AdminPage() {
                     user.status === 'active' &&
                     user.verificationStatus === 'verified' &&
                     user.purchasedBoosts?.includes('boost_1') &&
-                    (user.miningActivationCount || 0) >= 30
+                    (user.miningActivationCount || 0) >= 20
                 )
                 .map(user => {
                     const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
@@ -1106,5 +1106,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
