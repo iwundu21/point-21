@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Image from 'next/image';
 
 declare global {
   interface Window {
@@ -45,12 +45,6 @@ type WelcomeTasks = {
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-);
-
-const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.08l11.07-4.27c.71-.27 1.33.17 1.12.98l-1.89 8.92c-.22.88-1.07 1.1-1.8.61l-4.5-3.35-4.13 3.98c-.41.41-1.1.2-1.28-.31l-1.46-4.3z"/>
     </svg>
 );
 
@@ -227,7 +221,7 @@ export default function WelcomeTasksPage() {
                                 onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol')}
                            />
                            <TaskItem
-                                icon={<TelegramIcon className="w-6 h-6" />}
+                                icon={<Image src="/tg.jpg" alt="Telegram" width={24} height={24} />}
                                 title="Subscribe on Telegram"
                                 description="Get announcements directly from the source."
                                 points={300}
@@ -237,7 +231,7 @@ export default function WelcomeTasksPage() {
                                 onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol', '@Exnusprotocol')}
                            />
                             <TaskItem
-                                icon={<TelegramIcon className="w-6 h-6" />}
+                                icon={<Image src="/tg.jpg" alt="Telegram" width={24} height={24} />}
                                 title="Join Telegram Community"
                                 description="Chat with other members."
                                 points={300}
@@ -284,5 +278,3 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
-
-    

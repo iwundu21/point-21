@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -20,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Image from 'next/image';
 
 declare global {
   interface Window {
@@ -43,20 +43,15 @@ const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.08l11.07-4.27c.71-.27 1.33.17 1.12.98l-1.89 8.92c-.22.88-1.07 1.1-1.8.61l-4.5-3.35-4.13 3.98c-.41.41-1.1.2-1.28-.31l-1.46-4.3z"/>
-    </svg>
-);
-
 export const renderIcon = (iconName: string, className?: string) => {
+    const imageClassName = className?.replace('w-6', 'w-5').replace('h-6', 'h-5');
     switch(iconName) {
         case 'MessageCircle': return <MessageCircle className={className} />;
         case 'ThumbsUp': return <ThumbsUp className={className} />;
         case 'Repeat': return <Repeat className={className} />;
         case 'Star': return <Star className={className} />;
         case 'XIcon': return <XIcon className={className} />;
-        case 'TelegramIcon': return <TelegramIcon className={className} />;
+        case 'TelegramIcon': return <Image src="/tg.jpg" alt="Telegram" width={20} height={20} className={imageClassName} />;
         default: return <Users className={className} />;
     }
 }
@@ -347,5 +342,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
-    
