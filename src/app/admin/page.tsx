@@ -756,6 +756,7 @@ export default function AdminPage() {
                     isValidSolanaAddress(user.walletAddress) &&
                     user.status === 'active' &&
                     user.verificationStatus === 'verified' &&
+                    user.balance >= 10000 &&
                     user.purchasedBoosts?.includes('boost_1') &&
                     (user.miningActivationCount || 0) >= 20
                 )
