@@ -52,12 +52,6 @@ interface User {
     photo_url?: string;
 }
 
-const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-);
-
 
 export default function Home({}: {}) {
   const [balance, setBalance] = useState(0);
@@ -356,7 +350,7 @@ export default function Home({}: {}) {
             <h3 className="text-sm font-semibold text-muted-foreground mb-4">If you believe this is an error, please contact support:</h3>
             <div className="flex justify-around space-x-4">
                 <a href="https://x.com/exnusprotocol" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
-                    <XIcon className="w-6 h-6" />
+                    <Image src="/x.jpg" alt="X/Twitter" width={24} height={24} />
                     <span className="text-xs">X / Twitter</span>
                 </a>
                 <a href="https://t.me/exnusprotocol" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">

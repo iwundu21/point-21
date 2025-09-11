@@ -37,12 +37,6 @@ interface User {
   photo_url?: string;
 }
 
-const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-);
-
 export const renderIcon = (iconName: string, className?: string) => {
     const imageClassName = className?.replace('w-6', 'w-5').replace('h-6', 'h-5');
     switch(iconName) {
@@ -50,7 +44,7 @@ export const renderIcon = (iconName: string, className?: string) => {
         case 'ThumbsUp': return <ThumbsUp className={className} />;
         case 'Repeat': return <Repeat className={className} />;
         case 'Star': return <Star className={className} />;
-        case 'XIcon': return <XIcon className={className} />;
+        case 'XIcon': return <Image src="/x.jpg" alt="X/Twitter" width={20} height={20} className={imageClassName} />;
         case 'TelegramIcon': return <Image src="/tg.jpg" alt="Telegram" width={20} height={20} className={imageClassName} />;
         default: return <Users className={className} />;
     }
