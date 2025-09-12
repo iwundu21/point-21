@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         currency,
         prices: [{ label: 'Star', amount }],
       }),
-      signal: AbortSignal.timeout(30000), // Set timeout to 30 seconds
+      signal: AbortSignal.timeout(60000), // Set timeout to 60 seconds
     });
 
     const data = await response.json();
