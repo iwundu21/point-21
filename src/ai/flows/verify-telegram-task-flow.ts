@@ -7,7 +7,7 @@
  * - VerifyTelegramTaskInput - The input type for the verifyTelegramTask function.
  * - VerifyTelegramTaskOutput - The return type for the verifyTelegramTask function.
  */
-
+import 'dotenv/config';
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getChatMember } from '@/lib/telegram';
