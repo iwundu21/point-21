@@ -1,4 +1,5 @@
 
+import 'dotenv/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic' // ensure the function is not cached
 export async function POST(req: NextRequest) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
+    console.error('Bot token not configured');
     return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
   }
 
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: any) {
     console.error('Error creating invoice:', error);
-    if (error.name === 'TimeoutError') {
+    if (error.name === 'TimeoutError' || error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
         return NextResponse.json({ error: 'Request to Telegram timed out.' }, { status: 504 });
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
