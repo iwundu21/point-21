@@ -154,30 +154,31 @@ export default function TasksPage() {
             }
         };
 
-        if (isBrowserUser) {
-            setTimeout(completeTask, 8000); // 8-second delay for browser users
-            return;
-        }
-
-        // Telegram user logic
-        if (task.icon === 'TelegramIcon') {
-            if (typeof user.id !== 'number') return;
+        // For Telegram-based tasks, always attempt verification for Telegram users.
+        if (task.icon === 'TelegramIcon' && !isBrowserUser) {
+            if (typeof user.id !== 'number') {
+                setVerifyingTaskId(null);
+                return;
+            }
             try {
                 const chatId = task.link.substring(task.link.lastIndexOf('/') + 1);
-                const result = await verifyTelegramTask({ userId: user.id, chatId });
-                if (result.isMember) {
-                    await completeTask();
-                } else {
-                    showDialog("Verification Failed", result.error || "You must join the channel first.");
-                    setVerifyingTaskId(null);
-                }
+                // Verification delay to allow user to join
+                setTimeout(async () => {
+                    const result = await verifyTelegramTask({ userId: user.id as number, chatId });
+                    if (result.isMember) {
+                        await completeTask();
+                    } else {
+                        showDialog("Verification Failed", result.error || "You must join the channel first.");
+                        setVerifyingTaskId(null);
+                    }
+                }, 8000); // 8-second delay
             } catch (e) {
                  console.error(e);
                  showDialog("Error", "Could not verify task completion.");
                  setVerifyingTaskId(null);
             }
         } else {
-            // Non-verifiable tasks for Telegram users (e.g., X, Discord)
+             // For non-Telegram tasks or for browser users, use a simple timeout
             setTimeout(completeTask, 8000);
         }
     };
