@@ -249,22 +249,25 @@ export default function Home({}: {}) {
         const tg = window.Telegram.WebApp;
 
         try {
+            // CRITICAL FIX: Generate a unique payload for every request.
+            const uniquePayload = `${boostId}-${user.id}-${Date.now()}`;
+
             const response = await fetch('/api/create-invoice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title: title,
                     description: `Boost your mining rate by ${boostAmount.toLocaleString()} points per day.`,
-                    payload: `${boostId}-${user.id}`,
+                    payload: uniquePayload, // Use the new unique payload
                     currency: 'XTR',
                     amount: cost,
                 }),
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("API Error Response:", errorText);
-                throw new Error('Failed to create invoice. The server responded with an error.');
+                const errorData = await response.json();
+                console.error("API Error Response:", errorData);
+                throw new Error(errorData.error || 'Failed to create invoice. The server responded with an error.');
             }
 
             const { invoiceUrl, error } = await response.json();

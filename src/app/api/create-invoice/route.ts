@@ -18,28 +18,19 @@ export async function POST(req: NextRequest) {
   try {
     const { title, description, payload, currency, amount } = await req.json();
 
-    if (!title || !description || !currency || !amount) {
+    if (!title || !description || !payload || !currency || !amount) {
       return NextResponse.json({ error: 'Missing required invoice parameters' }, { status: 400 });
     }
-
-    const uniquePayload = `${payload}-${uuidv4()}`;
 
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/createInvoiceLink`;
 
     const requestBody: any = {
         title,
         description,
-        payload: uniquePayload,
+        payload: payload, // The payload is now guaranteed to be unique from the client
         currency,
         prices: [{ label: 'Star', amount }],
     };
-    
-    // For Telegram Stars, the provider_token MUST be omitted.
-    // We only add it if a real provider token is set for other payment types.
-    if (process.env.TELEGRAM_PROVIDER_TOKEN) {
-        requestBody.provider_token = process.env.TELEGRAM_PROVIDER_TOKEN;
-    }
-
 
     const response = await fetch(telegramApiUrl, {
       method: 'POST',
@@ -59,9 +50,6 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: any) {
     console.error('Error creating invoice:', error);
-    if (error.name === 'TimeoutError' || error.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
-        return NextResponse.json({ error: 'Request to Telegram timed out.' }, { status: 504 });
-    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
