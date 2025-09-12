@@ -610,9 +610,42 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
-    
+
+export const processSuccessfulPayment = async (userId: string, boostId: string, boostAmount: number) => {
+    if (!userId || !boostId || !boostAmount) return;
+
+    const userRef = doc(db, 'users', userId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw new Error(`User ${userId} not found`);
+            }
+
+            const userData = userDoc.data() as UserData;
+            const currentRate = userData.miningRate || (userId.startsWith('user_') ? 1000 : 700);
+            const newRate = currentRate + boostAmount;
+            const updatedBoosts = [...(userData.purchasedBoosts || []), boostId];
+            
+            // Prevent duplicate boost applications
+            if (userData.purchasedBoosts?.includes(boostId)) {
+                console.warn(`User ${userId} tried to purchase already active boost ${boostId}.`);
+                return; 
+            }
+
+            transaction.update(userRef, {
+                miningRate: newRate,
+                purchasedBoosts: updatedBoosts
+            });
+        });
+    } catch (error) {
+        console.error("Transaction failed for processSuccessfulPayment:", error);
+    }
+};
 
     
+
 
 
 

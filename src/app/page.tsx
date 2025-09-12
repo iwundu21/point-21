@@ -238,27 +238,26 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
-    const handleBoost = async (boostId: string, cost: number, boostAmount: number, title: string) => {
+  const handleBoost = async (boostId: string, cost: number, title: string) => {
         if (!user || !userData || !window.Telegram?.WebApp) return;
+        const tg = window.Telegram.WebApp;
 
         if (userData.purchasedBoosts?.includes(boostId)) {
             showDialog("Boost Already Active", "You have already purchased this boost.");
             return;
         }
 
-        const tg = window.Telegram.WebApp;
-
         try {
-            // CRITICAL FIX: Generate a unique payload for every request.
-            const uniquePayload = `${boostId}-${user.id}-${Date.now()}`;
+            const userId = typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
+            const uniquePayload = `${boostId}-${userId}-${Date.now()}`;
 
             const response = await fetch('/api/create-invoice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title: title,
-                    description: `Boost your mining rate by ${boostAmount.toLocaleString()} points per day.`,
-                    payload: uniquePayload, // Use the new unique payload
+                    description: `Activate ${title}.`,
+                    payload: uniquePayload,
                     currency: 'XTR',
                     amount: cost,
                 }),
@@ -266,8 +265,7 @@ export default function Home({}: {}) {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("API Error Response:", errorData);
-                throw new Error(errorData.error || 'Failed to create invoice. The server responded with an error.');
+                throw new Error(errorData.error || 'Failed to create invoice.');
             }
 
             const { invoiceUrl, error } = await response.json();
@@ -276,24 +274,18 @@ export default function Home({}: {}) {
                 throw new Error(error);
             }
 
-            tg.openInvoice(invoiceUrl, async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
-                if (status === 'paid') {
-                    const { userData: freshUserData } = await getUserData(user);
-                    const currentRate = freshUserData.miningRate || 0;
-                    const newRate = currentRate + boostAmount;
-                    const updatedBoosts = [...(freshUserData.purchasedBoosts || []), boostId];
-
-                    await saveUserData(user, { miningRate: newRate, purchasedBoosts: updatedBoosts });
-                    setMiningRate(newRate);
-                    setUserData(prev => prev ? { ...prev, miningRate: newRate, purchasedBoosts: updatedBoosts } : null);
-                    showDialog("Boost Activated!", `Your mining rate has increased by ${boostAmount.toLocaleString()} points per day.`);
-                } else {
-                    showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
-                }
+            tg.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
+                 if (status === 'paid') {
+                     // The webhook will handle the logic. We can show a pending message here.
+                     showDialog("Payment Sent!", "Your boost is being activated. This may take a moment. You can refresh the page to see the changes.");
+                 } else {
+                     showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
+                 }
             });
+
         } catch (e: any) {
             console.error("Boost error:", e);
-            showDialog("Error", `Could not process the boost payment: ${e.message}. Please try again later.`);
+            showDialog("Error", `Could not process the boost payment: ${e.message}.`);
         }
   };
 
@@ -450,7 +442,7 @@ export default function Home({}: {}) {
                                     Cost: 50 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost('boost_1', 50, 2000, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
+                            <Button onClick={() => handleBoost('boost_1', 50, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
                                 {userData?.purchasedBoosts?.includes('boost_1') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
@@ -462,7 +454,7 @@ export default function Home({}: {}) {
                                     Cost: 100 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost('boost_2', 100, 4000, 'Booster Pack 2')} disabled={userData?.purchasedBoosts?.includes('boost_2')}>
+                            <Button onClick={() => handleBoost('boost_2', 100, 'Booster Pack 2')} disabled={userData?.purchasedBoosts?.includes('boost_2')}>
                                {userData?.purchasedBoosts?.includes('boost_2') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
@@ -474,7 +466,7 @@ export default function Home({}: {}) {
                                     Cost: 200 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost('boost_3', 200, 8000, 'Booster Pack 3')} disabled={userData?.purchasedBoosts?.includes('boost_3')}>
+                            <Button onClick={() => handleBoost('boost_3', 200, 'Booster Pack 3')} disabled={userData?.purchasedBoosts?.includes('boost_3')}>
                                {userData?.purchasedBoosts?.includes('boost_3') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
@@ -486,7 +478,7 @@ export default function Home({}: {}) {
                                     Cost: 500 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost('boost_4', 500, 20000, 'Booster Pack 4')} disabled={userData?.purchasedBoosts?.includes('boost_4')}>
+                            <Button onClick={() => handleBoost('boost_4', 500, 'Booster Pack 4')} disabled={userData?.purchasedBoosts?.includes('boost_4')}>
                                {userData?.purchasedBoosts?.includes('boost_4') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
@@ -498,7 +490,7 @@ export default function Home({}: {}) {
                                     Cost: 1000 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost('boost_5', 1000, 40000, 'Booster Pack 5')} disabled={userData?.purchasedBoosts?.includes('boost_5')}>
+                            <Button onClick={() => handleBoost('boost_5', 1000, 'Booster Pack 5')} disabled={userData?.purchasedBoosts?.includes('boost_5')}>
                                {userData?.purchasedBoosts?.includes('boost_5') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>

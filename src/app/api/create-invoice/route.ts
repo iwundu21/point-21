@@ -1,12 +1,8 @@
 
 import 'dotenv/config';
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
 
-// This is a backend endpoint that runs on the server.
-// It securely uses the bot token to create an invoice link from Telegram.
-
-export const dynamic = 'force-dynamic' // ensure the function is not cached
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -24,10 +20,11 @@ export async function POST(req: NextRequest) {
 
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/createInvoiceLink`;
 
+    // For Telegram Stars, the provider_token must be omitted.
     const requestBody: any = {
         title,
         description,
-        payload: payload, // The payload is now guaranteed to be unique from the client
+        payload: payload,
         currency,
         prices: [{ label: 'Star', amount }],
     };
