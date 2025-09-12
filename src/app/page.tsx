@@ -463,6 +463,42 @@ export default function Home({}: {}) {
                                {userData?.purchasedBoosts?.includes('boost_2') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
+                         <Card className="p-4 flex justify-between items-center">
+                            <div>
+                                <p className="font-semibold text-foreground">Booster Pack 3</p>
+                                <p className="font-bold text-sm">+8,000 Points Daily</p>
+                                <p className="text-xs text-muted-foreground flex items-center">
+                                    Cost: 200 <Star className="w-3 h-3 ml-1 text-yellow-400" />
+                                </p>
+                            </div>
+                            <Button onClick={() => handleBoost('boost_3', 200, 8000, 'Booster Pack 3')} disabled={userData?.purchasedBoosts?.includes('boost_3')}>
+                               {userData?.purchasedBoosts?.includes('boost_3') ? 'Active' : 'Activate'}
+                            </Button>
+                        </Card>
+                         <Card className="p-4 flex justify-between items-center">
+                            <div>
+                                <p className="font-semibold text-foreground">Booster Pack 4</p>
+                                <p className="font-bold text-sm">+20,000 Points Daily</p>
+                                <p className="text-xs text-muted-foreground flex items-center">
+                                    Cost: 500 <Star className="w-3 h-3 ml-1 text-yellow-400" />
+                                </p>
+                            </div>
+                            <Button onClick={() => handleBoost('boost_4', 500, 20000, 'Booster Pack 4')} disabled={userData?.purchasedBoosts?.includes('boost_4')}>
+                               {userData?.purchasedBoosts?.includes('boost_4') ? 'Active' : 'Activate'}
+                            </Button>
+                        </Card>
+                         <Card className="p-4 flex justify-between items-center">
+                            <div>
+                                <p className="font-semibold text-foreground">Booster Pack 5</p>
+                                <p className="font-bold text-sm">+40,000 Points Daily</p>
+                                <p className="text-xs text-muted-foreground flex items-center">
+                                    Cost: 1000 <Star className="w-3 h-3 ml-1 text-yellow-400" />
+                                </p>
+                            </div>
+                            <Button onClick={() => handleBoost('boost_5', 1000, 40000, 'Booster Pack 5')} disabled={userData?.purchasedBoosts?.includes('boost_5')}>
+                               {userData?.purchasedBoosts?.includes('boost_5') ? 'Active' : 'Activate'}
+                            </Button>
+                        </Card>
                     </div>
                 </DialogContent>
                </Dialog>
