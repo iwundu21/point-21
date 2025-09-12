@@ -268,16 +268,12 @@ export default function Home({}: {}) {
                 throw new Error(errorData.error || 'Failed to create invoice.');
             }
 
-            const { invoiceUrl, error } = await response.json();
+            const { invoiceUrl } = await response.json();
             
-            if (error) {
-                throw new Error(error);
-            }
-
             tg.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                  if (status === 'paid') {
                      // The webhook will handle the logic. We can show a pending message here.
-                     showDialog("Payment Sent!", "Your boost is being activated. This may take a moment. You can refresh the page to see the changes.");
+                     showDialog("Payment Successful!", "Your boost is being activated. You can refresh the page in a moment to see the changes.");
                  } else {
                      showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                  }
