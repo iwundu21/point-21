@@ -442,12 +442,12 @@ export default function Home({}: {}) {
                         <Card className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold text-foreground">Booster Pack 1</p>
-                                <p className="font-bold text-sm">+4,000 Points Daily</p>
+                                <p className="font-bold text-sm">+2,000 Points Daily</p>
                                 <p className="text-xs text-muted-foreground flex items-center">
-                                    Cost: 150 <Star className="w-3 h-3 ml-1 text-yellow-400" />
+                                    Cost: 50 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
                             </div>
-                            <Button onClick={() => handleBoost('boost_1', 150, 4000, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
+                            <Button onClick={() => handleBoost('boost_1', 50, 2000, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
                                 {userData?.purchasedBoosts?.includes('boost_1') ? 'Active' : 'Activate'}
                             </Button>
                         </Card>
