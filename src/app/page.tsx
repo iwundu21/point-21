@@ -249,8 +249,6 @@ export default function Home({}: {}) {
         const tg = window.Telegram.WebApp;
 
         try {
-            showDialog("Processing Boost...", "Please wait while we create your payment invoice.");
-
             const response = await fetch('/api/create-invoice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -264,8 +262,6 @@ export default function Home({}: {}) {
             });
 
             const { invoiceUrl, error } = await response.json();
-            
-            setDialogOpen(false);
             
             if (error) {
                 throw new Error(error);
@@ -287,7 +283,6 @@ export default function Home({}: {}) {
                 }
             });
         } catch (e: any) {
-            setDialogOpen(false);
             console.error("Boost error:", e);
             showDialog("Error", `Could not process the boost payment: ${e.message}. Please try again later.`);
         }
