@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 // This is a backend endpoint that runs on the server.
 // It securely uses the bot token to create an invoice link from Telegram.
 
+export const dynamic = 'force-dynamic' // ensure the function is not cached
+
 export async function POST(req: NextRequest) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
@@ -31,10 +33,11 @@ export async function POST(req: NextRequest) {
         title,
         description,
         payload: uniquePayload,
-        provider_token: '', // Leave empty for Stars
+        provider_token: process.env.TELEGRAM_PROVIDER_TOKEN || '', // Required, even if empty for Stars
         currency,
         prices: [{ label: 'Star', amount }],
       }),
+      signal: AbortSignal.timeout(30000), // Set timeout to 30 seconds
     });
 
     const data = await response.json();
@@ -45,8 +48,11 @@ export async function POST(req: NextRequest) {
       console.error('Telegram API error:', data.description);
       return NextResponse.json({ error: `Failed to create invoice: ${data.description}` }, { status: 500 });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating invoice:', error);
+    if (error.name === 'TimeoutError') {
+        return NextResponse.json({ error: 'Request to Telegram timed out.' }, { status: 504 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
