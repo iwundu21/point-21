@@ -261,6 +261,12 @@ export default function Home({}: {}) {
                 }),
             });
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("API Error Response:", errorText);
+                throw new Error('Failed to create invoice. The server responded with an error.');
+            }
+
             const { invoiceUrl, error } = await response.json();
             
             if (error) {
