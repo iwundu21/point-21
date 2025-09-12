@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         title,
         description,
         payload: uniquePayload,
-        provider_token: process.env.TELEGRAM_PROVIDER_TOKEN || '', // Required, even if empty for Stars
+        provider_token: process.env.TELEGRAM_PROVIDER_TOKEN, // Directly use the env variable
         currency,
         prices: [{ label: 'Star', amount }],
       }),
