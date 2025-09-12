@@ -26,19 +26,27 @@ export async function POST(req: NextRequest) {
 
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/createInvoiceLink`;
 
+    const requestBody: any = {
+        title,
+        description,
+        payload: uniquePayload,
+        currency,
+        prices: [{ label: 'Star', amount }],
+    };
+    
+    // For Telegram Stars, the provider_token MUST be omitted.
+    // We only add it if a real provider token is set for other payment types.
+    if (process.env.TELEGRAM_PROVIDER_TOKEN) {
+        requestBody.provider_token = process.env.TELEGRAM_PROVIDER_TOKEN;
+    }
+
+
     const response = await fetch(telegramApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        title,
-        description,
-        payload: uniquePayload,
-        provider_token: process.env.TELEGRAM_PROVIDER_TOKEN, // Directly use the env variable
-        currency,
-        prices: [{ label: 'Star', amount }],
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const data = await response.json();
