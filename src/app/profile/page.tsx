@@ -23,30 +23,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { getInitials, TelegramUser } from '@/lib/user-utils';
 
-
-declare global {
-  interface Window {
-    Telegram: any;
-  }
-}
-
-interface User {
-    id: number | string;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    language_code?: string;
-    is_premium?: boolean;
-    photo_url?: string;
-}
-
-type VerificationStatus = 'unverified' | 'detecting' | 'verified' | 'failed';
 
 interface ProfilePageProps {}
 
 export default function ProfilePage({}: ProfilePageProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<TelegramUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -55,7 +38,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isProcessingVerification, setIsProcessingVerification] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
-  const [accountStatus, setAccountStatus] = useState<VerificationStatus>('unverified');
+  const [accountStatus, setAccountStatus] = useState<UserData['verificationStatus']>('unverified');
   const [failureReason, setFailureReason] = useState<string | null>(null);
   const [isVerificationInProgress, setIsVerificationInProgress] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -74,7 +57,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   };
 
 
-  const loadInitialData = useCallback(async (currentUser: User) => {
+  const loadInitialData = useCallback(async (currentUser: TelegramUser) => {
       setIsLoading(true);
       try {
           const { userData: data } = await getUserData(currentUser);
@@ -90,7 +73,7 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   useEffect(() => {
     const init = () => {
-      let currentUser: User | null = null;
+      let currentUser: TelegramUser | null = null;
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
         const tg = window.Telegram.WebApp;
         currentUser = tg.initDataUnsafe.user;
@@ -114,13 +97,6 @@ export default function ProfilePage({}: ProfilePageProps) {
     init();
   }, [loadInitialData]);
 
-
-  const getInitials = () => {
-    if (!user) return '';
-    const firstNameInitial = user.first_name ? user.first_name[0] : '';
-    const lastNameInitial = user.last_name ? user.last_name[0] : '';
-    return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || 'BU';
-  }
   
   const handleStartVerification = () => {
       if (user?.first_name === 'Browser User' && !userData?.customPhotoUrl) {
@@ -421,7 +397,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                 <div className="relative group">
                     <Avatar className="w-24 h-24 border-4 border-primary" onClick={handleAvatarClick} >
                         <AvatarImage src={avatarSrc} alt={displayName} />
-                        <AvatarFallback className="text-3xl">{getInitials()}</AvatarFallback>
+                        <AvatarFallback className="text-3xl">{getInitials(user)}</AvatarFallback>
                     </Avatar>
                      {isBrowserUser && (
                         <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
@@ -513,5 +489,3 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
-
-    

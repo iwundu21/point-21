@@ -2,26 +2,16 @@
 
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion } from 'firebase/firestore';
+import type { TelegramUser } from './user-utils';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
-
-interface TelegramUser {
-    id: number;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    language_code: string;
-    is_premium?: boolean;
-    photo_url?: string;
-}
-
 export interface UserData {
     id: string; // Document ID
     balance: number;
     miningEndTime: number | null;
     miningRate: number; // Daily mining points
     dailyStreak: { count: number; lastLogin: string };
-    verificationStatus: 'verified' | 'unverified' | 'failed';
+    verificationStatus: 'verified' | 'unverified' | 'failed' | 'detecting';
     faceVerificationUri: string | null;
     faceFingerprint: string | null; // Unique identifier for the face
     walletAddress: string | null;
@@ -56,13 +46,13 @@ const generateReferralCode = () => {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
-const getUserId = (user: { id: number | string } | null): string => {
+export const getUserId = (user: { id: number | string } | null): string => {
     if (!user) return 'guest';
     // Prefix to distinguish between ID types
     return typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
 };
 
-const defaultUserData = (user: { id: number | string, first_name?: string } | null): Omit<UserData, 'id'> => ({
+const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     balance: 0,
     miningEndTime: null,
     miningRate: user && typeof user.id === 'number' ? 1000 : 700,
@@ -181,7 +171,7 @@ export const getTotalActivePoints = async (): Promise<number> => {
 };
 
 
-export const getUserData = async (user: { id: number | string } | null): Promise<{ userData: UserData, isNewUser: boolean }> => {
+export const getUserData = async (user: TelegramUser | null): Promise<{ userData: UserData, isNewUser: boolean }> => {
     if (!user) return { userData: { ...defaultUserData(null), id: 'guest' }, isNewUser: false };
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
@@ -231,7 +221,7 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     
     // Check if the user exists before trying to get old data
     const oldSnap = await getDoc(userRef);
-    const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user);
+    const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user as TelegramUser);
 
     await setDoc(userRef, data, { merge: true });
 
@@ -310,7 +300,7 @@ export const applyReferralBonus = async (newUser: { id: number | string }, refer
             await incrementTotalPoints(200); // For referrer
             await incrementTotalPoints(50); // For new user
 
-            const { userData } = await getUserData(newUser);
+            const { userData } = await getUserData(newUser as TelegramUser);
             return userData;
         } catch (error) {
             console.error("Transaction failed: ", error);
@@ -339,7 +329,7 @@ export const getLeaderboardUsers = async (): Promise<{ users: UserData[]}> => {
 export const getUserRank = async (user: { id: number | string } | null): Promise<{ rank: number; league: string }> => {
     if (!user) return { rank: 0, league: 'Unranked' };
 
-    const { userData: currentUserData } = await getUserData(user);
+    const { userData: currentUserData } = await getUserData(user as TelegramUser);
     if (!currentUserData) {
         return { rank: 0, league: 'Unranked' };
     }
@@ -583,11 +573,11 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
 
 // --- Specific Data Functions ---
 
-export const getBalance = async (user: { id: number | string } | null) => (await getUserData(user)).userData.balance;
-export const getMiningEndTime = async (user: { id: number | string } | null) => (await getUserData(user)).userData.miningEndTime;
-export const getDailyStreak = async (user: { id: number | string } | null) => (await getUserData(user)).userData.dailyStreak;
-export const getVerificationStatus = async (user: { id: number | string } | null) => (await getUserData(user)).userData.verificationStatus;
-export const saveVerificationStatus = async (user: { id: number | string } | null, status: 'verified' | 'unverified' | 'failed', imageUri?: string | null, faceFingerprint?: string | null) => {
+export const getBalance = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.balance;
+export const getMiningEndTime = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.miningEndTime;
+export const getDailyStreak = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.dailyStreak;
+export const getVerificationStatus = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.verificationStatus;
+export const saveVerificationStatus = async (user: { id: number | string } | null, status: UserData['verificationStatus'], imageUri?: string | null, faceFingerprint?: string | null) => {
     const data: Partial<UserData> = { verificationStatus: status };
     if (status === 'verified') {
         if (imageUri) data.faceVerificationUri = imageUri;
@@ -597,7 +587,7 @@ export const saveVerificationStatus = async (user: { id: number | string } | nul
       await saveUserData(user, data);
     }
 }
-export const getWalletAddress = async (user: { id: number | string } | null) => (await getUserData(user)).userData.walletAddress;
+export const getWalletAddress = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.walletAddress;
 export const saveWalletAddress = async (user: { id: number | string } | null, address: string) => {
     if (!user) return;
     const userId = getUserId(user);
@@ -607,7 +597,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
     if (!userSnap.exists()) {
         // This is a new browser user, create their record now.
         const newUser: Omit<UserData, 'id'> = {
-            ...defaultUserData(user),
+            ...defaultUserData(user as TelegramUser),
             referralCode: generateReferralCode(),
             walletAddress: address,
         };
@@ -619,7 +609,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
     }
 }
 
-export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user)).userData.referralCode;
+export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
 
@@ -655,25 +645,3 @@ export const processSuccessfulPayment = async (userId: string, boostId: string, 
         console.error("Transaction failed for processSuccessfulPayment:", error);
     }
 };
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -12,9 +12,7 @@ import { Button } from '@/components/ui/button';
 import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldBan, Loader2, Bot, ArrowRight, Wallet, Zap, Star } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,23 +32,8 @@ import {
   } from "@/components/ui/dialog"
 import { increment } from 'firebase/firestore';
 import Image from 'next/image';
-
-
-declare global {
-  interface Window {
-    Telegram: any;
-  }
-}
-
-interface User {
-    id: number | string;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    language_code?: string;
-    is_premium?: boolean;
-    photo_url?: string;
-}
+import { TelegramUser } from '@/lib/user-utils';
+import TelegramGate from '@/components/telegram-gate';
 
 
 export default function Home({}: {}) {
@@ -59,7 +42,7 @@ export default function Home({}: {}) {
   const [miningEndTime, setMiningEndTime] = useState<number | null>(null);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [dailyStreak, setDailyStreak] = useState(0);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<TelegramUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
@@ -88,7 +71,7 @@ export default function Home({}: {}) {
   const isBrowserUser = user?.first_name === 'Browser User';
   const miningReward = userData?.miningRate || (isBrowserUser ? 700 : 1000);
 
-  const initializeUser = useCallback(async (currentUser: User) => {
+  const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
       const [dataResponse, userRankInfo] = await Promise.all([
@@ -180,7 +163,7 @@ export default function Home({}: {}) {
 
   useEffect(() => {
     const init = () => {
-      let currentUser: User | null = null;
+      let currentUser: TelegramUser | null = null;
       
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
           const tg = window.Telegram.WebApp;
@@ -307,35 +290,7 @@ export default function Home({}: {}) {
   
   if (!isTelegram) {
       return (
-         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-            <Card className="max-w-md w-full text-center">
-                <CardHeader>
-                    <div className="flex justify-center mb-4">
-                        <Bot className="w-16 h-16 text-primary" />
-                    </div>
-                    <CardTitle className="text-2xl">We've Moved to Telegram!</CardTitle>
-                    <CardDescription>
-                       Our app is now exclusively available inside the Telegram Mini App for a better and more integrated experience.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="text-left text-sm text-muted-foreground p-4 border rounded-lg bg-primary/5">
-                        <h3 className="font-semibold text-foreground mb-2">How to Recover Your Browser Points:</h3>
-                        <ol className="list-decimal list-inside space-y-2">
-                            <li>Click the button below to open the app in Telegram.</li>
-                            <li>You will be prompted to link your browser account.</li>
-                            <li>Enter the Solana wallet address you used here.</li>
-                            <li>Your points will be automatically transferred!</li>
-                        </ol>
-                    </div>
-
-                    <a href="https://t.me/Exnuspoint_bot" className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-                        <Bot className="w-5 h-5 mr-2"/>
-                        Open in Telegram & Recover Points
-                    </a>
-                </CardContent>
-            </Card>
-        </div>
+         <TelegramGate />
       );
   }
 
@@ -532,5 +487,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    

@@ -13,37 +13,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { Skeleton } from '@/components/ui/skeleton';
-
-declare global {
-  interface Window {
-    Telegram: any;
-  }
-}
-
-interface User {
-    id: number | string;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    photo_url?: string;
-}
-
-const getInitials = (user: UserData) => {
-    if (user.telegramUser && user.telegramUser.first_name) {
-        const firstNameInitial = user.telegramUser.first_name?.[0] || '';
-        const lastNameInitial = user.telegramUser.last_name?.[0] || '';
-        return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
-    }
-    return 'BU';
-};
-
-const getDisplayName = (user: UserData) => {
-    if (user.telegramUser && user.telegramUser.first_name && user.telegramUser.first_name !== 'Browser User') {
-        return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
-    }
-    return 'Browser User';
-};
-
+import { getInitials, getDisplayName, TelegramUser } from '@/lib/user-utils';
 
 const getLeagueInfo = (rank: number) => {
     if (rank <= 10) return { name: "Diamond", progress: 100 };
@@ -83,7 +53,7 @@ export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
     const [totalTelegramUsers, setTotalTelegramUsers] = useState(0);
     const [totalBrowserUsers, setTotalBrowserUsers] = useState(0);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     
@@ -113,7 +83,7 @@ export default function LeaderboardPage() {
 
     useEffect(() => {
         const init = () => {
-          let user: User | null = null;
+          let user: TelegramUser | null = null;
           if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
               const tg = window.Telegram.WebApp;
               user = tg.initDataUnsafe.user;
@@ -285,4 +255,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-

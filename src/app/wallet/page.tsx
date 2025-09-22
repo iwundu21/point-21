@@ -22,29 +22,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
-import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData } from '@/lib/database';
+import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData, getUserId } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
+import { TelegramUser } from '@/lib/user-utils';
 
-
-declare global {
-  interface Window {
-    Telegram: any;
-  }
-}
-
-interface User {
-    id: number | string;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    language_code?: string;
-    is_premium?: boolean;
-    photo_url?: string;
-}
-
-interface WalletPageProps {}
 
 const isValidSolanaAddress = (address: string): boolean => {
     const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -62,11 +45,11 @@ const EligibilityItem = ({ text, isMet }: { text: string, isMet: boolean }) => (
     </div>
 );
 
-export default function WalletPage({}: WalletPageProps) {
+export default function WalletPage() {
   const [savedAddress, setSavedAddress] = useState('');
   const [manualAddress, setManualAddress] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<TelegramUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [balance, setBalance] = useState(0);
   const router = useRouter();
@@ -83,7 +66,7 @@ export default function WalletPage({}: WalletPageProps) {
 
   useEffect(() => {
     const init = () => {
-        let currentUser: User | null = null;
+        let currentUser: TelegramUser | null = null;
         if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
             const tg = window.Telegram.WebApp;
             currentUser = tg.initDataUnsafe.user;
@@ -207,12 +190,6 @@ export default function WalletPage({}: WalletPageProps) {
     return `${address.slice(0, 6)}****${address.slice(-6)}`;
   }
   
-  const getUserId = (user: { id: number | string } | null): string => {
-    if (!user) return 'guest';
-    // Prefix to distinguish between ID types
-    return typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
-  };
-
   const renderWalletUI = () => {
     if (savedAddress) {
         return (

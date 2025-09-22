@@ -48,6 +48,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { renderIcon } from '@/app/tasks/page';
 import Papa from 'papaparse';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { getInitials, getDisplayName } from '@/lib/user-utils';
 
 
 // NOTE: Add your Telegram user ID here for admin access
@@ -70,23 +71,6 @@ interface TelegramUser {
     username?: string;
     photo_url?: string;
 }
-
-const getInitials = (user: UserData) => {
-    if (user.telegramUser && user.telegramUser.first_name) {
-        const firstNameInitial = user.telegramUser.first_name?.[0] || '';
-        const lastNameInitial = user.telegramUser.last_name?.[0] || '';
-        return `${firstNameInitial}${lastNameInitial}`.toUpperCase() || '??';
-    }
-    return 'BU';
-};
-
-const getDisplayName = (user: UserData) => {
-    if (user.telegramUser && user.telegramUser.first_name && user.telegramUser.first_name !== 'Browser User') {
-        return `${user.telegramUser.first_name || ''} ${user.telegramUser.last_name || ''}`.trim() || 'Anonymous';
-    }
-    return 'Browser User';
-};
-
 
 const isValidSolanaAddress = (address: string): boolean => {
     const solanaAddressRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -1146,7 +1130,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-
-    
