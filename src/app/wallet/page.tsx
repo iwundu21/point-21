@@ -3,7 +3,7 @@
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -110,31 +110,44 @@ export default function WalletPage({}: WalletPageProps) {
     init();
   }, [router]);
 
+  const loadUserData = useCallback(async () => {
+    if (user) {
+        setIsLoading(true);
+        try {
+            const { userData: freshUserData } = await getUserData(user);
 
-  useEffect(() => {
-    const loadUserData = async () => {
-        if (user) {
-            setIsLoading(true);
-            try {
-                const { userData: freshUserData } = await getUserData(user);
-
-                setUserData(freshUserData);
-                if (freshUserData.walletAddress) {
-                    setSavedAddress(freshUserData.walletAddress);
-                    setManualAddress(freshUserData.walletAddress);
-                }
-                setIsVerified(freshUserData.verificationStatus === 'verified');
-                setBalance(freshUserData.balance);
-
-            } catch (error) {
-                console.error("Failed to load user wallet data:", error);
-            } finally {
-                setIsLoading(false);
+            setUserData(freshUserData);
+            if (freshUserData.walletAddress) {
+                setSavedAddress(freshUserData.walletAddress);
+                setManualAddress(freshUserData.walletAddress);
             }
+            setIsVerified(freshUserData.verificationStatus === 'verified');
+            setBalance(freshUserData.balance);
+
+        } catch (error) {
+            console.error("Failed to load user wallet data:", error);
+        } finally {
+            setIsLoading(false);
         }
     }
-    loadUserData();
   }, [user]);
+
+  useEffect(() => {
+    loadUserData();
+  }, [loadUserData]);
+  
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+        if(document.visibilityState === 'visible') {
+            loadUserData();
+        }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
+  }, [loadUserData]);
+
 
   const handleSaveAddress = async () => {
     setIsSaving(true);
@@ -347,9 +360,3 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
-
-    
-
-    
-
-    
