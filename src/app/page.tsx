@@ -196,6 +196,18 @@ export default function Home({}: {}) {
     };
     init();
   }, [initializeUser]);
+  
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+        if(document.visibilityState === 'visible' && user) {
+            initializeUser(user);
+        }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
+  }, [user, initializeUser]);
 
   
   const handleActivateMining = async () => {
@@ -272,13 +284,8 @@ export default function Home({}: {}) {
             
             tg.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                  if (status === 'paid') {
-                     showDialog("Payment Processing!", "Your boost is being activated. The app will refresh in a moment.");
-                     // Wait for webhook to process, then refetch data
-                     setTimeout(() => {
-                        if (user) {
-                           initializeUser(user);
-                        }
-                     }, 5000); // 5-second delay
+                     showDialog("Payment Processing!", "Your boost is being activated. The app will update momentarily.");
+                     // The visibilitychange event handler will now take care of refetching data.
                  } else {
                      showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                  }
@@ -525,3 +532,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
