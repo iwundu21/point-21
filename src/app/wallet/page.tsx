@@ -316,7 +316,6 @@ export default function WalletPage({}: WalletPageProps) {
                         <EligibilityItem text="Active user status" isMet={userData?.status === 'active'} />
                         <EligibilityItem text="Earned at least 10,000 points" isMet={(userData?.balance || 0) >= 10000} />
                         <EligibilityItem text="Purchased Booster Pack 1" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} />
-                        <EligibilityItem text="Activate mining for 20 days" isMet={(userData?.miningActivationCount || 0) >= 20} />
                     </CardContent>
                 </Card>
 
@@ -348,6 +347,8 @@ export default function WalletPage({}: WalletPageProps) {
     </div>
   );
 }
+
+    
 
     
 
