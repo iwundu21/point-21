@@ -9,6 +9,7 @@ import MissionsCard from '@/components/missions-card';
 import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -269,7 +270,7 @@ export default function Home({}: {}) {
                  if (status === 'paid') {
                      showDialog("Payment Processing!", "Your boost is being activated. The app will update momentarily.");
                      // The visibilitychange event handler will now take care of refetching data.
-                 } else {
+                 } else if (status !== 'pending') {
                      showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                  }
             });
@@ -487,3 +488,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
