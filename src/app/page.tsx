@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan, Loader2, Bot, ArrowRight, Wallet, Zap, Star } from 'lucide-react';
@@ -35,6 +35,7 @@ import { increment } from 'firebase/firestore';
 import Image from 'next/image';
 import { TelegramUser } from '@/lib/user-utils';
 import TelegramGate from '@/components/telegram-gate';
+import { processBoost } from '@/ai/flows/process-boost-flow';
 
 
 export default function Home({}: {}) {
@@ -246,7 +247,7 @@ export default function Home({}: {}) {
         }
 
         try {
-            const userId = typeof user.id === 'number' ? `user_${user.id}` : `browser_${user.id}`;
+            const userId = getUserId(user);
             const uniquePayload = `${boostId}-${userId}-${Date.now()}`;
 
             const response = await fetch('/api/create-invoice', {
@@ -268,12 +269,20 @@ export default function Home({}: {}) {
 
             const { invoiceUrl } = await response.json();
             
-            tg.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
+            tg.openInvoice(invoiceUrl, async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                  if (status === 'paid') {
                     setBoostDialogOpen(false); // Close the dialog
-                    showDialog("Purchase Successful!", "Your boost is now active. Your mining rate has been increased.");
-                    // Force a refresh of user data to update UI
-                    initializeUser(user);
+                    showDialog("Purchase Successful!", "Your boost is now being activated.");
+                    
+                    // Call the server-side flow to process the purchase
+                    const result = await processBoost({ userId, boostId });
+
+                    if (result.success) {
+                        // Force a refresh of user data to update UI
+                        await initializeUser(user);
+                    } else {
+                        showDialog("Activation Failed", result.reason || "Could not activate the boost. Please contact support.");
+                    }
                  } else if (status !== 'pending') {
                      showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                  }
