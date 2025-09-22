@@ -272,8 +272,13 @@ export default function Home({}: {}) {
             
             tg.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                  if (status === 'paid') {
-                     // The webhook will handle the logic. We can show a pending message here.
-                     showDialog("Payment Successful!", "Your boost is being activated. You can refresh the page in a moment to see the changes.");
+                     showDialog("Payment Processing!", "Your boost is being activated. The app will refresh in a moment.");
+                     // Wait for webhook to process, then refetch data
+                     setTimeout(() => {
+                        if (user) {
+                           initializeUser(user);
+                        }
+                     }, 5000); // 5-second delay
                  } else {
                      showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                  }

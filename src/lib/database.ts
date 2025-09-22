@@ -636,19 +636,19 @@ export const processSuccessfulPayment = async (userId: string, boostId: string, 
             }
 
             const userData = userDoc.data() as UserData;
-            const currentRate = userData.miningRate || (userId.startsWith('user_') ? 1000 : 700);
-            const newRate = currentRate + boostAmount;
-            const updatedBoosts = [...(userData.purchasedBoosts || []), boostId];
             
             // Prevent duplicate boost applications
             if (userData.purchasedBoosts?.includes(boostId)) {
                 console.warn(`User ${userId} tried to purchase already active boost ${boostId}.`);
-                return; 
+                return; // Stop the transaction
             }
 
+            const currentRate = userData.miningRate || (userId.startsWith('user_') ? 1000 : 700);
+            const newRate = currentRate + boostAmount;
+            
             transaction.update(userRef, {
                 miningRate: newRate,
-                purchasedBoosts: updatedBoosts
+                purchasedBoosts: arrayUnion(boostId) // Atomically add the new boost
             });
         });
     } catch (error) {
@@ -657,6 +657,7 @@ export const processSuccessfulPayment = async (userId: string, boostId: string, 
 };
 
     
+
 
 
 
