@@ -613,8 +613,8 @@ export const getReferralCode = async (user: { id: number | string } | null) => (
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
 
-export const processSuccessfulPayment = async (userId: string, boostId: string, boostAmount: number) => {
-    if (!userId || !boostId || !boostAmount) return;
+export const processSuccessfulPayment = async (userId: string, boostId: string, amount: number) => {
+    if (!userId || !boostId) return;
 
     const userRef = doc(db, 'users', userId);
 
@@ -634,7 +634,7 @@ export const processSuccessfulPayment = async (userId: string, boostId: string, 
             }
 
             const currentRate = userData.miningRate || (userId.startsWith('user_') ? 1000 : 700);
-            const newRate = currentRate + boostAmount;
+            const newRate = currentRate + amount;
             
             transaction.update(userRef, {
                 miningRate: newRate,
@@ -645,3 +645,5 @@ export const processSuccessfulPayment = async (userId: string, boostId: string, 
         console.error("Transaction failed for processSuccessfulPayment:", error);
     }
 };
+
+    
