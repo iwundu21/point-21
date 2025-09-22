@@ -16,11 +16,11 @@ import { UserData } from '@/lib/database';
 
 // Define a map for boost details (points, cost, etc.)
 const boostDetails: { [key: string]: { amount: number; cost: number } } = {
-    boost_1: { amount: 2000, cost: 1 },
-    boost_2: { amount: 4000, cost: 5 },
-    boost_3: { amount: 8000, cost: 10 },
-    boost_4: { amount: 20000, cost: 25 },
-    boost_5: { amount: 40000, cost: 50 },
+    boost_1: { amount: 2000, cost: 50 },
+    boost_2: { amount: 4000, cost: 100 },
+    boost_3: { amount: 8000, cost: 200 },
+    boost_4: { amount: 20000, cost: 500 },
+    boost_5: { amount: 40000, cost: 1000 },
 };
 
 const ProcessBoostInputSchema = z.object({
