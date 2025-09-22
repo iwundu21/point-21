@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1 } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -338,7 +338,8 @@ const UserTable = ({
     onCopy,
     totalPoints,
     onBalanceUpdated,
-    onWalletUpdated
+    onWalletUpdated,
+    onForceBoost,
 }: {
     users: UserData[],
     onUpdateStatus: (user: UserData, status: 'active' | 'banned', reason?: string) => void,
@@ -346,7 +347,8 @@ const UserTable = ({
     onCopy: (text: string) => void,
     totalPoints: number,
     onBalanceUpdated: (userId: string, newBalance: number) => void,
-    onWalletUpdated: (userId: string, newAddress: string) => void
+    onWalletUpdated: (userId: string, newAddress: string) => void,
+    onForceBoost: (user: UserData) => void,
 }) => {
    
     return (
@@ -361,6 +363,7 @@ const UserTable = ({
                             <TableHead>Balance</TableHead>
                             <TableHead>Referrals</TableHead>
                             <TableHead>Airdrop Allocation</TableHead>
+                            <TableHead>Boost 1</TableHead>
                             <TableHead>Mining Status</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -371,6 +374,7 @@ const UserTable = ({
                           const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
                           const isMiningActive = user.miningEndTime && user.miningEndTime > Date.now();
                           const isBrowserUser = !user.telegramUser;
+                          const hasBoost1 = user.purchasedBoosts?.includes('boost_1');
 
                           return (
                             <TableRow key={user.id}>
@@ -429,6 +433,12 @@ const UserTable = ({
                                       {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                   </div>
                                 </TableCell>
+                                 <TableCell>
+                                    <Badge variant={hasBoost1 ? 'default' : 'secondary'} className={cn('flex items-center gap-1', hasBoost1 ? 'bg-yellow-500/80' : 'bg-gray-500/80')}>
+                                        <Star className="w-3 h-3" />
+                                        {hasBoost1 ? 'Yes' : 'No'}
+                                    </Badge>
+                                </TableCell>
                                 <TableCell>
                                     <Badge variant={isMiningActive ? 'default' : 'secondary'} className={cn('flex items-center gap-1', isMiningActive ? 'bg-green-500/80' : 'bg-gray-500/80')}>
                                         <Zap className="w-3 h-3" />
@@ -439,12 +449,16 @@ const UserTable = ({
                                     <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right space-x-2">
+                                    {!hasBoost1 && (
+                                        <Button variant="outline" size="icon" onClick={() => onForceBoost(user)}>
+                                            <Star className="h-4 w-4 text-yellow-500"/>
+                                        </Button>
+                                    )}
                                     {user.status === 'active' ? (
                                         <Button variant="destructive" size="icon" onClick={() => onUpdateStatus(user, 'banned', 'Your account is blocked. If you think this is a mistake, please contact support.')}><UserX className="h-4 w-4"/></Button>
                                     ) : (
                                         <Button variant="secondary" size="icon" onClick={() => onUpdateStatus(user, 'active')}><UserCheck className="h-4 w-4"/></Button>
                                     )}
-
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
@@ -674,6 +688,24 @@ export default function AdminPage() {
         
         const newTotalPoints = await getTotalActivePoints();
         setTotalPoints(newTotalPoints);
+    };
+
+    const handleForceBoost = async (user: UserData) => {
+        const userIdentifier = user.telegramUser || { id: user.id };
+        const setUsers = searchTerm.trim() ? setSearchedUsers : setAllUsers;
+
+        try {
+            await forceAddBoosterPack1(userIdentifier);
+            setUsers(currentUsers =>
+                currentUsers.map(u =>
+                    u.id === user.id ? { ...u, purchasedBoosts: [...(u.purchasedBoosts || []), 'boost_1'] } : u
+                )
+            );
+            toast({ title: 'Boost Granted', description: `${getDisplayName(user)} has been granted Booster Pack 1.` });
+        } catch (error) {
+            console.error("Failed to force boost:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not grant the boost.' });
+        }
     };
 
 
@@ -1054,6 +1086,7 @@ export default function AdminPage() {
                             totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
+                            onForceBoost={handleForceBoost}
                         />
                     </TabsContent>
                     <TabsContent value="tg-banned" className="mt-4">
@@ -1065,6 +1098,7 @@ export default function AdminPage() {
                             totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
+                            onForceBoost={handleForceBoost}
                         />
                     </TabsContent>
                     <TabsContent value="browser-active" className="mt-4">
@@ -1076,6 +1110,7 @@ export default function AdminPage() {
                             totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
+                            onForceBoost={handleForceBoost}
                         />
                     </TabsContent>
                      <TabsContent value="browser-banned" className="mt-4">
@@ -1087,6 +1122,7 @@ export default function AdminPage() {
                             totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
+                            onForceBoost={handleForceBoost}
                         />
                     </TabsContent>
                 </Tabs>

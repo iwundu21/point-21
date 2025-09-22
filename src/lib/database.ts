@@ -1,7 +1,7 @@
 
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion } from 'firebase/firestore';
 
 // THIS IS NOW A REAL DATABASE USING FIRESTORE.
 
@@ -479,6 +479,18 @@ export const banUser = async (user: {id: number | string} | null, reason?: strin
     await saveUserData(user, dataToSave);
 }
 
+export const forceAddBoosterPack1 = async (user: {id: string | number}) => {
+    const userDocId = getUserId(user);
+    const userRef = doc(db, 'users', userDocId);
+    
+    // Atomically add 'boost_1' to the purchasedBoosts array.
+    // arrayUnion ensures no duplicates are added.
+    await setDoc(userRef, { 
+        purchasedBoosts: arrayUnion('boost_1') 
+    }, { merge: true });
+};
+
+
 // --- Social Task Admin Functions ---
 export const addSocialTask = async (task: Omit<SocialTask, 'id' | 'createdAt' | 'completionCount'>) => {
     const tasksCollection = collection(db, 'socialTasks');
@@ -645,6 +657,7 @@ export const processSuccessfulPayment = async (userId: string, boostId: string, 
 };
 
     
+
 
 
 
