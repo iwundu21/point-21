@@ -47,11 +47,11 @@ export async function POST(req: NextRequest) {
             }
 
             const boostDetails = {
-                'boost_1': { cost: 50, amount: 2000 },
-                'boost_2': { cost: 100, amount: 4000 },
-                'boost_3': { cost: 200, amount: 8000 },
-                'boost_4': { cost: 500, amount: 20000 },
-                'boost_5': { cost: 1000, amount: 40000 },
+                'boost_1': { cost: 1, amount: 2000 },
+                'boost_2': { cost: 1, amount: 4000 },
+                'boost_3': { cost: 1, amount: 8000 },
+                'boost_4': { cost: 1, amount: 20000 },
+                'boost_5': { cost: 1, amount: 40000 },
             };
 
             const boost = boostDetails[boostId as keyof typeof boostDetails];
