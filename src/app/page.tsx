@@ -62,6 +62,8 @@ export default function Home({}: {}) {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogContent, setDialogContent] = useState({ title: '', description: '', action: null as React.ReactNode | null });
+  const [boostDialogOpen, setBoostDialogOpen] = useState(false);
+
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
     setDialogContent({ title, description, action });
@@ -268,8 +270,10 @@ export default function Home({}: {}) {
             
             tg.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                  if (status === 'paid') {
-                    showDialog("Payment Processing!", "Your boost is being activated. The app will update momentarily.");
-                    // The visibilitychange event handler will now take care of refetching data.
+                    setBoostDialogOpen(false); // Close the dialog
+                    showDialog("Purchase Successful!", "Your boost is now active. Your mining rate has been increased.");
+                    // Force a refresh of user data to update UI
+                    initializeUser(user);
                  } else if (status !== 'pending') {
                      showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
                  }
@@ -381,7 +385,7 @@ export default function Home({}: {}) {
                     miningReward={miningReward}
                 />
               </div>
-              <Dialog>
+              <Dialog open={boostDialogOpen} onOpenChange={setBoostDialogOpen}>
                 <DialogTrigger asChild>
                     <Button 
                         variant="outline" 
