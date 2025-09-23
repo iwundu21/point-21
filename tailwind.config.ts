@@ -113,7 +113,7 @@ export default {
         'fast-pulse': 'fast-pulse 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1)',
         'heartbeat': 'heartbeat 1.s infinite ease-in-out',
         'fade-in': 'fade-in 0.5s ease-in-out',
-        'turn': 'turn 6s linear infinite',
+        'turn': 'turn 5s linear infinite',
       },
     },
   },
