@@ -87,7 +87,7 @@ export default function Home({}: {}) {
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
 
-       if (isNewUser && typeof currentUser.id === 'number') {
+       if (isNewUser && typeof currentUser.id === 'number' && !freshUserData.hasOnboarded) {
         setShowOnboarding(true);
         setIsLoading(false);
         setUser(currentUser);
@@ -494,7 +494,12 @@ export default function Home({}: {}) {
             <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
             <div className="w-full max-w-sm">
-            <MissionsCard streak={dailyStreak} rank={rankInfo.rank} league={rankInfo.league} />
+            <MissionsCard 
+                streak={dailyStreak} 
+                rank={rankInfo.rank} 
+                league={rankInfo.league} 
+                userData={userData}
+            />
             </div>
         </main>
         <Footer />

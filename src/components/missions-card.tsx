@@ -4,14 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Gift, Zap, Crown, Flame } from 'lucide-react';
 import RankCard from './rank-card';
 import DailyStreak from './daily-streak';
+import AchievementCard from './achievement-card';
+import { UserData } from "@/lib/database";
 
 interface MissionsCardProps {
   streak: number;
   rank: number;
   league: string;
+  userData: UserData | null;
 }
 
-const MissionsCard = ({ streak, rank, league }: MissionsCardProps) => {
+const MissionsCard = ({ streak, rank, league, userData }: MissionsCardProps) => {
     return (
         <div className="w-full max-w-sm p-4 space-y-6">
             <div className="text-center">
@@ -23,6 +26,7 @@ const MissionsCard = ({ streak, rank, league }: MissionsCardProps) => {
                     rank={rank}
                     league={league}
                 />
+                <AchievementCard userData={userData} />
             </div>
         </div>
     )
