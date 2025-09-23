@@ -55,7 +55,7 @@ const completeOnboardingFlow = ai.defineFlow(
     try {
         const { userData } = await getUserData(telegramUser);
         
-        // Prevent re-running onboarding
+        // Prevent re-running onboarding bonus calculation if it's already done
         if (userData.hasOnboarded) {
              const creationDate = getTelegramCreationDate(telegramUser.id);
              return { 
@@ -72,11 +72,14 @@ const completeOnboardingFlow = ai.defineFlow(
         const ageInMs = now.getTime() - creationDate.getTime();
         const ageInMonths = Math.floor(ageInMs / (1000 * 60 * 60 * 24 * 30.44)); // Average days in a month
 
-        let initialBalance = 500; // Base bonus for everyone who onboards
+        let initialBalance = userData.balance; // Start with the converted balance
         if (ageInMonths >= 1) {
             const ageBonus = ageInMonths * 10;
             initialBalance += ageBonus;
         }
+
+        // Add base bonus for all users completing onboarding for the first time
+        initialBalance += 500;
 
         const dataToSave: Partial<UserData> = {
             balance: initialBalance,

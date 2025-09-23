@@ -68,6 +68,7 @@ export default function Home({}: {}) {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isNewUserForOnboarding, setIsNewUserForOnboarding] = useState(false);
+  const [onboardingInitialData, setOnboardingInitialData] = useState<UserData | null>(null);
 
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
@@ -90,12 +91,12 @@ export default function Home({}: {}) {
       const isTelegramUser = typeof currentUser.id === 'number';
 
       // --- ONBOARDING & MERGE FLOW ---
-      if (isTelegramUser && !freshUserData.hasOnboarded) {
+       if (isTelegramUser && !freshUserData.hasOnboarded) {
+          setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
-          setIsNewUserForOnboarding(isNewUser); // Pass isNewUser to onboarding component
+          setIsNewUserForOnboarding(isNewUser); 
           setIsLoading(false);
           setUser(currentUser);
-          setUserData(freshUserData);
           return; // Stop initialization to show onboarding
       }
 
@@ -297,9 +298,12 @@ export default function Home({}: {}) {
         }
   };
 
-  const handleOnboardingComplete = (initialBalance: number) => {
+  const handleOnboardingComplete = () => {
       setShowOnboarding(false);
+      setOnboardingInitialData(null);
       if (user) {
+        // Re-initialize to get latest data after onboarding
+        setIsLoading(true);
         initializeUser(user);
       }
   }
@@ -319,8 +323,8 @@ export default function Home({}: {}) {
       );
   }
 
-  if (showOnboarding && user) {
-    return <Onboarding user={user} isNewUser={isNewUserForOnboarding} onComplete={handleOnboardingComplete} />;
+  if (showOnboarding && user && onboardingInitialData) {
+    return <Onboarding user={user} isNewUser={isNewUserForOnboarding} onComplete={handleOnboardingComplete} initialData={onboardingInitialData}/>;
   }
 
 

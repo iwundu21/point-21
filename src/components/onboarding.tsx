@@ -4,13 +4,15 @@
 import { useState, useEffect } from 'react';
 import { TelegramUser } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck } from 'lucide-react';
+import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck, RefreshCw } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
+import { UserData, saveUserData } from '@/lib/database';
 
 interface OnboardingProps {
     user: TelegramUser;
     isNewUser: boolean;
-    onComplete: (initialBalance: number) => void;
+    onComplete: () => void;
+    initialData: UserData;
 }
 
 const getGreeting = () => {
@@ -20,7 +22,7 @@ const getGreeting = () => {
     return 'Good Evening';
 };
 
-const Onboarding = ({ user, isNewUser, onComplete }: OnboardingProps) => {
+const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProps) => {
     const [stage, setStage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [bonusResult, setBonusResult] = useState<{
@@ -28,10 +30,36 @@ const Onboarding = ({ user, isNewUser, onComplete }: OnboardingProps) => {
         bonus: number;
     } | null>(null);
 
+    // Determine if the conversion step should be shown
+    const needsConversion = !isNewUser && !initialData.hasConvertedToExn;
+    const oldBalance = initialData.balance;
+    const newBalance = Math.floor(oldBalance / 1000);
+
+    const firstStage = needsConversion ? 0 : 1;
     const finalStage = isNewUser ? 5 : 4;
 
+
+    useEffect(() => {
+        setStage(firstStage);
+    }, [firstStage]);
+
     const handleNext = async () => {
-        if (stage === 1) {
+        if (stage === 0) { // Conversion stage
+            setIsLoading(true);
+            try {
+                await saveUserData(user, {
+                    balance: newBalance,
+                    hasConvertedToExn: true,
+                });
+                 setStage(1);
+            } catch (e) {
+                 console.error("Conversion failed:", e);
+                 showErrorAndExit();
+            } finally {
+                setIsLoading(false);
+            }
+
+        } else if (stage === 1) { // Loyalty bonus calculation
              setIsLoading(true);
              try {
                 const result = await completeOnboarding({ user });
@@ -42,7 +70,6 @@ const Onboarding = ({ user, isNewUser, onComplete }: OnboardingProps) => {
                     });
                      setStage(2);
                 } else {
-                    // Fallback if the flow fails
                     showErrorAndExit();
                 }
              } catch (e) {
@@ -53,25 +80,37 @@ const Onboarding = ({ user, isNewUser, onComplete }: OnboardingProps) => {
              }
         } else if (stage === finalStage) {
             // Final stage, complete the onboarding
-             if (bonusResult) {
-                onComplete(bonusResult.bonus);
-            } else {
-                 // Should not happen, but as a fallback
-                onComplete(0);
-            }
+            onComplete();
         } else {
             setStage(prev => prev + 1);
         }
     };
     
     const showErrorAndExit = () => {
-         // In a real app, you'd show a proper error message
-         // For now, we'll just exit the onboarding.
-        onComplete(0);
+        onComplete();
     }
 
     const renderStage = () => {
         switch (stage) {
+            case 0:
+                return (
+                    <div className="text-center animate-fade-in space-y-6">
+                        <h1 className="text-4xl font-bold text-foreground">Welcome Back!</h1>
+                        <p className="text-xl text-muted-foreground">We've updated our points system.</p>
+                         <div className="py-8 flex flex-col items-center justify-center gap-4">
+                            <RefreshCw className="w-20 h-20 text-primary" />
+                            <p className="text-base text-muted-foreground">Your E-Points are being converted to EXN.</p>
+                            <div className="mt-4 space-y-2 text-center">
+                                <p className="text-lg text-muted-foreground">Previous Balance:</p>
+                                <p className="text-3xl font-bold text-muted-foreground line-through">{oldBalance.toLocaleString()} E-Points</p>
+                                <p className="text-sm text-primary mt-2">(Ratio: 1000 E-Points = 1 EXN)</p>
+                                <p className="text-lg text-gold mt-4">New Balance:</p>
+                                <p className="text-5xl font-bold text-gold animate-fast-pulse">{newBalance.toLocaleString()} EXN</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Click below to confirm the conversion.</p>
+                    </div>
+                );
             case 1:
                 return (
                     <div className="text-center animate-fade-in space-y-4">
@@ -165,6 +204,12 @@ const Onboarding = ({ user, isNewUser, onComplete }: OnboardingProps) => {
         }
     }
 
+    const getButtonText = () => {
+        if (stage === 0) return 'Convert to EXN';
+        if (stage === finalStage) return 'Enter App';
+        return 'Continue';
+    }
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 animate-fade-in">
             <div className="flex-grow flex flex-col items-center justify-center w-full">
@@ -172,7 +217,7 @@ const Onboarding = ({ user, isNewUser, onComplete }: OnboardingProps) => {
             </div>
             <div className="w-full max-w-sm pb-8">
                 <Button onClick={handleNext} disabled={isLoading} className="w-full h-12 text-lg">
-                    {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : (stage === finalStage ? 'Enter App' : 'Continue')}
+                    {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : getButtonText()}
                 </Button>
             </div>
         </div>
