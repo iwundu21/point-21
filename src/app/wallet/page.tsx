@@ -279,8 +279,7 @@ export default function WalletPage() {
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                         <div className="flex items-center space-x-2">
-                            <Coins className="w-6 h-6 text-gold" />
-                            <span className="text-2xl font-bold text-gold">{balance.toLocaleString()}</span>
+                            <span className="text-2xl font-bold text-gold">{balance.toLocaleString()} EXN</span>
                         </div>
                     </CardContent>
                 </Card>

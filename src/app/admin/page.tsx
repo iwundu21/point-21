@@ -413,8 +413,7 @@ const UserTable = ({
                                 <TableCell>{user.referrals}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1 text-gold">
-                                      <Coins className="w-4 h-4" />
-                                      {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                      {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })} EXN
                                   </div>
                                 </TableCell>
                                  <TableCell>
