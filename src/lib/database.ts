@@ -9,6 +9,7 @@ export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'we
 export interface UserData {
     id: string; // Document ID
     balance: number;
+    ePointsBalance?: number; // For one-time conversion
     miningEndTime: number | null;
     miningRate: number;
     dailyStreak: { count: number; lastLogin: string };
@@ -59,6 +60,7 @@ export const getUserId = (user: { id: number | string } | null): string => {
 
 const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     balance: 0,
+    ePointsBalance: 0,
     miningEndTime: null,
     miningRate: user && typeof user.id === 'number' ? 1000 : 700,
     dailyStreak: { count: 0, lastLogin: '' },
@@ -194,16 +196,18 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             dataToUpdate.referralCode = generateReferralCode();
         }
 
-        const finalUserData = { 
+        // Logic to stage pre-conversion balances
+        if (fetchedData.hasConvertedToExn === false && fetchedData.ePointsBalance === undefined && (fetchedData.balance || 0) > 0) {
+            dataToUpdate.ePointsBalance = fetchedData.balance;
+            dataToUpdate.balance = 0;
+        }
+
+        const finalUserData: UserData = { 
             ...defaultUserData(user), 
             ...fetchedData,
-            ...dataToUpdate,
+            ...dataToUpdate, // Apply staging changes
             id: userSnap.id 
         };
-        
-        if (fetchedData.hasConvertedToExn === false) {
-            finalUserData.balance = fetchedData.balance || 0;
-        }
 
         if (typeof user.id === 'number') {
             finalUserData.telegramUser = user as TelegramUser;
@@ -220,6 +224,7 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             ...defaultUserData(user),
             referralCode: generateReferralCode(),
             hasConvertedToExn: true, // New users start with EXN
+            ePointsBalance: 0,
         };
         await setDoc(userRef, newUser);
         await incrementUserCount(isTelegramUser ? 'telegram' : 'browser');
@@ -240,16 +245,16 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     // Check for point conversion
     const isConverting = data.hasConvertedToExn && !oldData.hasConvertedToExn;
     if (isConverting && data.balance !== undefined) {
-        const oldBalance = oldData.balance;
-        const newBalance = data.balance;
-        const difference = newBalance - oldBalance;
+        const oldEPoints = oldData.ePointsBalance || 0;
+        const newExnBalance = data.balance;
+        const difference = newExnBalance - oldEPoints;
         
-        if (isCurrentlyActive) {
-            await incrementTotalPoints(difference); // This will be a negative value, correctly decreasing the total
+        if (isCurrentlyActive && oldEPoints > 0) {
+            await incrementTotalPoints(difference);
         }
 
         // Save and exit to prevent double counting
-        await setDoc(userRef, data, { merge: true });
+        await setDoc(userRef, {...data, ePointsBalance: null}, { merge: true });
         return;
     }
 

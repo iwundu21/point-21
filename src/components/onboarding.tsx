@@ -42,7 +42,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
     } | null>(null);
 
     // Data for conversion stage
-    const oldBalance = initialData.balance;
+    const oldBalance = initialData.ePointsBalance || 0;
     const newBalance = Math.floor(oldBalance / 1000);
 
     // Data for booster reward stage
