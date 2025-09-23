@@ -16,7 +16,7 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating, miningReward })
   return (
     <Card className="w-full glass-card">
       <CardHeader className="p-2">
-        <CardTitle className="text-center text-muted-foreground font-normal text-sm">E-point</CardTitle>
+        <CardTitle className="text-center text-muted-foreground font-normal text-sm">EXN</CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-center space-x-2 p-2">
         <Coins className="w-6 h-6 text-gold" />

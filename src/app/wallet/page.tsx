@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -281,7 +280,7 @@ export default function WalletPage() {
                     <CardContent className="p-4 pt-0">
                         <div className="flex items-center space-x-2">
                             <Coins className="w-6 h-6 text-gold" />
-                            <span className="text-2xl font-bold text-gold">{balance.toLocaleString()} E-points</span>
+                            <span className="text-2xl font-bold text-gold">{balance.toLocaleString()} EXN</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -304,7 +303,7 @@ export default function WalletPage() {
                         <EligibilityItem text="Wallet address submitted" isMet={!!savedAddress} />
                         <EligibilityItem text="Account verified" isMet={isVerified} />
                         <EligibilityItem text="Active user status" isMet={userData?.status === 'active'} />
-                        <EligibilityItem text="Earned at least 10,000 points" isMet={(userData?.balance || 0) >= 10000} />
+                        <EligibilityItem text="Earned at least 10,000 EXN" isMet={(userData?.balance || 0) >= 10000} />
                         <EligibilityItem text="Purchased Booster Pack 1" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} />
                     </CardContent>
                 </Card>

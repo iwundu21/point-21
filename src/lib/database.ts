@@ -1,15 +1,13 @@
 
-
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion } from 'firebase/firestore';
 import type { TelegramUser } from './user-utils';
 
-// THIS IS NOW A REAL DATABASE USING FIRESTORE.
 export interface UserData {
     id: string; // Document ID
     balance: number;
     miningEndTime: number | null;
-    miningRate: number; // Daily mining points
+    miningRate: number;
     dailyStreak: { count: number; lastLogin: string };
     verificationStatus: 'verified' | 'unverified' | 'failed' | 'detecting';
     faceVerificationUri: string | null;
@@ -40,6 +38,8 @@ export interface UserData {
     hasMergedBrowserAccount?: boolean;
     purchasedBoosts: string[];
     miningActivationCount: number;
+    hasOnboarded?: boolean; // New flag for the new onboarding flow
+    hasConvertedToExn?: boolean; // New flag for EXN conversion
 }
 
 const generateReferralCode = () => {
@@ -85,6 +85,8 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     hasMergedBrowserAccount: false,
     purchasedBoosts: [],
     miningActivationCount: 0,
+    hasOnboarded: false,
+    hasConvertedToExn: false,
 });
 
 // --- User Count Management ---
@@ -178,39 +180,49 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-        const fetchedData = userSnap.data() as Partial<Omit<UserData, 'id'>>;
-        let shouldSave = false;
+        const fetchedData = userSnap.data() as Partial<UserData>;
+        let dataToUpdate: Partial<UserData> = {};
+        
+        // --- ONE-TIME CONVERSION LOGIC ---
+        if (!fetchedData.hasConvertedToExn) {
+            const oldBalance = fetchedData.balance || 0;
+            if (oldBalance > 0) {
+                 dataToUpdate.balance = oldBalance / 10000;
+            }
+            dataToUpdate.hasConvertedToExn = true;
+        }
+        // --- END CONVERSION LOGIC ---
+
         if (!fetchedData.referralCode) {
-            fetchedData.referralCode = generateReferralCode();
-            shouldSave = true;
+            dataToUpdate.referralCode = generateReferralCode();
         }
 
-        const finalUserData = { ...defaultUserData(user), ...fetchedData, id: userSnap.id };
+        const finalUserData = { 
+            ...defaultUserData(user), 
+            ...fetchedData,
+            ...dataToUpdate,
+            id: userSnap.id 
+        };
+
         if (typeof user.id === 'number') {
             finalUserData.telegramUser = user as TelegramUser;
         }
 
-        if (shouldSave) {
-            await setDoc(userRef, { referralCode: finalUserData.referralCode }, { merge: true });
+        if (Object.keys(dataToUpdate).length > 0) {
+            await setDoc(userRef, dataToUpdate, { merge: true });
         }
         
         return { userData: finalUserData, isNewUser: false };
     } else {
-        // For Telegram users, we create the user on first load.
-        // For Browser users, we wait until they save their wallet.
         const isTelegramUser = typeof user.id === 'number';
-        if (isTelegramUser) {
-            const newUser: Omit<UserData, 'id'> = {
-                ...defaultUserData(user),
-                referralCode: generateReferralCode(),
-            };
-            await setDoc(userRef, newUser);
-            await incrementUserCount('telegram');
-            return { userData: { ...newUser, id: userId }, isNewUser: true };
-        } else {
-            // Return default data for a new browser user without saving to DB.
-            return { userData: { ...defaultUserData(user), id: userId }, isNewUser: true };
-        }
+        const newUser: Omit<UserData, 'id'> = {
+            ...defaultUserData(user),
+            referralCode: generateReferralCode(),
+            hasConvertedToExn: true, // New users start with EXN
+        };
+        await setDoc(userRef, newUser);
+        await incrementUserCount(isTelegramUser ? 'telegram' : 'browser');
+        return { userData: { ...newUser, id: userId }, isNewUser: true };
     }
 };
 
@@ -612,38 +624,3 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
-
-export const processSuccessfulPayment = async (userId: string, boostId: string, amount: number) => {
-    if (!userId || !boostId) return;
-
-    const userRef = doc(db, 'users', userId);
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) {
-                throw new Error(`User ${userId} not found`);
-            }
-
-            const userData = userDoc.data() as UserData;
-            
-            // Prevent duplicate boost applications
-            if (userData.purchasedBoosts?.includes(boostId)) {
-                console.warn(`User ${userId} tried to purchase already active boost ${boostId}.`);
-                return; // Stop the transaction
-            }
-
-            const currentRate = userData.miningRate || (userId.startsWith('user_') ? 1000 : 700);
-            const newRate = currentRate + amount;
-            
-            transaction.update(userRef, {
-                miningRate: newRate,
-                purchasedBoosts: arrayUnion(boostId) // Atomically add the new boost
-            });
-        });
-    } catch (error) {
-        console.error("Transaction failed for processSuccessfulPayment:", error);
-    }
-};
-
-    

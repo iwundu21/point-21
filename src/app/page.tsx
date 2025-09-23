@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getUserData, saveUserData, UserData, getUserRank, getUserId } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldBan, Loader2, Bot, ArrowRight, Wallet, Zap, Star } from 'lucide-react';
+import { ShieldBan, Loader2, Bot, Wallet, Zap, Star } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,7 @@ import Image from 'next/image';
 import { TelegramUser } from '@/lib/user-utils';
 import TelegramGate from '@/components/telegram-gate';
 import { processBoost } from '@/ai/flows/process-boost-flow';
+import Onboarding from '@/components/onboarding';
 
 
 export default function Home({}: {}) {
@@ -65,6 +66,8 @@ export default function Home({}: {}) {
   const [dialogContent, setDialogContent] = useState({ title: '', description: '', action: null as React.ReactNode | null });
   const [boostDialogOpen, setBoostDialogOpen] = useState(false);
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
     setDialogContent({ title, description, action });
@@ -84,12 +87,19 @@ export default function Home({}: {}) {
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
 
+       if (isNewUser && typeof currentUser.id === 'number') {
+        setShowOnboarding(true);
+        setIsLoading(false);
+        setUser(currentUser);
+        setUserData(freshUserData);
+        return;
+      }
+
 
       // --- MERGE FLOW FOR NEW TELEGRAM USERS ---
       // This will trigger for any brand new TG user that does not have the `hasMergedBrowserAccount` flag set.
-      // Existing users will already have it (or it will be added), new users won't.
       const isTelegramUser = typeof currentUser.id === 'number';
-      if (isTelegramUser && isNewUser) {
+      if (isTelegramUser && isNewUser && !freshUserData.hasOnboarded) {
           router.replace('/merge');
           return; // Stop initialization until merge flow is complete
       }
@@ -107,7 +117,6 @@ export default function Home({}: {}) {
 
       let currentBalance = freshUserData.balance;
       let streakData = freshUserData.dailyStreak;
-      let shouldSave = false;
       
       setHasRedeemedReferral(freshUserData.referralBonusApplied);
       const allWelcomeTasksDone = Object.values(freshUserData.welcomeTasks || {}).every(Boolean);
@@ -121,7 +130,10 @@ export default function Home({}: {}) {
         const reward = freshUserData.miningRate || (typeof currentUser.id === 'number' ? 1000 : 700);
         currentBalance += reward;
         freshUserData.miningEndTime = null; 
-        shouldSave = true;
+        await saveUserData(currentUser, { 
+          balance: currentBalance, 
+          miningEndTime: freshUserData.miningEndTime 
+        });
       }
 
       if (streakData.lastLogin !== today) {
@@ -142,7 +154,6 @@ export default function Home({}: {}) {
         await saveUserData(currentUser, { 
           balance: currentBalance, 
           dailyStreak: streakData, 
-          miningEndTime: freshUserData.miningEndTime 
         });
         
       } else {
@@ -150,13 +161,7 @@ export default function Home({}: {}) {
       }
       
       setBalance(currentBalance);
-      
-      if (shouldSave) {
-        await saveUserData(currentUser, { 
-          balance: currentBalance, 
-          miningEndTime: freshUserData.miningEndTime 
-        });
-      }
+
     } catch (error) {
       console.error("Initialization failed:", error);
       showDialog("Error", "Could not load user data. Please try again later.");
@@ -237,7 +242,7 @@ export default function Home({}: {}) {
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
-  const handleBoost = async (boostId: string, cost: number, title: string) => {
+   const handleBoost = async (boostId: string, cost: number, title: string) => {
         if (!user || !userData || !window.Telegram?.WebApp) return;
         const tg = window.Telegram.WebApp;
 
@@ -271,14 +276,12 @@ export default function Home({}: {}) {
             
             tg.openInvoice(invoiceUrl, async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
                  if (status === 'paid') {
-                    setBoostDialogOpen(false); // Close the dialog
+                    setBoostDialogOpen(false);
                     showDialog("Purchase Successful!", "Your boost is now being activated.");
                     
-                    // Call the server-side flow to process the purchase
                     const result = await processBoost({ userId, boostId });
 
                     if (result.success) {
-                        // Force a refresh of user data to update UI
                         await initializeUser(user);
                     } else {
                         showDialog("Activation Failed", result.reason || "Could not activate the boost. Please contact support.");
@@ -294,6 +297,14 @@ export default function Home({}: {}) {
         }
   };
 
+  const handleOnboardingComplete = (initialBalance: number) => {
+      setShowOnboarding(false);
+      if (user) {
+        initializeUser(user);
+      }
+  }
+
+
   if (isLoading) {
     return (
         <div className="flex justify-center items-center h-screen">
@@ -306,6 +317,10 @@ export default function Home({}: {}) {
       return (
          <TelegramGate />
       );
+  }
+
+  if (showOnboarding && user) {
+    return <Onboarding user={user} onComplete={handleOnboardingComplete} />;
   }
 
 
@@ -407,14 +422,14 @@ export default function Home({}: {}) {
                     <DialogHeader>
                         <DialogTitle>Boost Your Mining Speed</DialogTitle>
                         <DialogDescription>
-                            Increase your daily E-point earnings by purchasing a boost with Telegram Stars. Boosts are stackable.
+                            Increase your daily EXN earnings by purchasing a boost with Telegram Stars. Boosts are stackable.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <Card className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold text-foreground">Booster Pack 1</p>
-                                <p className="font-bold text-sm">+2,000 Points Daily</p>
+                                <p className="font-bold text-sm">+2,000 EXN Daily</p>
                                 <p className="text-xs text-muted-foreground flex items-center">
                                     Cost: 50 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
@@ -426,7 +441,7 @@ export default function Home({}: {}) {
                         <Card className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold text-foreground">Booster Pack 2</p>
-                                <p className="font-bold text-sm">+4,000 Points Daily</p>
+                                <p className="font-bold text-sm">+4,000 EXN Daily</p>
                                 <p className="text-xs text-muted-foreground flex items-center">
                                     Cost: 100 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
@@ -438,7 +453,7 @@ export default function Home({}: {}) {
                          <Card className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold text-foreground">Booster Pack 3</p>
-                                <p className="font-bold text-sm">+8,000 Points Daily</p>
+                                <p className="font-bold text-sm">+8,000 EXN Daily</p>
                                 <p className="text-xs text-muted-foreground flex items-center">
                                     Cost: 200 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
@@ -450,7 +465,7 @@ export default function Home({}: {}) {
                          <Card className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold text-foreground">Booster Pack 4</p>
-                                <p className="font-bold text-sm">+20,000 Points Daily</p>
+                                <p className="font-bold text-sm">+20,000 EXN Daily</p>
                                 <p className="text-xs text-muted-foreground flex items-center">
                                     Cost: 500 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>
@@ -462,7 +477,7 @@ export default function Home({}: {}) {
                          <Card className="p-4 flex justify-between items-center">
                             <div>
                                 <p className="font-semibold text-foreground">Booster Pack 5</p>
-                                <p className="font-bold text-sm">+40,000 Points Daily</p>
+                                <p className="font-bold text-sm">+40,000 EXN Daily</p>
                                 <p className="text-xs text-muted-foreground flex items-center">
                                     Cost: 1000 <Star className="w-3 h-3 ml-1 text-yellow-400" />
                                 </p>

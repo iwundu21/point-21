@@ -32,7 +32,7 @@ const TaskItem = ({ icon, title, description, points, link, completed, isVerifyi
             <div className="flex-grow space-y-1">
                 <h3 className="font-semibold">{title}</h3>
                 <p className="text-xs text-muted-foreground">{description}</p>
-                 <p className="text-xs font-bold text-gold">+{points} E-points</p>
+                 <p className="text-xs font-bold text-gold">+{points} EXN</p>
             </div>
             <Button
                 size="sm"

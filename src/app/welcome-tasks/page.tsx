@@ -18,22 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import Image from 'next/image';
-
-declare global {
-  interface Window {
-    Telegram: any;
-  }
-}
-
-interface User {
-  id: number | string;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-  is_premium?: boolean;
-  photo_url?: string;
-}
+import { TelegramUser } from '@/lib/user-utils';
 
 type WelcomeTasks = {
     followedOnX: boolean;
@@ -43,7 +28,7 @@ type WelcomeTasks = {
 };
 
 export default function WelcomeTasksPage() {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<TelegramUser | null>(null);
     const [tasks, setTasks] = useState<WelcomeTasks>({
         followedOnX: false,
         subscribedOnTelegram: false,
@@ -65,7 +50,7 @@ export default function WelcomeTasksPage() {
 
     useEffect(() => {
         const init = () => {
-            let currentUser: User | null = null;
+            let currentUser: TelegramUser | null = null;
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
                 const tg = window.Telegram.WebApp;
                 currentUser = tg.initDataUnsafe.user;
@@ -127,7 +112,7 @@ export default function WelcomeTasksPage() {
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 300 E-points.");
+                    showDialog("Success!", "You've earned 300 EXN.");
                 }
                 setVerifyingTaskId(null);
             }, 10000); // 10 second delay to simulate action
@@ -148,7 +133,7 @@ export default function WelcomeTasksPage() {
                     const updatedBalance = userData.balance + 300;
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 300 E-points.");
+                    showDialog("Success!", "You've earned 300 EXN.");
                 } else {
                     showDialog("Verification Failed", result.error || "You must join the channel first.");
                 }
@@ -169,7 +154,7 @@ export default function WelcomeTasksPage() {
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 300 E-points.");
+                    showDialog("Success!", "You've earned 300 EXN.");
                 }
                 setVerifyingTaskId(null);
             }, 9000); // 9 second delay for user to perform action

@@ -20,22 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import Image from 'next/image';
-
-declare global {
-  interface Window {
-    Telegram: any;
-  }
-}
-
-interface User {
-  id: number | string;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-  is_premium?: boolean;
-  photo_url?: string;
-}
+import { TelegramUser } from '@/lib/user-utils';
 
 export const renderIcon = (iconName: string, className?: string) => {
     const imageClassName = className?.replace('w-6', 'w-5').replace('h-6', 'h-5');
@@ -54,7 +39,7 @@ export const renderIcon = (iconName: string, className?: string) => {
 const TASKS_PER_PAGE = 10;
 
 export default function TasksPage() {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<TelegramUser | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [allTasks, setAllTasks] = useState<SocialTask[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +59,7 @@ export default function TasksPage() {
 
     useEffect(() => {
         const init = () => {
-            let currentUser: User | null = null;
+            let currentUser: TelegramUser | null = null;
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
                 const tg = window.Telegram.WebApp;
                 currentUser = tg.initDataUnsafe.user;
@@ -145,7 +130,7 @@ export default function TasksPage() {
                 
                 const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
                 setUserData(updatedData);
-                showDialog("Success!", `You've earned ${task.points} E-points.`);
+                showDialog("Success!", `You've earned ${task.points} EXN.`);
             } catch (error) {
                  console.error("Error completing task:", error);
                  showDialog("Error", "Could not complete the task.");
@@ -212,7 +197,7 @@ export default function TasksPage() {
                         Social Engagement
                     </h1>
                      <p className="text-sm text-muted-foreground pt-2">
-                        Engage with us on social media to earn more E-points!
+                        Engage with us on social media to earn more EXN!
                     </p>
                 </div>
                  {isBrowserUser && (

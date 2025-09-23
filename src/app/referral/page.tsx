@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,27 +18,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-declare global {
-  interface Window {
-    Telegram: any;
-  }
-}
-
-interface User {
-    id: number | string;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    language_code?: string;
-    is_premium?: boolean;
-    photo_url?: string;
-}
+import { TelegramUser } from '@/lib/user-utils';
 
 interface ReferralPageProps {}
 
 export default function ReferralPage({}: ReferralPageProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<TelegramUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [referralCode, setReferralCode] = useState('');
   const [enteredCode, setEnteredCode] = useState('');
@@ -52,7 +36,7 @@ export default function ReferralPage({}: ReferralPageProps) {
   const [dialogDescription, setDialogDescription] = useState('');
 
   const botUrl = "https://t.me/Exnuspoint_bot";
-  const shareMessage = `🚀 Join me on the Exnus Points mission! Get a 50 E-point welcome bonus when you use my code. ✨\n\nThe official TGE is coming in December 2025 - let's start earning together!\n\nMy referral code: ${referralCode}\n\nJoin here: ${botUrl}`;
+  const shareMessage = `🚀 Join me on the Exnus Points mission! Get a 50 EXN welcome bonus when you use my code. ✨\n\nThe official TGE is coming in December 2025 - let's start earning together!\n\nMy referral code: ${referralCode}\n\nJoin here: ${botUrl}`;
 
   const showDialog = (title: string, description: string) => {
     setDialogTitle(title);
@@ -63,7 +47,7 @@ export default function ReferralPage({}: ReferralPageProps) {
 
   useEffect(() => {
     const init = () => {
-      let currentUser: User | null = null;
+      let currentUser: TelegramUser | null = null;
       if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
         const tg = window.Telegram.WebApp;
         currentUser = tg.initDataUnsafe.user;
@@ -133,7 +117,7 @@ export default function ReferralPage({}: ReferralPageProps) {
 
         if (updatedUser) {
             setBonusApplied(true);
-            showDialog('Success!', 'You have received a 50 E-point bonus!');
+            showDialog('Success!', 'You have received a 50 EXN bonus!');
         } else {
             showDialog('Invalid Code', 'The referral code you entered is not valid or does not exist.');
         }
@@ -165,7 +149,7 @@ export default function ReferralPage({}: ReferralPageProps) {
                     <div className="space-y-4 text-center">
                         <h2 className="text-xl font-semibold">Have a referral code?</h2>
                         <p className="text-sm text-muted-foreground">
-                            Enter the code from your friend to get a <strong className="text-gold">50 E-point</strong> bonus.
+                            Enter the code from your friend to get a <strong className="text-gold">50 EXN</strong> bonus.
                         </p>
                         <div className="flex w-full max-w-sm items-center space-x-2">
                            <Input
@@ -192,9 +176,9 @@ export default function ReferralPage({}: ReferralPageProps) {
                 )}
 
                 <div className="space-y-4 text-center">
-                  <h2 className="text-xl font-semibold">Invite Friends, Earn E-points</h2>
+                  <h2 className="text-xl font-semibold">Invite Friends, Earn EXN</h2>
                   <p className="text-sm text-muted-foreground">
-                    Share your unique referral code with friends. When they sign up, you'll earn <strong className="text-gold">200 E-points</strong>, and they'll get a <strong className="text-gold">50 E-point</strong> head start! It's a win-win.
+                    Share your unique referral code with friends. When they sign up, you'll earn <strong className="text-gold">200 EXN</strong>, and they'll get a <strong className="text-gold">50 EXN</strong> head start! It's a win-win.
                   </p>
                   <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center cursor-pointer" onClick={() => handleCopy(referralCode, 'Your referral code has been copied.')}>
                       <p className="text-xs text-primary/80 mb-1">Your Unique Code</p>
@@ -230,7 +214,7 @@ export default function ReferralPage({}: ReferralPageProps) {
                    </div>
                    <div className="flex justify-between items-center p-4 bg-primary/5 rounded-lg">
                        <span className="text-muted-foreground">Bonus Earned:</span>
-                       <span className="font-bold text-xl text-gold">{(friendsReferred * 200).toLocaleString()} E-points</span>
+                       <span className="font-bold text-xl text-gold">{(friendsReferred * 200).toLocaleString()} EXN</span>
                    </div>
                  </div>
             </div>
@@ -254,5 +238,3 @@ export default function ReferralPage({}: ReferralPageProps) {
     </div>
   );
 }
-
-    
