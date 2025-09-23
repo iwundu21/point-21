@@ -2,7 +2,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield, Coins } from 'lucide-react';
+import { Home, User, Wallet, Gift, Users, Handshake, Trophy, Shield, Coins, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { getUserData, getSocialTasks } from '@/lib/database';
@@ -79,7 +79,7 @@ const Footer = () => {
     { href: '/', label: 'Home', icon: Home },
     { href: '/tasks', label: 'Social', icon: Users, badge: availableTaskCount },
     { href: '/referral', label: 'Ref', icon: Handshake },
-    { href: '/welcome-tasks', label: 'Wel', icon: Gift },
+    { href: '/achievements', label: 'Achieve', icon: Award },
     { href: '/leaderboard', label: 'Leader', icon: Trophy },
     { href: '/wallet', label: 'Airdrop', icon: Coins },
     { href: '/profile', label: 'Profile', icon: User },

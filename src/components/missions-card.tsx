@@ -26,7 +26,6 @@ const MissionsCard = ({ streak, rank, league, userData }: MissionsCardProps) => 
                     rank={rank}
                     league={league}
                 />
-                <AchievementCard userData={userData} />
             </div>
         </div>
     )
