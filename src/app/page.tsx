@@ -91,7 +91,10 @@ export default function Home({}: {}) {
       const isTelegramUser = typeof currentUser.id === 'number';
 
       // --- ONBOARDING & MERGE FLOW ---
-       if (isTelegramUser && !freshUserData.hasOnboarded) {
+      const needsConversion = !isNewUser && !freshUserData.hasConvertedToExn;
+      const needsBoosterReward = !isNewUser && freshUserData.purchasedBoosts?.includes('boost_1') && !freshUserData.claimedBoostReward;
+
+      if (!freshUserData.hasOnboarded || needsConversion || needsBoosterReward) {
           setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 
@@ -99,6 +102,7 @@ export default function Home({}: {}) {
           setUser(currentUser);
           return; // Stop initialization to show onboarding
       }
+
 
       if (isNewUser && isTelegramUser && !freshUserData.hasMergedBrowserAccount) {
           router.replace('/merge');

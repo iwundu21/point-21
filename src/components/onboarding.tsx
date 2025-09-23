@@ -7,7 +7,7 @@ import { TelegramUser } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck, RefreshCw } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
-import { UserData, saveUserData } from '@/lib/database';
+import { UserData, saveUserData, getUserData } from '@/lib/database';
 
 interface OnboardingProps {
     user: TelegramUser;
@@ -73,18 +73,24 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                      // After conversion, check if they are also eligible for booster reward
                     if (!isNewUser && initialData.purchasedBoosts?.includes('boost_1') && !initialData.claimedBoostReward) {
                         setStage(OnboardingStage.BoosterReward);
+                    } else if (initialData.hasOnboarded) {
+                        onComplete(); // Already onboarded, just needed conversion
                     } else {
                         setStage(OnboardingStage.Welcome);
                     }
                     break;
                 
                 case OnboardingStage.BoosterReward:
-                    const currentBalance = (await (await saveUserData(user, {})), (await (await getUserData(user)).userData.balance));
+                    const { userData } = await getUserData(user);
                     await saveUserData(user, {
-                        balance: currentBalance + BOOSTER_REWARD,
+                        balance: userData.balance + BOOSTER_REWARD,
                         claimedBoostReward: true,
                     });
-                    setStage(OnboardingStage.Welcome);
+                     if (initialData.hasOnboarded) {
+                        onComplete(); // Already onboarded, just needed reward
+                    } else {
+                        setStage(OnboardingStage.Welcome);
+                    }
                     break;
 
                 case OnboardingStage.Welcome:
@@ -147,7 +153,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 <p className="text-3xl font-bold text-muted-foreground line-through">{oldBalance.toLocaleString()} E-Points</p>
                                 <p className="text-sm text-primary mt-2">(Ratio: 1000 E-Points = 1 EXN)</p>
                                 <p className="text-lg text-gold mt-4">New Balance:</p>
-                                <p className="text-5xl font-bold text-gold animate-fast-pulse">{newBalance.toLocaleString()}</p>
+                                <p className="text-5xl font-bold text-gold animate-fast-pulse">{newBalance.toLocaleString()} EXN</p>
                             </div>
                         </div>
                         <p className="text-sm text-muted-foreground">Click below to confirm the conversion.</p>
@@ -161,7 +167,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                          <div className="py-8 flex flex-col items-center justify-center gap-4">
                             <Star className="w-20 h-20 text-gold" />
                             <p className="text-base text-muted-foreground">Because you purchased Booster Pack 1, we're giving you a special reward.</p>
-                            <p className="text-6xl font-bold text-gold my-4 animate-fast-pulse">{BOOSTER_REWARD.toLocaleString()}</p>
+                            <p className="text-6xl font-bold text-gold my-4 animate-fast-pulse">{BOOSTER_REWARD.toLocaleString()} EXN</p>
                         </div>
                         <p className="text-sm text-muted-foreground">Click below to claim your bonus.</p>
                     </div>
@@ -196,7 +202,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                         <p className="text-xl text-muted-foreground">Based on your account age, here's your head start.</p>
                         <div className="py-8 flex flex-col items-center justify-center gap-4">
                             <Award className="w-20 h-20 text-gold" />
-                            <p className="text-6xl font-bold text-gold my-4 animate-fast-pulse">{bonusResult?.bonus.toLocaleString()}</p>
+                            <p className="text-6xl font-bold text-gold my-4 animate-fast-pulse">{bonusResult?.bonus.toLocaleString()} EXN</p>
                         </div>
                         <p className="text-sm text-muted-foreground">This bonus reflects your time in the Telegram ecosystem. The older your account, the bigger the reward.</p>
                     </div>
