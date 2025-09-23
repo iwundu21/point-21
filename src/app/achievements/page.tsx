@@ -4,12 +4,13 @@
 import { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
 import { Award, Loader2 } from 'lucide-react';
-import { getUserData, UserData } from '@/lib/database';
+import { getUserData, UserData, getUserId } from '@/lib/database';
 import AchievementCard from '@/components/achievement-card';
 import RankCard from '@/components/rank-card';
 import { v4 as uuidv4 } from 'uuid';
 import { TelegramUser } from '@/lib/user-utils';
 import { getUserRank } from '@/lib/database';
+import { awardAchievements } from '@/ai/flows/award-achievements-flow';
 
 export default function AchievementsPage() {
     const [user, setUser] = useState<TelegramUser | null>(null);
@@ -47,7 +48,11 @@ export default function AchievementsPage() {
             if (user) {
                 setIsLoading(true);
                 try {
-                     const [dataResponse, userRankInfo] = await Promise.all([
+                    // First, award any pending achievements
+                    await awardAchievements({ userId: getUserId(user) });
+                    
+                    // Then, fetch the latest data
+                    const [dataResponse, userRankInfo] = await Promise.all([
                         getUserData(user),
                         getUserRank(user)
                     ]);

@@ -26,6 +26,7 @@ const AchievementSquare: FC<{ title: string; isAchieved: boolean; icon: React.Re
         )}>
             {title}
         </p>
+        <p className="text-xs font-bold text-gold mt-1">+100 EXN</p>
     </div>
 );
 

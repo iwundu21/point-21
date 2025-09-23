@@ -6,3 +6,4 @@ import './flows/verify-telegram-task-flow';
 import './flows/merge-accounts-flow';
 import './flows/process-boost-flow';
 import './flows/onboarding-flow';
+import './flows/award-achievements-flow';

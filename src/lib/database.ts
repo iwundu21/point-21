@@ -1,8 +1,10 @@
 
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { TelegramUser } from './user-utils';
+
+export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'welcomeTasks' | 'socialTasks';
 
 export interface UserData {
     id: string; // Document ID
@@ -41,6 +43,7 @@ export interface UserData {
     miningActivationCount: number;
     hasOnboarded?: boolean; // New flag for the new onboarding flow
     hasConvertedToExn?: boolean; // New flag for EXN conversion
+    claimedAchievements: AchievementKey[]; // Tracks awarded achievements
 }
 
 const generateReferralCode = () => {
@@ -88,6 +91,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     miningActivationCount: 0,
     hasOnboarded: false,
     hasConvertedToExn: false,
+    claimedAchievements: [],
 });
 
 // --- User Count Management ---
@@ -155,7 +159,7 @@ export const getTotalBrowserUsersCount = async (): Promise<number> => {
 // --- Total Points Management ---
 const pointsStatsRef = doc(db, 'app-stats', 'points-counter');
 
-const incrementTotalPoints = async (amount: number) => {
+export const incrementTotalPoints = async (amount: number) => {
     if (isNaN(amount)) return;
     await setDoc(pointsStatsRef, { total: increment(amount) }, { merge: true });
 }
@@ -678,6 +682,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
 
 
