@@ -103,8 +103,11 @@ export default {
           '100%': { opacity: '1' },
         },
         'flip': {
-          'from': { transform: 'rotateY(0deg)' },
-          'to': { transform: 'rotateY(360deg)' },
+          '0%': { transform: 'rotateY(0deg)' },
+          '45%': { transform: 'rotateY(0deg)' },
+          '50%': { transform: 'rotateY(180deg)' },
+          '95%': { transform: 'rotateY(180deg)' },
+          '100%': { transform: 'rotateY(360deg)' },
         },
       },
       animation: {
@@ -113,7 +116,7 @@ export default {
         'fast-pulse': 'fast-pulse 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1)',
         'heartbeat': 'heartbeat 1.5s infinite ease-in-out',
         'fade-in': 'fade-in 0.5s ease-in-out',
-        'flip': 'flip 3s linear infinite',
+        'flip': 'flip 6s linear infinite',
       },
     },
   },
