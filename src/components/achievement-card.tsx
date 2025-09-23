@@ -16,7 +16,7 @@ const AchievementSquare: FC<{ title: string; isAchieved: boolean; icon: React.Re
     <div className="group w-full aspect-square [perspective:1000px]">
         <div className={cn(
             "relative w-full h-full transition-transform duration-1000 [transform-style:preserve-3d]",
-            "animate-flip" // Continuous flip animation
+            "animate-turn" // Continuous turn animation
         )}>
             {/* Front of the card */}
             <div className={cn(
@@ -84,4 +84,3 @@ const AchievementCard: FC<AchievementCardProps> = ({ userData }) => {
 };
 
 export default AchievementCard;
-
