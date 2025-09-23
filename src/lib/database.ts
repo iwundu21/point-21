@@ -44,6 +44,7 @@ export interface UserData {
     hasOnboarded?: boolean; // New flag for the new onboarding flow
     hasConvertedToExn?: boolean; // New flag for EXN conversion
     claimedAchievements: AchievementKey[]; // Tracks awarded achievements
+    claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
 }
 
 const generateReferralCode = () => {
@@ -92,6 +93,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     hasOnboarded: false,
     hasConvertedToExn: false,
     claimedAchievements: [],
+    claimedBoostReward: false,
 });
 
 // --- User Count Management ---
@@ -198,6 +200,11 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             ...dataToUpdate,
             id: userSnap.id 
         };
+        
+        // This is where we respect the unconverted balance
+        if (fetchedData.hasConvertedToExn === false) {
+            finalUserData.balance = fetchedData.balance || 0;
+        }
 
         if (typeof user.id === 'number') {
             finalUserData.telegramUser = user as TelegramUser;
@@ -648,6 +655,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
 
 
