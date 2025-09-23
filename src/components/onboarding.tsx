@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { TelegramUser } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, Zap, Gift, Users, Star } from 'lucide-react';
+import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
 
 interface OnboardingProps {
@@ -22,32 +22,51 @@ const getGreeting = () => {
 const Onboarding = ({ user, onComplete }: OnboardingProps) => {
     const [stage, setStage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-    const [initialBalance, setInitialBalance] = useState(500); // Default starting bonus
+    const [bonusResult, setBonusResult] = useState<{
+        creationDate: string;
+        bonus: number;
+    } | null>(null);
 
     const handleNext = async () => {
-        if (stage === 4) {
-            setIsLoading(true);
-            try {
-                // The flow now just marks onboarding as complete and can grant a standard bonus
+        if (stage === 1) {
+             setIsLoading(true);
+             try {
                 const result = await completeOnboarding({ user });
                 if(result.success) {
-                    onComplete(result.initialBalance);
+                    setBonusResult({
+                        creationDate: result.accountCreationDate,
+                        bonus: result.initialBalance
+                    });
+                     setStage(2);
                 } else {
-                    console.error("Onboarding completion failed:", result.reason);
-                    // Fallback for the user
-                    onComplete(0);
+                    // Fallback if the flow fails
+                    showErrorAndExit();
                 }
-            } catch (error) {
-                console.error("Error during onboarding completion:", error);
-                 onComplete(0);
-            } finally {
+             } catch (e) {
+                 console.error("Onboarding calculation failed:", e);
+                 showErrorAndExit();
+             } finally {
                 setIsLoading(false);
+             }
+        } else if (stage === 4) {
+            // Final stage, complete the onboarding
+             if (bonusResult) {
+                onComplete(bonusResult.bonus);
+            } else {
+                 // Should not happen, but as a fallback
+                onComplete(0);
             }
         } else {
             setStage(prev => prev + 1);
         }
     };
     
+    const showErrorAndExit = () => {
+         // In a real app, you'd show a proper error message
+         // For now, we'll just exit the onboarding.
+        onComplete(0);
+    }
+
     const renderStage = () => {
         switch (stage) {
             case 1:
@@ -63,19 +82,33 @@ const Onboarding = ({ user, onComplete }: OnboardingProps) => {
             case 2:
                 return (
                      <div className="text-center animate-fade-in space-y-4">
-                        <h1 className="text-4xl font-bold text-foreground">Your Head Start Bonus</h1>
-                        <p className="text-xl text-muted-foreground">As a thank you for joining, we're starting you off with a reward.</p>
-                        <div className="py-8">
-                             <p className="text-6xl font-bold text-gold my-4 animate-heartbeat">{initialBalance.toLocaleString()} EXN</p>
+                        <h1 className="text-4xl font-bold text-foreground">Your Telegram Journey</h1>
+                        <p className="text-xl text-muted-foreground">We've checked your Telegram history to prepare your welcome gift.</p>
+                         <div className="py-8 flex flex-col items-center justify-center gap-4">
+                            <CalendarDays className="w-20 h-20 text-primary" />
+                            <p className="text-base text-muted-foreground">Account Created:</p>
+                            <p className="text-3xl font-bold text-foreground animate-heartbeat">{bonusResult?.creationDate}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">This bonus is just the beginning of your journey.</p>
+                        <p className="text-sm text-muted-foreground">Your loyalty as a long-time Telegram user is valuable to us.</p>
                     </div>
                 );
             case 3:
                 return (
                     <div className="text-center animate-fade-in space-y-6">
+                        <h1 className="text-4xl font-bold text-foreground">Your Loyalty Bonus</h1>
+                        <p className="text-xl text-muted-foreground">Based on your account age, here's your head start.</p>
+                        <div className="py-8 flex flex-col items-center justify-center gap-4">
+                            <Award className="w-20 h-20 text-gold" />
+                            <p className="text-6xl font-bold text-gold my-4 animate-fast-pulse">{bonusResult?.bonus.toLocaleString()} EXN</p>
+                        </div>
+                        <p className="text-sm text-muted-foreground">This bonus reflects your time in the Telegram ecosystem. The older your account, the bigger the reward.</p>
+                    </div>
+                );
+            case 4:
+                 return (
+                    <div className="text-center animate-fade-in space-y-6">
                         <h1 className="text-4xl font-bold text-foreground">How It Works</h1>
-                        <p className="text-xl text-muted-foreground">Earning EXN is simple and rewarding.</p>
+                        <p className="text-xl text-muted-foreground">Earning more EXN is simple and rewarding.</p>
                         <div className="text-left max-w-md mx-auto space-y-6 text-lg">
                             <div className="flex items-start gap-4">
                                 <Zap className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
@@ -99,19 +132,6 @@ const Onboarding = ({ user, onComplete }: OnboardingProps) => {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                );
-            case 4:
-                return (
-                     <div className="text-center animate-fade-in space-y-4">
-                        <h1 className="text-4xl font-bold text-foreground">Ready to Begin?</h1>
-                        <p className="text-xl text-muted-foreground">Your journey into the Exnus ecosystem starts now.</p>
-                        <div className="py-8">
-                           <Star className="w-24 h-24 text-gold animate-fast-pulse" />
-                        </div>
-                        <p className="text-muted-foreground max-w-md mx-auto">
-                           Click below to enter the app and start your first mining session!
-                        </p>
                     </div>
                 );
             default:
