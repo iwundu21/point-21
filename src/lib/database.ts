@@ -201,7 +201,6 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             id: userSnap.id 
         };
         
-        // This is where we respect the unconverted balance
         if (fetchedData.hasConvertedToExn === false) {
             finalUserData.balance = fetchedData.balance || 0;
         }
@@ -233,15 +232,33 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
     
-    // Check if the user exists before trying to get old data
     const oldSnap = await getDoc(userRef);
     const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user as TelegramUser);
+
+    const isCurrentlyActive = oldData.status === 'active';
+    
+    // Check for point conversion
+    const isConverting = data.hasConvertedToExn && !oldData.hasConvertedToExn;
+    if (isConverting && data.balance !== undefined) {
+        const oldBalance = oldData.balance;
+        const newBalance = data.balance;
+        const difference = newBalance - oldBalance;
+        
+        if (isCurrentlyActive) {
+            await incrementTotalPoints(difference); // This will be a negative value, correctly decreasing the total
+        }
+
+        // Save and exit to prevent double counting
+        await setDoc(userRef, data, { merge: true });
+        return;
+    }
+
 
     await setDoc(userRef, data, { merge: true });
 
     // If balance was updated, adjust total points
     if (data.balance !== undefined && data.balance !== oldData.balance) {
-         if (oldData.status === 'active' || (oldSnap.exists() && oldSnap.data().status === 'active')) { // Check both old state and DB state
+         if (isCurrentlyActive) {
             const difference = data.balance - oldData.balance;
             await incrementTotalPoints(difference);
         }
@@ -661,3 +678,6 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
 
+
+
+    
