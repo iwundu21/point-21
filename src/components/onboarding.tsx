@@ -20,7 +20,6 @@ enum OnboardingStage {
     Conversion,
     BoosterReward,
     Welcome,
-    LoyaltyCheck,
     LoyaltyBonus,
     HowItWorks,
     WelcomeTasks,
@@ -94,10 +93,6 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     break;
 
                 case OnboardingStage.Welcome:
-                    setStage(OnboardingStage.LoyaltyCheck);
-                    break;
-
-                case OnboardingStage.LoyaltyCheck:
                     const result = await completeOnboarding({ user });
                     if (result.success) {
                         setBonusResult({
@@ -109,7 +104,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                         showErrorAndExit();
                     }
                     break;
-
+                
                 case OnboardingStage.LoyaltyBonus:
                     setStage(OnboardingStage.HowItWorks);
                     break;
@@ -182,27 +177,20 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                         </p>
                     </div>
                 );
-            case OnboardingStage.LoyaltyCheck:
-                return (
-                     <div className="text-center animate-fade-in space-y-4">
-                        <h1 className="text-4xl font-bold text-foreground">Your Telegram Journey</h1>
-                        <p className="text-xl text-muted-foreground">We've checked your Telegram history to prepare your welcome gift.</p>
-                         <div className="py-8 flex flex-col items-center justify-center gap-4">
-                            <CalendarDays className="w-20 h-20 text-primary" />
-                            <p className="text-base text-muted-foreground">Account Created:</p>
-                            <p className="text-3xl font-bold text-foreground animate-heartbeat">{bonusResult?.creationDate}</p>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Your loyalty as a long-time Telegram user is valuable to us.</p>
-                    </div>
-                );
             case OnboardingStage.LoyaltyBonus:
                 return (
                     <div className="text-center animate-fade-in space-y-6">
                         <h1 className="text-4xl font-bold text-foreground">Your Loyalty Bonus</h1>
                         <p className="text-xl text-muted-foreground">Based on your account age, here's your head start.</p>
                         <div className="py-8 flex flex-col items-center justify-center gap-4">
-                            <Award className="w-20 h-20 text-gold" />
-                            <p className="text-6xl font-bold text-gold my-4 animate-fast-pulse">{bonusResult?.bonus.toLocaleString()} EXN</p>
+                           <div className="flex flex-col items-center justify-center gap-2 mb-4">
+                                <CalendarDays className="w-16 h-16 text-primary" />
+                                <p className="text-base text-muted-foreground">Account Created:</p>
+                                <p className="text-2xl font-bold text-foreground animate-heartbeat">{bonusResult?.creationDate}</p>
+                           </div>
+                            <Award className="w-16 h-16 text-gold" />
+                            <p className="text-base text-muted-foreground">Your Starting Balance:</p>
+                            <p className="text-6xl font-bold text-gold my-2 animate-fast-pulse">{bonusResult?.bonus.toLocaleString()} EXN</p>
                         </div>
                         <p className="text-sm text-muted-foreground">This bonus reflects your time in the Telegram ecosystem. The older your account, the bigger the reward.</p>
                     </div>
