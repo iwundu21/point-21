@@ -48,16 +48,9 @@ const completeOnboardingFlow = ai.defineFlow(
         if (userData.hasOnboarded) {
             return { success: true, initialBalance: userData.balance, reason: 'User has already completed onboarding.' };
         }
-
-        // Telegram ID is a unix timestamp of account creation
-        const creationTimestamp = telegramUser.id;
-        const creationDate = new Date(creationTimestamp * 1000);
-        const now = new Date();
-        const ageInMs = now.getTime() - creationDate.getTime();
-        const ageInDays = Math.floor(ageInMs / (1000 * 60 * 60 * 24));
         
-        // 1 EXN per day of account age
-        const initialBalance = ageInDays > 0 ? ageInDays : 0; 
+        // Grant a standard starting bonus to all new users.
+        const initialBalance = 500; 
         
         const dataToSave: Partial<UserData> = {
             balance: initialBalance,
