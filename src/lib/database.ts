@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion } from 'firebase/firestore';
 import type { TelegramUser } from './user-utils';
@@ -279,7 +280,7 @@ export const findUserByFaceFingerprint = async (fingerprint: string): Promise<Us
         return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
     }
     return null;
-}
+};
 
 export const applyReferralBonus = async (newUser: { id: number | string }, referrerCode: string): Promise<UserData | null> => {
     const referrerData = await findUserByReferralCode(referrerCode);
@@ -329,11 +330,36 @@ export const getLeaderboardUsers = async (): Promise<{ users: UserData[]}> => {
     const q = query(usersRef, orderBy('balance', 'desc'), limit(LEADERBOARD_PAGE_SIZE));
     
     const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
     
     const users: UserData[] = [];
-    querySnapshot.forEach((doc) => {
-        users.push({ ...defaultUserData(null), ...(doc.data() as Omit<UserData, 'id'>), id: doc.id });
+    querySnapshot.forEach((docSnap) => {
+        let userData = { ...defaultUserData(null), ...(docSnap.data() as Omit<UserData, 'id'>), id: docSnap.id };
+
+        // Apply conversion logic if needed
+        if (!userData.hasConvertedToExn) {
+            const oldBalance = userData.balance || 0;
+            const newBalance = oldBalance > 0 ? oldBalance / 10000 : 0;
+            
+            // Stage the update in a batch write
+            const userRef = doc(db, 'users', userData.id);
+            batch.update(userRef, {
+                balance: newBalance,
+                hasConvertedToExn: true
+            });
+            
+            // Update the user data for the current response
+            userData.balance = newBalance;
+            userData.hasConvertedToExn = true;
+        }
+        
+        users.push(userData);
     });
+
+    // Commit all batched writes at once
+    if (!querySnapshot.empty) {
+        await batch.commit();
+    }
 
     return { users };
 }
@@ -624,3 +650,4 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
