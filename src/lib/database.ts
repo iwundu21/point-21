@@ -188,7 +188,7 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         if (!fetchedData.hasConvertedToExn) {
             const oldBalance = fetchedData.balance || 0;
             if (oldBalance > 0) {
-                 dataToUpdate.balance = oldBalance / 10000;
+                 dataToUpdate.balance = oldBalance / 1000;
             }
             dataToUpdate.hasConvertedToExn = true;
         }
@@ -339,7 +339,7 @@ export const getLeaderboardUsers = async (): Promise<{ users: UserData[]}> => {
         // Apply conversion logic if needed
         if (!userData.hasConvertedToExn) {
             const oldBalance = userData.balance || 0;
-            const newBalance = oldBalance > 0 ? oldBalance / 10000 : 0;
+            const newBalance = oldBalance > 0 ? oldBalance / 1000 : 0;
             
             // Stage the update in a batch write
             const userRef = doc(db, 'users', userData.id);
@@ -650,4 +650,5 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
