@@ -94,12 +94,12 @@ const Footer = () => {
           const isActive = pathname === item.href;
           return (
             <div key={item.href} onClick={() => showLoader(item.href)} className="relative flex flex-col items-center justify-center text-sm w-full p-1 cursor-pointer">
-              <item.icon className={cn("w-6 h-6 mb-1", isActive ? 'text-primary' : 'text-muted-foreground')} />
-              <span className={cn("text-xs", isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>
+              <item.icon className={cn("w-5 h-5", isActive ? 'text-primary' : 'text-muted-foreground')} />
+              <span className={cn("text-[10px] mt-1", isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>
                 {item.label}
               </span>
               {item.badge && item.badge > 0 && !isActive && (
-                <span className="absolute top-0 right-1/2 translate-x-3 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold">
+                <span className="absolute top-0 right-1.5 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold">
                     {item.badge}
                 </span>
               )}
@@ -108,8 +108,8 @@ const Footer = () => {
         })}
          {isAdmin && (
             <div onClick={() => showLoader(adminItem.href)} className="flex flex-col items-center justify-center text-sm w-full p-1 cursor-pointer">
-              <adminItem.icon className={cn("w-6 h-6 mb-1", pathname === adminItem.href ? 'text-primary' : 'text-muted-foreground')} />
-              <span className={cn("text-xs", pathname === adminItem.href ? 'text-primary font-semibold' : 'text-muted-foreground')}>
+              <adminItem.icon className={cn("w-5 h-5", pathname === adminItem.href ? 'text-primary' : 'text-muted-foreground')} />
+              <span className={cn("text-[10px] mt-1", pathname === adminItem.href ? 'text-primary font-semibold' : 'text-muted-foreground')}>
                 {adminItem.label}
               </span>
             </div>
