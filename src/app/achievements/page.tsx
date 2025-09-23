@@ -6,7 +6,6 @@ import Footer from '@/components/footer';
 import { Award, Loader2 } from 'lucide-react';
 import { getUserData, UserData } from '@/lib/database';
 import AchievementCard from '@/components/achievement-card';
-import DailyStreak from '@/components/daily-streak';
 import RankCard from '@/components/rank-card';
 import { v4 as uuidv4 } from 'uuid';
 import { TelegramUser } from '@/lib/user-utils';
@@ -83,7 +82,6 @@ export default function AchievementsPage() {
                             <div className="space-y-4">
                                 {userData && (
                                     <>
-                                        <DailyStreak streak={userData.dailyStreak.count} />
                                         <RankCard rank={rankInfo.rank} league={rankInfo.league} />
                                         <AchievementCard userData={userData} />
                                     </>
