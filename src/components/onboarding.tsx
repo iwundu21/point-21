@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { TelegramUser } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award } from 'lucide-react';
+import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
 
 interface OnboardingProps {
@@ -48,7 +48,7 @@ const Onboarding = ({ user, onComplete }: OnboardingProps) => {
              } finally {
                 setIsLoading(false);
              }
-        } else if (stage === 4) {
+        } else if (stage === 5) {
             // Final stage, complete the onboarding
              if (bonusResult) {
                 onComplete(bonusResult.bonus);
@@ -134,6 +134,29 @@ const Onboarding = ({ user, onComplete }: OnboardingProps) => {
                         </div>
                     </div>
                 );
+            case 5:
+                 return (
+                    <div className="text-center animate-fade-in space-y-6">
+                        <h1 className="text-4xl font-bold text-foreground">One Last Thing...</h1>
+                        <p className="text-xl text-muted-foreground">Complete your Welcome Tasks to unlock mining!</p>
+                        <div className="text-left max-w-md mx-auto space-y-6 text-lg">
+                            <div className="flex items-start gap-4">
+                                <UserCheck className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
+                                <div>
+                                    <h3 className="font-bold text-foreground">Welcome Tasks</h3>
+                                    <p className="text-muted-foreground text-base">Complete a few simple social tasks to get another bonus and unlock all app features, including daily mining.</p>
+                                </div>
+                            </div>
+                             <div className="flex items-start gap-4">
+                                <Award className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
+                                <div>
+                                    <h3 className="font-bold text-foreground">Achievements</h3>
+                                    <p className="text-muted-foreground text-base">Unlock achievements by using the app to earn even more EXN.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             default:
                 return null;
         }
@@ -146,7 +169,7 @@ const Onboarding = ({ user, onComplete }: OnboardingProps) => {
             </div>
             <div className="w-full max-w-sm pb-8">
                 <Button onClick={handleNext} disabled={isLoading} className="w-full h-12 text-lg">
-                    {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : (stage === 4 ? 'Enter App' : 'Continue')}
+                    {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : (stage === 5 ? 'Enter App' : 'Continue')}
                 </Button>
             </div>
         </div>
