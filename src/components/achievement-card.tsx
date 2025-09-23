@@ -17,8 +17,7 @@ const AchievementSquare: FC<{ title: string; isAchieved: boolean; icon: React.Re
         "relative w-full aspect-square rounded-lg flex flex-col items-center justify-center p-2 text-center transition-all duration-500",
         isAchieved 
             ? 'bg-gold/20 border-2 border-gold/50 text-gold shadow-lg shadow-gold/10' 
-            : 'bg-primary/10 border border-primary/20 text-muted-foreground',
-        "animate-turn" // Apply the turning animation
+            : 'bg-primary/10 border border-primary/20 text-muted-foreground'
     )}>
         <div className="mb-2">{icon}</div>
         <p className={cn(

@@ -102,10 +102,6 @@ export default {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
-        'turn': {
-          '0%': { transform: 'rotateY(0deg)' },
-          '100%': { transform: 'rotateY(360deg)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -113,7 +109,6 @@ export default {
         'fast-pulse': 'fast-pulse 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1)',
         'heartbeat': 'heartbeat 1.s infinite ease-in-out',
         'fade-in': 'fade-in 0.5s ease-in-out',
-        'turn': 'turn 5s linear infinite',
       },
     },
   },
