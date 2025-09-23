@@ -608,6 +608,34 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
     return userData;
 }
 
+export const unbanAllUsers = async (): Promise<number> => {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('status', '==', 'banned'));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        return 0;
+    }
+
+    const batch = writeBatch(db);
+    let totalPointsToAdd = 0;
+
+    querySnapshot.forEach((docSnap) => {
+        const userRef = doc(db, 'users', docSnap.id);
+        const userData = docSnap.data() as UserData;
+        batch.update(userRef, { status: 'active', banReason: '' });
+        totalPointsToAdd += userData.balance || 0;
+    });
+
+    await batch.commit();
+
+    // After unbanning, restore their collective balance to the total points counter
+    if (totalPointsToAdd > 0) {
+        await incrementTotalPoints(totalPointsToAdd);
+    }
+    
+    return querySnapshot.size;
+}
 
 // --- Specific Data Functions ---
 
@@ -650,5 +678,6 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
 

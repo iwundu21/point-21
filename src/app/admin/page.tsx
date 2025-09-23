@@ -491,6 +491,7 @@ export default function AdminPage() {
     const [totalPoints, setTotalPoints] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
+    const [isUnbanning, setIsUnbanning] = useState(false);
     
     const { toast } = useToast();
 
@@ -859,6 +860,20 @@ export default function AdminPage() {
             setIsExporting(false);
         }
     };
+
+    const handleUnbanAll = async () => {
+        setIsUnbanning(true);
+        try {
+            const unbannedCount = await unbanAllUsers();
+            toast({ title: 'Success', description: `${unbannedCount} users have been unbanned.` });
+            await fetchInitialData(); // Refresh data
+        } catch (error) {
+             console.error("Failed to unban all users:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not unban all users.' });
+        } finally {
+            setIsUnbanning(false);
+        }
+    }
     
 
     if (!isAdmin && !codeAuthenticated) {
@@ -1044,6 +1059,24 @@ export default function AdminPage() {
                          {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
                     </div>
                     <div className="flex gap-2 flex-wrap">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button disabled={isUnbanning} variant="destructive" className="flex-shrink-0">
+                                    {isUnbanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                                    Unban All Users
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>This will unban ALL users. This action cannot be undone.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleUnbanAll} className={cn(buttonVariants({variant: 'destructive'}))}>Confirm</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                         <Button onClick={handleExportAirdrop} disabled={isExportingAirdrop} variant="outline" className="flex-shrink-0">
                             {isExportingAirdrop ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                             Export Airdrop List
