@@ -5,21 +5,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, CheckCircle, Handshake, ShieldCheck, UserCheck, Users, Zap } from 'lucide-react';
 import type { UserData } from '@/lib/database';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 interface AchievementCardProps {
   userData: UserData | null;
 }
 
-const AchievementItem: FC<{ title: string; isAchieved: boolean; icon: React.ReactNode }> = ({ title, isAchieved, icon }) => (
-  <div className="flex items-center space-x-3">
-    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", isAchieved ? 'bg-gold/20 text-gold' : 'bg-primary/10 text-muted-foreground')}>
-        {icon}
-    </div>
-    <span className={cn("text-sm", isAchieved ? 'font-semibold text-foreground' : 'text-muted-foreground line-through')}>
-      {title}
-    </span>
-    {isAchieved && <CheckCircle className="w-5 h-5 text-gold ml-auto" />}
-  </div>
+const AchievementSquare: FC<{ title: string; isAchieved: boolean; icon: React.ReactNode }> = ({ title, isAchieved, icon }) => (
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className={cn(
+                    "w-full aspect-square rounded-lg flex flex-col items-center justify-center p-2 text-center transition-all",
+                    isAchieved 
+                        ? 'bg-gold/20 border-2 border-gold/50 text-gold shadow-lg shadow-gold/10' 
+                        : 'bg-primary/10 border border-primary/20 text-muted-foreground'
+                )}>
+                    <div className="mb-2">{icon}</div>
+                    <p className={cn(
+                        "text-xs font-semibold leading-tight",
+                        isAchieved ? 'text-gold' : 'text-muted-foreground'
+                    )}>
+                        {title}
+                    </p>
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>{isAchieved ? `Unlocked: ${title}` : `Locked: ${title}`}</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
 );
 
 const AchievementCard: FC<AchievementCardProps> = ({ userData }) => {
@@ -41,12 +57,14 @@ const AchievementCard: FC<AchievementCardProps> = ({ userData }) => {
             <span className="text-primary/90">Achievement Card</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 pt-0 space-y-3">
-        <AchievementItem title="Verified Account" isAchieved={achievements.verified} icon={<ShieldCheck className="w-5 h-5"/>} />
-        <AchievementItem title="First Mining Session" isAchieved={achievements.firstMining} icon={<Zap className="w-5 h-5"/>} />
-        <AchievementItem title="Referred a Friend" isAchieved={achievements.referredFriend} icon={<Handshake className="w-5 h-5"/>} />
-        <AchievementItem title="Joined the Community" isAchieved={achievements.welcomeTasks} icon={<UserCheck className="w-5 h-5"/>} />
-        <AchievementItem title="Social Butterfly" isAchieved={achievements.socialTasks} icon={<Users className="w-5 h-5"/>} />
+      <CardContent className="p-4 pt-0">
+        <div className="grid grid-cols-3 gap-3">
+          <AchievementSquare title="Verified" isAchieved={achievements.verified} icon={<ShieldCheck className="w-8 h-8"/>} />
+          <AchievementSquare title="First Mining" isAchieved={achievements.firstMining} icon={<Zap className="w-8 h-8"/>} />
+          <AchievementSquare title="Referred Friend" isAchieved={achievements.referredFriend} icon={<Handshake className="w-8 h-8"/>} />
+          <AchievementSquare title="Community" isAchieved={achievements.welcomeTasks} icon={<UserCheck className="w-8 h-8"/>} />
+          <AchievementSquare title="Social Butterfly" isAchieved={achievements.socialTasks} icon={<Users className="w-8 h-8"/>} />
+        </div>
       </CardContent>
     </Card>
   );
