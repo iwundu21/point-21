@@ -9,6 +9,7 @@ import { completeOnboarding } from '@/ai/flows/onboarding-flow';
 
 interface OnboardingProps {
     user: TelegramUser;
+    isNewUser: boolean;
     onComplete: (initialBalance: number) => void;
 }
 
@@ -19,13 +20,15 @@ const getGreeting = () => {
     return 'Good Evening';
 };
 
-const Onboarding = ({ user, onComplete }: OnboardingProps) => {
+const Onboarding = ({ user, isNewUser, onComplete }: OnboardingProps) => {
     const [stage, setStage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [bonusResult, setBonusResult] = useState<{
         creationDate: string;
         bonus: number;
     } | null>(null);
+
+    const finalStage = isNewUser ? 5 : 4;
 
     const handleNext = async () => {
         if (stage === 1) {
@@ -48,7 +51,7 @@ const Onboarding = ({ user, onComplete }: OnboardingProps) => {
              } finally {
                 setIsLoading(false);
              }
-        } else if (stage === 5) {
+        } else if (stage === finalStage) {
             // Final stage, complete the onboarding
              if (bonusResult) {
                 onComplete(bonusResult.bonus);
@@ -169,7 +172,7 @@ const Onboarding = ({ user, onComplete }: OnboardingProps) => {
             </div>
             <div className="w-full max-w-sm pb-8">
                 <Button onClick={handleNext} disabled={isLoading} className="w-full h-12 text-lg">
-                    {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : (stage === 5 ? 'Enter App' : 'Continue')}
+                    {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : (stage === finalStage ? 'Enter App' : 'Continue')}
                 </Button>
             </div>
         </div>

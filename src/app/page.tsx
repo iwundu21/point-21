@@ -67,6 +67,7 @@ export default function Home({}: {}) {
   const [boostDialogOpen, setBoostDialogOpen] = useState(false);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isNewUserForOnboarding, setIsNewUserForOnboarding] = useState(false);
 
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
@@ -86,24 +87,23 @@ export default function Home({}: {}) {
         getUserRank(currentUser)
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
-
-       if (isNewUser && typeof currentUser.id === 'number' && !freshUserData.hasOnboarded) {
-        setShowOnboarding(true);
-        setIsLoading(false);
-        setUser(currentUser);
-        setUserData(freshUserData);
-        return;
-      }
-
-
-      // --- MERGE FLOW FOR NEW TELEGRAM USERS ---
-      // This will trigger for any brand new TG user that does not have the `hasMergedBrowserAccount` flag set.
       const isTelegramUser = typeof currentUser.id === 'number';
-      if (isTelegramUser && isNewUser && !freshUserData.hasOnboarded) {
-          router.replace('/merge');
-          return; // Stop initialization until merge flow is complete
+
+      // --- ONBOARDING & MERGE FLOW ---
+      if (isTelegramUser && !freshUserData.hasOnboarded) {
+          setShowOnboarding(true);
+          setIsNewUserForOnboarding(isNewUser); // Pass isNewUser to onboarding component
+          setIsLoading(false);
+          setUser(currentUser);
+          setUserData(freshUserData);
+          return; // Stop initialization to show onboarding
       }
-      // --- END MERGE FLOW ---
+
+      if (isNewUser && isTelegramUser && !freshUserData.hasMergedBrowserAccount) {
+          router.replace('/merge');
+          return;
+      }
+      // --- END ONBOARDING & MERGE FLOW ---
       
       setUserData(freshUserData);
       setUser(currentUser);
@@ -320,7 +320,7 @@ export default function Home({}: {}) {
   }
 
   if (showOnboarding && user) {
-    return <Onboarding user={user} onComplete={handleOnboardingComplete} />;
+    return <Onboarding user={user} isNewUser={isNewUserForOnboarding} onComplete={handleOnboardingComplete} />;
   }
 
 
