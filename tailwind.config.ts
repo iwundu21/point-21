@@ -103,8 +103,8 @@ export default {
           '100%': { opacity: '1' },
         },
         'turn': {
-          '0%': { transform: 'rotateY(0deg)' },
-          '100%': { transform: 'rotateY(360deg)' },
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
       },
       animation: {

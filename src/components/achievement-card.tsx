@@ -13,41 +13,20 @@ interface AchievementCardProps {
 }
 
 const AchievementSquare: FC<{ title: string; isAchieved: boolean; icon: React.ReactNode }> = ({ title, isAchieved, icon }) => (
-    <div className="group w-full aspect-square [perspective:1000px]">
-        <div className={cn(
-            "relative w-full h-full transition-transform duration-1000 [transform-style:preserve-3d]",
-            "animate-turn" // Continuous turn animation
+    <div className={cn(
+        "relative w-full aspect-square rounded-lg flex flex-col items-center justify-center p-2 text-center transition-all duration-500",
+        isAchieved 
+            ? 'bg-gold/20 border-2 border-gold/50 text-gold shadow-lg shadow-gold/10' 
+            : 'bg-primary/10 border border-primary/20 text-muted-foreground',
+        "animate-turn" // Apply the turning animation
+    )}>
+        <div className="mb-2">{icon}</div>
+        <p className={cn(
+            "text-xs font-semibold leading-tight",
+            isAchieved ? 'text-gold' : 'text-muted-foreground'
         )}>
-            {/* Front of the card */}
-            <div className={cn(
-                "absolute w-full h-full rounded-lg flex flex-col items-center justify-center p-2 text-center [backface-visibility:hidden]",
-                 isAchieved 
-                    ? 'bg-gold/20 border-2 border-gold/50 text-gold shadow-lg shadow-gold/10' 
-                    : 'bg-primary/10 border border-primary/20 text-muted-foreground'
-            )}>
-                 <div className="mb-2">{icon}</div>
-                    <p className={cn(
-                        "text-xs font-semibold leading-tight",
-                        isAchieved ? 'text-gold' : 'text-muted-foreground'
-                    )}>
-                        {title}
-                    </p>
-            </div>
-            {/* Back of the card */}
-            <div className={cn(
-                "absolute w-full h-full rounded-lg flex flex-col items-center justify-center p-2 text-center [backface-visibility:hidden] [transform:rotateY(180deg)]",
-                 isAchieved 
-                    ? 'bg-gold/20 border-2 border-gold/50 text-gold shadow-lg shadow-gold/10' 
-                    : 'bg-primary/10 border border-primary/20 text-muted-foreground'
-            )}>
-                 <p className="text-xs font-bold leading-tight">
-                    {isAchieved ? 'Unlocked' : 'Locked'}
-                </p>
-                 <p className="text-xs font-semibold leading-tight mt-2">
-                    {title}
-                </p>
-            </div>
-        </div>
+            {title}
+        </p>
     </div>
 );
 
