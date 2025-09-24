@@ -38,7 +38,6 @@ export default function Home({}: {}) {
   const [isTelegram, setIsTelegram] = useState(false);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
-  const [totalUserCount, setTotalUserCount] = useState(0);
   const [boosterCount, setBoosterCount] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
 
@@ -67,17 +66,15 @@ export default function Home({}: {}) {
 
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
-      const [dataResponse, userRankInfo, totalUsers, boosterUsers, totalActivePoints] = await Promise.all([
+      const [dataResponse, userRankInfo, boosterUsers, totalActivePoints] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser),
-        getTotalUsersCount(),
         getBoosterPack1UserCount(),
         getTotalActivePoints(),
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
-      setTotalUserCount(totalUsers);
       setBoosterCount(boosterUsers);
       setTotalPoints(totalActivePoints);
 
@@ -344,33 +341,21 @@ export default function Home({}: {}) {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
                             <Users className="w-5 h-5 text-primary" />
-                            Airdrop Slots
+                            Airdrop Slots Secured
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Progress value={(totalUserCount / AIRDROP_CAP) * 100} className="w-full h-3" />
+                        <Progress value={(boosterCount / AIRDROP_CAP) * 100} className="w-full h-3" />
                         <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                            <span>Taken: {totalUserCount.toLocaleString()}</span>
-                            <span>Available: {(AIRDROP_CAP - totalUserCount).toLocaleString()}</span>
+                            <span>Taken: {boosterCount.toLocaleString()}</span>
+                            <span>Available: {(AIRDROP_CAP - boosterCount).toLocaleString()}</span>
                         </div>
                          <p className="text-center text-xs text-muted-foreground mt-2">
                             Total Slots: {AIRDROP_CAP.toLocaleString()}
                         </p>
                     </CardContent>
                 </Card>
-                <Card className="w-full bg-yellow-500/10 border-yellow-500/20">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium flex items-center gap-2">
-                            <Star className="w-5 h-5 text-yellow-500" />
-                            Booster Pack 1 Holders
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       <p className="text-center text-2xl font-bold text-yellow-400">
-                           {boosterCount.toLocaleString()}
-                       </p>
-                    </CardContent>
-                </Card>
+                
                 <Card className="w-full bg-gold/10 border-gold/20">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
@@ -460,3 +445,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    

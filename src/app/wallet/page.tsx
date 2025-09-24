@@ -302,7 +302,6 @@ export default function WalletPage() {
                         <EligibilityItem text="Wallet address submitted" isMet={!!savedAddress} />
                         <EligibilityItem text="Account verified" isMet={isVerified} />
                         <EligibilityItem text="Active user status" isMet={userData?.status === 'active'} />
-                        <EligibilityItem text="Earned at least 1 EXN" isMet={(userData?.balance || 0) >= 1} />
                         <EligibilityItem text="Purchased Booster Pack 1" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} />
                     </CardContent>
                 </Card>
@@ -337,5 +336,7 @@ export default function WalletPage() {
 
     
 
+
+    
 
     

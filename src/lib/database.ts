@@ -122,7 +122,8 @@ const decrementBrowserUserCount = async () => {
 };
 
 export const incrementUserCount = async (userType: 'telegram' | 'browser') => {
-    await setDoc(statsRef, { count: increment(1) }, { merge: true });
+    // This function now only increments the specific user type counter, not the main one.
+    // The main airdrop counter is now the booster pack counter.
     if (userType === 'telegram') {
         await incrementTelegramUserCount();
     } else {
@@ -140,11 +141,11 @@ const decrementUserCount = async (userType: 'telegram' | 'browser') => {
 };
 
 export const getTotalUsersCount = async (): Promise<number> => {
-    const statsSnap = await getDoc(statsRef);
-    if (statsSnap.exists()) {
-        return statsSnap.data().count || 0;
-    }
-    return 0;
+    const tgSnap = await getDoc(telegramUsersStatsRef);
+    const browserSnap = await getDoc(browserUsersStatsRef);
+    const tgCount = tgSnap.exists() ? tgSnap.data().count || 0 : 0;
+    const browserCount = browserSnap.exists() ? browserSnap.data().count || 0 : 0;
+    return tgCount + browserCount;
 };
 
 export const getBoosterPack1UserCount = async (): Promise<number> => {
@@ -239,7 +240,7 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         
         return { userData: finalUserData, isNewUser: false };
     } else {
-        const currentTotalUsers = await getTotalUsersCount();
+        const currentTotalUsers = await getBoosterPack1UserCount(); // Check against booster purchasers
         if (currentTotalUsers >= MAX_USERS) {
             throw new Error("Airdrop capacity reached. No new users can be added.");
         }
@@ -251,6 +252,9 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         };
         await setDoc(userRef, newUser);
         // User count is now incremented AFTER they purchase the booster pack
+        const userType = typeof user.id === 'number' ? 'telegram' : 'browser';
+        if (userType === 'telegram') await incrementTelegramUserCount(); else await incrementBrowserUserCount();
+        
         return { userData: { ...newUser, id: userId }, isNewUser: true };
     }
 };
@@ -770,5 +774,8 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
+    
+
 
     
