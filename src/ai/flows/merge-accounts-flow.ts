@@ -21,7 +21,7 @@ export type MergeAccountsInput = z.infer<typeof MergeAccountsInputSchema>;
 const MergeAccountsOutputSchema = z.object({
   success: z.boolean().describe('Whether the merge was successful.'),
   reason: z.string().optional().describe('The reason for failure, if any.'),
-  mergedBalance: z.number().optional().describe('The total balance after merging.'),
+  mergedBalance: z.number().optional().describe('The total EXN balance after merging.'),
 });
 export type MergeAccountsOutput = z.infer<typeof MergeAccountsOutputSchema>;
 
@@ -74,3 +74,5 @@ const mergeAccountsFlow = ai.defineFlow(
     }
   }
 );
+
+    

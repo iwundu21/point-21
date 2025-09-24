@@ -161,3 +161,5 @@ const MiningCircle: FC<MiningCircleProps> = ({
 };
 
 export default MiningCircle;
+
+    

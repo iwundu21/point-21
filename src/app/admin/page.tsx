@@ -196,7 +196,7 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
                 <DialogHeader>
                     <DialogTitle>Edit Balance for {getDisplayName(user)}</DialogTitle>
                     <DialogDescription>
-                        Set a new point balance for this user.
+                        Set a new EXN balance for this user.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -1098,7 +1098,7 @@ export default function AdminPage() {
                         </Card>
                         <Card className="bg-primary/5">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Points (Active)</CardTitle>
+                                <CardTitle className="text-sm font-medium">Total EXN (Active)</CardTitle>
                                 <Star className="h-4 w-4 text-primary" />
                             </CardHeader>
                             <CardContent>
@@ -1250,3 +1250,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

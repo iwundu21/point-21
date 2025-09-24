@@ -41,3 +41,5 @@ const DailyStreak = ({ streak }: DailyStreakProps) => {
 };
 
 export default DailyStreak;
+
+    
