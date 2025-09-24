@@ -415,17 +415,17 @@ export default function Home({}: {}) {
                             <LoadingDots />
                         ) : !canTap ? (
                              countdown ? (
-                                <div className="text-center bg-black/50 p-4 rounded-full">
+                                <div className="text-center p-4 rounded-full">
                                     <p className="text-2xl font-bold text-white tabular-nums">{countdown}</p>
                                     <p className="text-xs text-white/80 mt-1">Next claim</p>
                                 </div>
                             ) : (
-                                <div className="text-center bg-black/50 p-4 rounded-full">
+                                <div className="text-center p-4 rounded-full">
                                     <CheckCircle className="w-12 h-12 text-white/80" />
                                 </div>
                             )
                         ) : (
-                            <div className="text-center bg-black/50 p-4 rounded-full">
+                            <div className="text-center p-4 rounded-full">
                                 <p className="text-4xl font-bold text-white">TAP</p>
                                 <p className="text-sm font-semibold text-white">+100 EXN</p>
                             </div>
