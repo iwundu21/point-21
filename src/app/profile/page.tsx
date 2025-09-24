@@ -393,94 +393,97 @@ export default function ProfilePage({}: ProfilePageProps) {
 
 
   return (
-    <div className="flex flex-col min-h-screen text-foreground font-body bg-transparent">
-      <div className="flex-grow pb-32">
-        {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
-          <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
-            <Card className="w-full max-w-sm glass-card">
-                <CardContent className="flex flex-col items-center text-center space-y-4 p-6">
-                    <div className="relative group">
-                        <Avatar className="w-24 h-24 border-4 border-primary" onClick={handleAvatarClick} >
-                            <AvatarImage src={avatarSrc} alt={displayName} />
-                            <AvatarFallback className="text-3xl bg-black/80">{getInitials(user)}</AvatarFallback>
-                        </Avatar>
-                        {isBrowserUser && (
-                            <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
-                            {isUploading ? <LoadingDots /> : <Upload className="w-8 h-8 text-white" />}
+    <div className="flex flex-col min-h-screen text-foreground font-body bg-profile-bg bg-cover bg-center bg-fixed">
+        <div className="absolute inset-0 bg-black/60 z-0"></div>
+        <div className="relative z-10 flex-grow flex flex-col">
+            <div className="flex-grow pb-32">
+                {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
+                <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
+                    <Card className="w-full max-w-sm glass-card">
+                        <CardContent className="flex flex-col items-center text-center space-y-4 p-6">
+                            <div className="relative group">
+                                <Avatar className="w-24 h-24 border-4 border-primary" onClick={handleAvatarClick} >
+                                    <AvatarImage src={avatarSrc} alt={displayName} />
+                                    <AvatarFallback className="text-3xl bg-black/80">{getInitials(user)}</AvatarFallback>
+                                </Avatar>
+                                {isBrowserUser && (
+                                    <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
+                                    {isUploading ? <LoadingDots /> : <Upload className="w-8 h-8 text-white" />}
+                                    </div>
+                                )}
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
                             </div>
-                        )}
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-                    </div>
-                    {isBrowserUser && <p className="text-xs text-white/70">Click avatar to upload</p>}
+                            {isBrowserUser && <p className="text-xs text-white/70">Click avatar to upload</p>}
+                            
+                            <div className="flex flex-col space-y-1">
+                                <h2 className="text-2xl font-bold">{displayName}</h2>
+                                {isBrowserUser ? (
+                                    <div className="flex items-center justify-center gap-2 font-mono text-white/70 pt-1">
+                                        <span className="truncate max-w-[200px]">ID: {user?.id}</span>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-white/70 hover:bg-white/10 hover:text-white" onClick={() => handleCopy(user?.id.toString() || '')}>
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-white/70">@{user?.username || 'N/A'}</p>
+                                        <p className="text-xs text-white/70 pt-2">ID: {user?.id}</p>
+                                    </>
+                                )}
+                                <div className="flex items-center justify-center pt-2">
+                                    <p className="text-sm font-semibold mr-2 text-white/90">Status:</p>
+                                    {renderAccountStatus()}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Separator className="w-full max-w-sm" />
                     
-                    <div className="flex flex-col space-y-1">
-                        <h2 className="text-2xl font-bold">{displayName}</h2>
-                        {isBrowserUser ? (
-                            <div className="flex items-center justify-center gap-2 font-mono text-white/70 pt-1">
-                                <span className="truncate max-w-[200px]">ID: {user?.id}</span>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-white/70 hover:bg-white/10 hover:text-white" onClick={() => handleCopy(user?.id.toString() || '')}>
-                                    <Copy className="h-4 w-4" />
-                                </Button>
+                    <Card className="w-full max-w-sm glass-card">
+                        <CardContent className="space-y-4 p-6">
+                            <div className="text-center">
+                            {accountStatus === 'verified' ? (
+                                <h2 className="text-xl font-bold flex items-center justify-center gap-2 text-green-400">
+                                    <CheckCircle className="w-6 h-6" /> Account Verified
+                                </h2>
+                            ) : (
+                                <h2 className="text-xl font-bold flex items-center justify-center gap-2">
+                                    <Camera className="w-6 h-6 text-primary" /> System Verification
+                                </h2>
+                            )}
                             </div>
-                        ) : (
-                            <>
-                                <p className="text-sm text-white/70">@{user?.username || 'N/A'}</p>
-                                <p className="text-xs text-white/70 pt-2">ID: {user?.id}</p>
-                            </>
-                        )}
-                        <div className="flex items-center justify-center pt-2">
-                            <p className="text-sm font-semibold mr-2 text-white/90">Status:</p>
-                            {renderAccountStatus()}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
 
-            <Separator className="w-full max-w-sm" />
-            
-            <Card className="w-full max-w-sm glass-card">
-                <CardContent className="space-y-4 p-6">
-                    <div className="text-center">
-                    {accountStatus === 'verified' ? (
-                        <h2 className="text-xl font-bold flex items-center justify-center gap-2 text-green-400">
-                            <CheckCircle className="w-6 h-6" /> Account Verified
-                        </h2>
-                    ) : (
-                        <h2 className="text-xl font-bold flex items-center justify-center gap-2">
-                            <Camera className="w-6 h-6 text-primary" /> System Verification
-                        </h2>
-                    )}
+                            {accountStatus === 'unverified' || accountStatus === 'failed' ? (
+                                accountStatus === 'failed' && failureReason ? renderVerificationFailure() : (
+                                    <div className='text-center space-y-4'>
+                                        <p className="text-sm text-white/80">Verify your identity by taking a photo of your face.</p>
+                                        <Button onClick={handleStartVerification} className="w-full">
+                                        <Camera className="mr-2 h-4 w-4" /> Start Verification
+                                        </Button>
+                                    </div>
+                                )
+                            ) : (
+                                <div className='flex flex-col items-center justify-center gap-4 text-green-400 text-center p-4'>
+                                    <CheckCircle className="w-12 h-12" />
+                                    <p className="text-white/80">You have successfully verified your account.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </main>
+                )}
+                <div className="text-center text-xs text-muted-foreground p-4 mt-8">
+                    <div className="flex justify-center items-center space-x-4">
+                        <Link href="/terms" className="hover:text-primary">Terms & Conditions</Link>
+                        <span>|</span>
+                        <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
                     </div>
-
-                    {accountStatus === 'unverified' || accountStatus === 'failed' ? (
-                        accountStatus === 'failed' && failureReason ? renderVerificationFailure() : (
-                            <div className='text-center space-y-4'>
-                                <p className="text-sm text-white/80">Verify your identity by taking a photo of your face.</p>
-                                <Button onClick={handleStartVerification} className="w-full">
-                                <Camera className="mr-2 h-4 w-4" /> Start Verification
-                                </Button>
-                            </div>
-                        )
-                    ) : (
-                        <div className='flex flex-col items-center justify-center gap-4 text-green-400 text-center p-4'>
-                            <CheckCircle className="w-12 h-12" />
-                            <p className="text-white/80">You have successfully verified your account.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-          </main>
-        )}
-         <div className="text-center text-xs text-muted-foreground p-4 mt-8">
-            <div className="flex justify-center items-center space-x-4">
-                <Link href="/terms" className="hover:text-primary">Terms & Conditions</Link>
-                <span>|</span>
-                <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
+                    <p className="mt-2">© 2025 Exnus Points. All rights reserved.</p>
+                </div>
             </div>
-            <p className="mt-2">© 2025 Exnus Points. All rights reserved.</p>
-         </div>
-      </div>
-      <Footer />
+            <Footer />
+        </div>
        <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -501,3 +504,4 @@ export default function ProfilePage({}: ProfilePageProps) {
     
 
     
+

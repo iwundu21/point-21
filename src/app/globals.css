@@ -87,13 +87,6 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-  .dark body {
-    background-image: url('/1.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-color: transparent; /* Fallback */
-  }
 }
 
 @layer components {
