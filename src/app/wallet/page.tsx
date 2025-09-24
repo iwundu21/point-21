@@ -309,7 +309,7 @@ export default function WalletPage() {
                             <EligibilitySquare title="Wallet Submitted" isMet={!!savedAddress} icon={<WalletIcon className="w-8 h-8" />} />
                             <EligibilitySquare title="Account Verified" isMet={isVerified} icon={<UserCheck className="w-8 h-8" />} />
                             <EligibilitySquare title="Active User" isMet={userData?.status === 'active'} icon={<Bot className="w-8 h-8" />} />
-                            <EligibilitySquare title="Booster Active" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} icon={<Star className="w-8 h-8" />} />
+                            <EligibilitySquare title="Secure Airdrop" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} icon={<Star className="w-8 h-8" />} />
                        </div>
                     </CardContent>
                 </Card>
