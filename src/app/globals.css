@@ -46,7 +46,7 @@ body {
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 98%; /* Off-white */
-    --card: 0 0% 0% / 0; /* Fully transparent for glass effect */
+    --card: 0 0% 10% / 0.3; /* Semi-transparent dark for glass effect */
     --card-foreground: 0 0% 98%;
     --popover: 235 21% 12%;
     --popover-foreground: 0 0% 98%;
