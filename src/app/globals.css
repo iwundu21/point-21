@@ -85,23 +85,20 @@ body {
     @apply border-border;
   }
   body {
-    @apply text-foreground;
+    @apply bg-background text-foreground;
+  }
+  .dark body {
     background-image: url('/1.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    background-color: transparent; /* Fallback */
+    background-color: hsl(var(--background)); /* Fallback */
   }
 }
 
 @layer components {
-    .dark {
-        .glass-card {
-            @apply bg-transparent border border-white/10 backdrop-blur-lg;
-        }
-        body {
-             /* We control body background in the @layer base above */
-        }
+    .glass-card {
+        @apply bg-transparent border border-white/10 backdrop-blur-lg;
     }
      .loading-dots span {
         animation-name: loading-dots;
