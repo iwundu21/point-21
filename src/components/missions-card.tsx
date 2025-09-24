@@ -17,9 +17,6 @@ interface MissionsCardProps {
 const MissionsCard = ({ streak, rank, league, userData }: MissionsCardProps) => {
     return (
         <div className="w-full max-w-sm p-4 space-y-6">
-            <div className="text-center">
-                <h2 className="text-lg font-semibold text-primary/90">Missions & Stats</h2>
-            </div>
             <div className="space-y-4">
                 {/* DailyStreak removed */}
             </div>
