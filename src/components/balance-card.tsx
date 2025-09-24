@@ -7,11 +7,9 @@ import { cn } from '@/lib/utils';
 
 interface BalanceCardProps {
   balance: number;
-  animating: boolean;
-  miningReward: number;
 }
 
-const BalanceCard: FC<BalanceCardProps> = ({ balance, animating, miningReward }) => {
+const BalanceCard: FC<BalanceCardProps> = ({ balance }) => {
   return (
     <Card className="w-full glass-card">
       <CardHeader className="p-2">
@@ -22,12 +20,6 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating, miningReward })
           <span className="text-2xl sm:text-3xl font-normal tracking-tight text-gold">
             {balance.toLocaleString()} EXN
           </span>
-          <span className={cn(
-            "absolute -top-6 right-0 text-lg sm:text-xl font-medium text-gold transition-all duration-1000 ease-out",
-            animating ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-          )}>
-            +{miningReward.toLocaleString()} EXN
-          </span>
         </div>
       </CardContent>
     </Card>
@@ -35,5 +27,3 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, animating, miningReward })
 };
 
 export default BalanceCard;
-
-    

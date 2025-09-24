@@ -12,16 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { doc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { UserData } from '@/lib/database';
-
-// Define a map for boost details (points, cost, etc.)
-const boostDetails: { [key: string]: { amount: number; cost: number } } = {
-    boost_1: { amount: 2000, cost: 50 },
-    boost_2: { amount: 4000, cost: 100 },
-    boost_3: { amount: 8000, cost: 200 },
-    boost_4: { amount: 20000, cost: 500 },
-    boost_5: { amount: 40000, cost: 1000 },
-};
+import { UserData, incrementTotalPoints } from '@/lib/database';
 
 const ProcessBoostInputSchema = z.object({
   userId: z.string().describe('The unique identifier for the user (e.g., user_12345 or browser_xyz).'),
@@ -31,6 +22,7 @@ export type ProcessBoostInput = z.infer<typeof ProcessBoostInputSchema>;
 
 const ProcessBoostOutputSchema = z.object({
   success: z.boolean().describe('Whether the boost was processed successfully.'),
+  newBalance: z.number().optional().describe('The new balance after the reward.'),
   reason: z.string().optional().describe('The reason for failure, if any.'),
 });
 export type ProcessBoostOutput = z.infer<typeof ProcessBoostOutputSchema>;
@@ -48,18 +40,14 @@ const processBoostFlow = ai.defineFlow(
     outputSchema: ProcessBoostOutputSchema,
   },
   async ({ userId, boostId }) => {
-    if (!userId || !boostId) {
-        return { success: false, reason: 'User ID and Boost ID are required.' };
-    }
-
-    const boost = boostDetails[boostId];
-    if (!boost) {
-        return { success: false, reason: 'Invalid Boost ID.' };
+    if (!userId || boostId !== 'boost_1') {
+        return { success: false, reason: 'Invalid boost activation request.' };
     }
 
     const userRef = doc(db, 'users', userId);
 
     try {
+        let finalBalance: number | undefined;
         await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists()) {
@@ -68,24 +56,29 @@ const processBoostFlow = ai.defineFlow(
 
             const userData = userDoc.data() as UserData;
             
-            // Prevent duplicate boost applications
-            if (userData.purchasedBoosts?.includes(boostId)) {
-                // This isn't an error, just means we don't need to do anything.
-                // The client might be calling this again on a refresh.
+            if (userData.purchasedBoosts?.includes('boost_1')) {
+                finalBalance = userData.balance; // No change
                 return;
             }
-
-            const isTelegramUser = userId.startsWith('user_');
-            const currentRate = userData.miningRate || (isTelegramUser ? 1000 : 700);
-            const newRate = currentRate + boost.amount;
+            
+            const REWARD = 5000;
+            const newBalance = userData.balance + REWARD;
             
             transaction.update(userRef, {
-                miningRate: newRate,
-                purchasedBoosts: arrayUnion(boostId)
+                balance: newBalance,
+                purchasedBoosts: arrayUnion('boost_1')
             });
+            finalBalance = newBalance;
         });
 
-        return { success: true };
+        // If a new balance was set (meaning the boost was just added)
+        if (finalBalance !== undefined) {
+            await incrementTotalPoints(5000);
+            return { success: true, newBalance: finalBalance };
+        } else {
+            // This happens if the user already had the boost
+            return { success: false, reason: "Booster already active." };
+        }
 
     } catch (error: any) {
         console.error("Transaction failed for processBoost:", error);

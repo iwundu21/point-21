@@ -4,16 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import UserCard from '@/components/user-card';
 import BalanceCard from '@/components/balance-card';
-import MiningCircle from '@/components/mining-circle';
 import MissionsCard from '@/components/missions-card';
 import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints } from '@/lib/database';
-import MiningStatusIndicator from '@/components/mining-status-indicator';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, activateBoosterAndClaimReward, claimDailyTapReward } from '@/lib/database';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users } from 'lucide-react';
+import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
@@ -24,39 +22,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-  } from "@/components/ui/dialog"
-import { increment } from 'firebase/firestore';
 import Image from 'next/image';
-import { TelegramUser } from '@/lib/user-utils';
+import { TelegramUser, getDisplayName } from '@/lib/user-utils';
 import TelegramGate from '@/components/telegram-gate';
-import { processBoost } from '@/ai/flows/process-boost-flow';
 import Onboarding from '@/components/onboarding';
+import { cn } from '@/lib/utils';
 
 
 export default function Home({}: {}) {
   const [balance, setBalance] = useState(0);
-  const [isMiningActive, setIsMiningActive] = useState(false);
-  const [miningEndTime, setMiningEndTime] = useState<number | null>(null);
-  const [showPointsAnimation, setShowPointsAnimation] = useState(false);
-  const [dailyStreak, setDailyStreak] = useState(0);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isActivating, setIsActivating] = useState(false);
   const [isTelegram, setIsTelegram] = useState(false);
-  
-  // New state for sequential tasks
-  const [hasRedeemedReferral, setHasRedeemedReferral] = useState(false);
-  const [hasCompletedWelcomeTasks, setHasCompletedWelcomeTasks] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [miningRate, setMiningRate] = useState(1000);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
   const [totalUserCount, setTotalUserCount] = useState(0);
@@ -68,11 +46,14 @@ export default function Home({}: {}) {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogContent, setDialogContent] = useState({ title: '', description: '', action: null as React.ReactNode | null });
-  const [boostDialogOpen, setBoostDialogOpen] = useState(false);
-
+  
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isNewUserForOnboarding, setIsNewUserForOnboarding] = useState(false);
   const [onboardingInitialData, setOnboardingInitialData] = useState<UserData | null>(null);
+
+  const [isClaimingBooster, setIsClaimingBooster] = useState(false);
+  const [isClaimingTap, setIsClaimingTap] = useState(false);
+  const [canTap, setCanTap] = useState(false);
   
   const AIRDROP_CAP = 300000;
 
@@ -83,12 +64,8 @@ export default function Home({}: {}) {
   };
 
 
-  const isBrowserUser = user?.first_name === 'Browser User';
-  const miningReward = userData?.miningRate || (isBrowserUser ? 700 : 1000);
-
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
-      const today = new Date().toLocaleDateString('en-CA');
       const [dataResponse, userRankInfo, totalUsers, boosterUsers, totalActivePoints] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser),
@@ -105,9 +82,7 @@ export default function Home({}: {}) {
 
       // --- ONBOARDING & MERGE FLOW ---
       const needsConversion = !isNewUser && freshUserData.hasConvertedToExn === false;
-      const needsBoosterReward = !isNewUser && freshUserData.purchasedBoosts?.includes('boost_1') && !freshUserData.claimedBoostReward;
-
-      if (!freshUserData.hasOnboarded || needsConversion || needsBoosterReward) {
+      if (!freshUserData.hasOnboarded || needsConversion) {
           setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 
@@ -116,74 +91,28 @@ export default function Home({}: {}) {
           return; // Stop initialization to show onboarding
       }
 
-
       if (isNewUser && isTelegramUser && !freshUserData.hasMergedBrowserAccount) {
           router.replace('/merge');
           return;
       }
-      // --- END ONBOARDING & MERGE FLOW ---
       
       setUserData(freshUserData);
       setUser(currentUser);
+      setBalance(freshUserData.balance);
       setRankInfo(userRankInfo || { rank: 0, league: 'Unranked' });
-      setMiningRate(freshUserData.miningRate || (isTelegramUser ? 1000 : 700));
+      
+      const today = new Date().toISOString().split('T')[0];
+      setCanTap(freshUserData.lastTapDate !== today);
       
       if (freshUserData.status === 'banned') {
         setIsLoading(false);
         return;
       }
 
-      let currentBalance = freshUserData.balance;
-      let streakData = freshUserData.dailyStreak;
-      
-      setHasRedeemedReferral(freshUserData.referralBonusApplied);
-      const allWelcomeTasksDone = Object.values(freshUserData.welcomeTasks || {}).every(Boolean);
-      setHasCompletedWelcomeTasks(allWelcomeTasksDone);
-      setIsVerified(freshUserData.verificationStatus === 'verified');
-
-      if (freshUserData.miningEndTime && freshUserData.miningEndTime > Date.now()) {
-        setIsMiningActive(true);
-        setMiningEndTime(freshUserData.miningEndTime);
-      } else if (freshUserData.miningEndTime) {
-        const reward = freshUserData.miningRate || (typeof currentUser.id === 'number' ? 1000 : 700);
-        currentBalance += reward;
-        freshUserData.miningEndTime = null; 
-        await saveUserData(currentUser, { 
-          balance: currentBalance, 
-          miningEndTime: freshUserData.miningEndTime 
-        });
-      }
-
-      if (streakData.lastLogin !== today) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toLocaleDateString('en-CA');
-
-        let newStreakCount = 1;
-        if (streakData.lastLogin === yesterdayStr) {
-           newStreakCount = (streakData.count % 7) + 1;
-        }
-        
-        const dailyBonus = 200;
-        currentBalance += dailyBonus;
-        streakData = { count: newStreakCount, lastLogin: today };
-        setDailyStreak(newStreakCount);
-        
-        await saveUserData(currentUser, { 
-          balance: currentBalance, 
-          dailyStreak: streakData, 
-        });
-        
-      } else {
-        setDailyStreak(streakData.count);
-      }
-      
-      setBalance(currentBalance);
-
     } catch (error: any) {
       console.error("Initialization failed:", error);
        if (error.message.includes("Airdrop capacity reached")) {
-           router.replace('/auth'); // Redirect to auth page which shows the gate.
+           router.replace('/auth');
        } else {
           showDialog("Error", "Could not load user data. Please try again later.");
        }
@@ -200,10 +129,9 @@ export default function Home({}: {}) {
           const tg = window.Telegram.WebApp;
           currentUser = tg.initDataUnsafe.user;
           setIsTelegram(true);
-          tg.ready();
+tg.ready();
           initializeUser(currentUser);
       } else {
-          // It's a browser user or an environment without Telegram
           setIsTelegram(false);
           setIsLoading(false); 
       }
@@ -224,111 +152,62 @@ export default function Home({}: {}) {
   }, [user, initializeUser]);
 
   
-  const handleActivateMining = async () => {
-    if (!hasRedeemedReferral) {
-       showDialog("Referral Code Required", "Please redeem a referral code to unlock the next step.", <Button onClick={() => router.push('/referral')}>Go to Referrals</Button>);
-       return;
-    }
-     if (!hasCompletedWelcomeTasks) {
-       showDialog("Welcome Tasks Required", "Please complete all welcome tasks to continue.", <Button onClick={() => router.push('/welcome-tasks')}>Go to Tasks</Button>);
-       return;
-    }
-    if (!isVerified) {
-       showDialog("Verification Required", "Please verify your account on the profile page to start mining.", <Button onClick={() => router.push('/profile')}>Go to Profile</Button>);
-       return;
-    }
+  const handleSecureAirdrop = async () => {
+    if (!user || !userData || isClaimingBooster || userData.purchasedBoosts?.includes('boost_1')) return;
 
-    setIsActivating(true);
-    const endTime = Date.now() + 24 * 60 * 60 * 1000;
-    if (user) {
-        await saveUserData(user, { miningEndTime: endTime, miningActivationCount: increment(1) as any });
-        setUserData(prev => prev ? {...prev, miningEndTime: endTime, miningActivationCount: (prev.miningActivationCount || 0) + 1} : null);
+    setIsClaimingBooster(true);
+    try {
+        const userId = getUserId(user);
+        const result = await activateBoosterAndClaimReward(userId);
+        if (result) {
+            setUserData(result);
+            setBalance(result.balance);
+            setBoosterCount(prev => prev + 1); // Optimistically update UI
+            showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
+        } else {
+            showDialog("Error", "Could not activate the booster. You may have already claimed it.");
+        }
+    } catch (e) {
+        console.error("Error securing airdrop:", e);
+        showDialog("Error", "An unexpected error occurred.");
+    } finally {
+        setIsClaimingBooster(false);
     }
-    setTimeout(() => {
-        setIsMiningActive(true);
-        setMiningEndTime(endTime);
-        setIsActivating(false);
-    }, 4000);
   };
 
-  const handleSessionEnd = async () => {
-    const newBalance = balance + miningReward;
-    setBalance(newBalance);
-    setIsMiningActive(false);
-    setMiningEndTime(null);
-    if(user){
-        await saveUserData(user, { balance: newBalance, miningEndTime: null });
-        setUserData(prev => prev ? {...prev, balance: newBalance, miningEndTime: null} : null);
+  const handleDailyTap = async () => {
+    if (!user || !canTap || isClaimingTap) return;
+
+    setIsClaimingTap(true);
+    try {
+        const userId = getUserId(user);
+        const result = await claimDailyTapReward(userId);
+        if (result.success && result.newBalance) {
+            setBalance(result.newBalance);
+            setCanTap(false);
+            const today = new Date().toISOString().split('T')[0];
+            setUserData(prev => prev ? {...prev, lastTapDate: today, balance: result.newBalance as number} : null);
+            showDialog("Reward Claimed!", "You've earned 100 EXN. Come back tomorrow!");
+        } else {
+            showDialog("Already Claimed", "You have already claimed your daily tap reward for today.");
+            setCanTap(false);
+        }
+    } catch (e) {
+        console.error("Error claiming daily tap:", e);
+        showDialog("Error", "An unexpected error occurred.");
+    } finally {
+        setIsClaimingTap(false);
     }
-    setShowPointsAnimation(true);
-    setTimeout(() => setShowPointsAnimation(false), 2000);
-  };
-
-   const handleBoost = async (boostId: string, cost: number, title: string) => {
-        if (!user || !userData || !window.Telegram?.WebApp) return;
-        const tg = window.Telegram.WebApp;
-
-        if (userData.purchasedBoosts?.includes(boostId)) {
-            showDialog("Boost Already Active", "You have already purchased this boost.");
-            return;
-        }
-
-        try {
-            const userId = getUserId(user);
-            const uniquePayload = `${boostId}-${userId}-${Date.now()}`;
-
-            const response = await fetch('/api/create-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: title,
-                    description: `Activate ${title}.`,
-                    payload: uniquePayload,
-                    currency: 'XTR',
-                    amount: cost,
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create invoice.');
-            }
-
-            const { invoiceUrl } = await response.json();
-            
-            tg.openInvoice(invoiceUrl, async (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
-                 if (status === 'paid') {
-                    setBoostDialogOpen(false);
-                    showDialog("Purchase Successful!", "Your boost is now being activated.");
-                    
-                    const result = await processBoost({ userId, boostId });
-
-                    if (result.success) {
-                        await initializeUser(user);
-                    } else {
-                        showDialog("Activation Failed", result.reason || "Could not activate the boost. Please contact support.");
-                    }
-                 } else if (status !== 'pending') {
-                     showDialog("Payment Not Completed", "The payment was not completed. Please try again.");
-                 }
-            });
-
-        } catch (e: any) {
-            console.error("Boost error:", e);
-            showDialog("Error", `Could not process the boost payment: ${e.message}.`);
-        }
   };
 
   const handleOnboardingComplete = () => {
       setShowOnboarding(false);
       setOnboardingInitialData(null);
       if (user) {
-        // Re-initialize to get latest data after onboarding
         setIsLoading(true);
         initializeUser(user);
       }
   }
-
 
   if (isLoading) {
     return (
@@ -347,7 +226,6 @@ export default function Home({}: {}) {
   if (showOnboarding && user && onboardingInitialData) {
     return <Onboarding user={user} isNewUser={isNewUserForOnboarding} onComplete={handleOnboardingComplete} initialData={onboardingInitialData}/>;
   }
-
 
   if (userData?.status === 'banned') {
     return (
@@ -380,8 +258,7 @@ export default function Home({}: {}) {
     );
   }
 
-  if (!user) {
-      // This state should ideally not be reached if the init logic is correct, but it's a safe fallback.
+  if (!user || !userData) {
       return (
          <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
             <Card className="max-w-md w-full text-center">
@@ -405,18 +282,16 @@ export default function Home({}: {}) {
       );
   }
 
+  const hasBooster = userData.purchasedBoosts?.includes('boost_1');
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
-            <div className="flex justify-between items-start">
             <UserCard 
                 user={user}
                 userData={userData}
             />
-            <MiningStatusIndicator isActive={isMiningActive} />
-            </div>
-            <BalanceCard balance={balance} animating={showPointsAnimation} miningReward={miningReward} />
+            <BalanceCard balance={balance} />
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
@@ -467,107 +342,55 @@ export default function Home({}: {}) {
                 </Card>
             </div>
 
-            <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
-              <div className="flex items-center justify-center space-x-2">
-                <MiningCircle 
-                    isActive={isMiningActive}
-                    endTime={miningEndTime}
-                    onActivate={handleActivateMining}
-                    onSessionEnd={handleSessionEnd}
-                    isActivating={isActivating}
-                    hasRedeemedReferral={hasRedeemedReferral}
-                    hasCompletedWelcomeTasks={hasCompletedWelcomeTasks}
-                    isVerified={isVerified}
-                    miningReward={miningReward}
-                />
-              </div>
-              <Dialog open={boostDialogOpen} onOpenChange={setBoostDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button 
-                        variant="outline" 
-                        className="mt-4 animate-heartbeat bg-sky-500/10 border-sky-500/20 text-sky-400 hover:bg-sky-500/20 hover:text-sky-300"
-                    >
-                        <Zap className="w-4 h-4 mr-2 text-gold" /> Boost
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Boost Your Mining Speed</DialogTitle>
-                        <DialogDescription>
-                            Increase your daily EXN earnings by purchasing a boost with Telegram Stars. Boosts are stackable.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <Card className="p-4 flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold text-foreground">Booster Pack 1</p>
-                                <p className="font-bold text-sm">+2,000 EXN Daily</p>
-                                <p className="text-xs text-muted-foreground flex items-center">
-                                    Cost: 50 <Star className="w-3 h-3 ml-1 text-yellow-400" />
-                                </p>
-                            </div>
-                            <Button onClick={() => handleBoost('boost_1', 50, 'Booster Pack 1')} disabled={userData?.purchasedBoosts?.includes('boost_1')}>
-                                {userData?.purchasedBoosts?.includes('boost_1') ? 'Active' : 'Activate'}
-                            </Button>
-                        </Card>
-                        <Card className="p-4 flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold text-foreground">Booster Pack 2</p>
-                                <p className="font-bold text-sm">+4,000 EXN Daily</p>
-                                <p className="text-xs text-muted-foreground flex items-center">
-                                    Cost: 100 <Star className="w-3 h-3 ml-1 text-yellow-400" />
-                                </p>
-                            </div>
-                            <Button onClick={() => handleBoost('boost_2', 100, 'Booster Pack 2')} disabled={userData?.purchasedBoosts?.includes('boost_2')}>
-                               {userData?.purchasedBoosts?.includes('boost_2') ? 'Active' : 'Activate'}
-                            </Button>
-                        </Card>
-                         <Card className="p-4 flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold text-foreground">Booster Pack 3</p>
-                                <p className="font-bold text-sm">+8,000 EXN Daily</p>
-                                <p className="text-xs text-muted-foreground flex items-center">
-                                    Cost: 200 <Star className="w-3 h-3 ml-1 text-yellow-400" />
-                                </p>
-                            </div>
-                            <Button onClick={() => handleBoost('boost_3', 200, 'Booster Pack 3')} disabled={userData?.purchasedBoosts?.includes('boost_3')}>
-                               {userData?.purchasedBoosts?.includes('boost_3') ? 'Active' : 'Activate'}
-                            </Button>
-                        </Card>
-                         <Card className="p-4 flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold text-foreground">Booster Pack 4</p>
-                                <p className="font-bold text-sm">+20,000 EXN Daily</p>
-                                <p className="text-xs text-muted-foreground flex items-center">
-                                    Cost: 500 <Star className="w-3 h-3 ml-1 text-yellow-400" />
-                                </p>
-                            </div>
-                            <Button onClick={() => handleBoost('boost_4', 500, 'Booster Pack 4')} disabled={userData?.purchasedBoosts?.includes('boost_4')}>
-                               {userData?.purchasedBoosts?.includes('boost_4') ? 'Active' : 'Activate'}
-                            </Button>
-                        </Card>
-                         <Card className="p-4 flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold text-foreground">Booster Pack 5</p>
-                                <p className="font-bold text-sm">+40,000 EXN Daily</p>
-                                <p className="text-xs text-muted-foreground flex items-center">
-                                    Cost: 1000 <Star className="w-3 h-3 ml-1 text-yellow-400" />
-                                </p>
-                            </div>
-                            <Button onClick={() => handleBoost('boost_5', 1000, 'Booster Pack 5')} disabled={userData?.purchasedBoosts?.includes('boost_5')}>
-                               {userData?.purchasedBoosts?.includes('boost_5') ? 'Active' : 'Activate'}
-                            </Button>
-                        </Card>
-                    </div>
-                </DialogContent>
-               </Dialog>
+            <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
+                {!hasBooster ? (
+                    <Card className="w-full p-6 text-center space-y-4 bg-primary/10 border-primary/20">
+                        <Zap className="w-16 h-16 mx-auto text-primary" />
+                        <h2 className="text-xl font-bold">Secure Your Airdrop Spot</h2>
+                        <p className="text-muted-foreground text-sm">
+                            Activate your Booster Pack to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus and unlock daily rewards.
+                        </p>
+                        <Button 
+                            onClick={handleSecureAirdrop} 
+                            disabled={isClaimingBooster} 
+                            className="w-full h-12 text-lg animate-heartbeat"
+                        >
+                            {isClaimingBooster ? <Loader2 className="animate-spin" /> : "Secure Airdrop & Get 5,000 EXN"}
+                        </Button>
+                    </Card>
+                ) : (
+                    <Card className="w-full p-6 text-center space-y-4 bg-primary/5">
+                         <div 
+                            className={cn(
+                                "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300",
+                                !canTap ? "bg-muted/30 border-4 border-muted-foreground/30" : "bg-gold/20 border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
+                            )}
+                            onClick={handleDailyTap}
+                        >
+                            {isClaimingTap ? (
+                                <Loader2 className="w-16 h-16 text-gold animate-spin" />
+                            ) : !canTap ? (
+                                <CheckCircle className="w-16 h-16 text-muted-foreground/50" />
+                            ) : (
+                                <div className="text-center">
+                                    <p className="text-4xl font-bold text-gold">TAP</p>
+                                    <p className="text-sm font-semibold text-gold">+100 EXN</p>
+                                </div>
+                            )}
+                        </div>
+                        <h2 className="text-xl font-bold">Daily Tap Reward</h2>
+                        <p className="text-muted-foreground text-sm">
+                           {canTap ? "Tap the button to claim your 100 EXN for today!" : "You have already claimed your daily reward. Come back tomorrow!"}
+                        </p>
+                    </Card>
+                )}
             </div>
 
             <Separator className="w-full max-w-sm my-4 bg-primary/10" />
 
             <div className="w-full max-w-sm">
             <MissionsCard 
-                streak={dailyStreak} 
+                streak={userData.dailyStreak.count} 
                 rank={rankInfo.rank} 
                 league={rankInfo.league} 
                 userData={userData}
@@ -593,4 +416,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-

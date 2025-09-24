@@ -12,6 +12,7 @@ export interface UserData {
     miningEndTime: number | null;
     miningRate: number;
     dailyStreak: { count: number; lastLogin: string };
+    lastTapDate: string; // YYYY-MM-DD
     verificationStatus: 'verified' | 'unverified' | 'failed' | 'detecting';
     faceVerificationUri: string | null;
     faceFingerprint: string | null; // Unique identifier for the face
@@ -62,6 +63,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     miningEndTime: null,
     miningRate: user && typeof user.id === 'number' ? 1000 : 700,
     dailyStreak: { count: 0, lastLogin: '' },
+    lastTapDate: '',
     verificationStatus: 'unverified',
     faceVerificationUri: null,
     faceFingerprint: null,
@@ -91,7 +93,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     purchasedBoosts: [],
     miningActivationCount: 0,
     hasOnboarded: false,
-    hasConvertedToExn: false,
+    hasConvertedToExn: true,
     claimedAchievements: [],
     claimedBoostReward: false,
 });
@@ -268,8 +270,9 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
          if (isCurrentlyActive) {
             const oldEPointsBalance = oldData.balance || 0;
             const newExnBalance = data.balance;
-            const totalChange = newExnBalance - oldEPointsBalance;
-            await incrementTotalPoints(totalChange);
+            // Correctly calculate the total change
+            await decrementTotalPoints(oldEPointsBalance);
+            await incrementTotalPoints(newExnBalance);
         }
     } else if (oldData.hasConvertedToExn && typeof data.balance === 'number' && data.balance !== oldData.balance) {
          if (isCurrentlyActive) {
@@ -645,6 +648,90 @@ export const unbanAllUsers = async (): Promise<number> => {
     }
     
     return querySnapshot.size;
+}
+
+export const activateBoosterAndClaimReward = async (userId: string): Promise<UserData | null> => {
+    const userRef = doc(db, 'users', userId);
+    let updatedUserData: UserData | null = null;
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw new Error("User not found.");
+            }
+
+            const userData = userDoc.data() as UserData;
+
+            // Prevent re-activation
+            if (userData.purchasedBoosts?.includes('boost_1')) {
+                updatedUserData = userData;
+                return;
+            }
+
+            const REWARD = 5000;
+            const newBalance = userData.balance + REWARD;
+
+            transaction.update(userRef, {
+                balance: newBalance,
+                purchasedBoosts: arrayUnion('boost_1')
+            });
+
+            // For returning updated data
+            updatedUserData = { ...userData, balance: newBalance, purchasedBoosts: [...userData.purchasedBoosts, 'boost_1'] };
+        });
+
+        // If the transaction was successful and the user was not already boosted
+        if (updatedUserData && !updatedUserData.purchasedBoosts.includes('boost_1')) {
+            await incrementTotalPoints(5000);
+        }
+
+        return updatedUserData;
+    } catch (error) {
+        console.error("Failed to activate booster pack:", error);
+        return null;
+    }
+}
+
+export const claimDailyTapReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
+    const userRef = doc(db, 'users', userId);
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    try {
+        let result: { success: boolean, newBalance?: number } = { success: false };
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw new Error("User not found.");
+            }
+            const userData = userDoc.data() as UserData;
+
+            if (userData.lastTapDate === today) {
+                // Already tapped today, but it's not an error.
+                result = { success: false }; // Indicate no change was made
+                return;
+            }
+            
+            const REWARD = 100;
+            const newBalance = userData.balance + REWARD;
+
+            transaction.update(userRef, {
+                balance: newBalance,
+                lastTapDate: today
+            });
+            result = { success: true, newBalance };
+        });
+
+        if (result.success) {
+            await incrementTotalPoints(100);
+        }
+
+        return result;
+
+    } catch (error) {
+        console.error("Failed to claim daily tap reward:", error);
+        return { success: false };
+    }
 }
 
 // --- Specific Data Functions ---
