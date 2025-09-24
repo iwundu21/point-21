@@ -55,6 +55,7 @@ export default function Home({}: {}) {
   const [isClaimingBooster, setIsClaimingBooster] = useState(false);
   const [isClaimingTap, setIsClaimingTap] = useState(false);
   const [canTap, setCanTap] = useState(false);
+  const [countdown, setCountdown] = useState('');
   
   const AIRDROP_CAP = 300000;
 
@@ -134,6 +135,36 @@ export default function Home({}: {}) {
     };
     init();
   }, [initializeUser]);
+
+   useEffect(() => {
+    if (canTap) {
+      setCountdown('');
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setUTCHours(24, 0, 0, 0);
+
+      const diff = tomorrow.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setCountdown('');
+        setCanTap(true);
+        clearInterval(interval);
+        return;
+      }
+
+      const hours = String(Math.floor((diff / (1000 * 60 * 60)))).padStart(2, '0');
+      const minutes = String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0');
+      const seconds = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
+      
+      setCountdown(`${hours}:${minutes}:${seconds}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [canTap]);
   
   const handleSuccessfulPayment = useCallback(async () => {
       if (!user) return;
@@ -384,7 +415,14 @@ export default function Home({}: {}) {
                         {isClaimingTap ? (
                             <LoadingDots />
                         ) : !canTap ? (
-                            <CheckCircle className="w-16 h-16 text-muted-foreground/50" />
+                             countdown ? (
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-muted-foreground tabular-nums">{countdown}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Next claim</p>
+                                </div>
+                            ) : (
+                                <CheckCircle className="w-16 h-16 text-muted-foreground/50" />
+                            )
                         ) : (
                             <div className="text-center">
                                 <p className="text-4xl font-bold text-gold">TAP</p>
