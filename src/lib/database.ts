@@ -249,12 +249,13 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             ...defaultUserData(user),
             referralCode: generateReferralCode(),
         };
+        const newUserData = { ...newUser, id: userId };
         await setDoc(userRef, newUser);
-        // User count is now incremented AFTER they purchase the booster pack
+        await incrementTotalPoints(newUserData.balance);
         const userType = typeof user.id === 'number' ? 'telegram' : 'browser';
         if (userType === 'telegram') await incrementTelegramUserCount(); else await incrementBrowserUserCount();
         
-        return { userData: { ...newUser, id: userId }, isNewUser: true };
+        return { userData: newUserData, isNewUser: true };
     }
 };
 
@@ -262,18 +263,6 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     if (!user) return;
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
-    
-    // Always track balance changes to keep the total accurate.
-    if (typeof data.balance === 'number') {
-        const oldSnap = await getDoc(userRef);
-        const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user as TelegramUser);
-        const isCurrentlyActive = oldData.status === 'active';
-
-        if (isCurrentlyActive) {
-            const difference = data.balance - oldData.balance;
-            await incrementTotalPoints(difference);
-        }
-    }
     
     await setDoc(userRef, data, { merge: true });
 };
@@ -770,4 +759,5 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 

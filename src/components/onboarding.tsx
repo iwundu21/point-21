@@ -81,6 +81,10 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     const oldBalance = initialData.balance;
                     const newBalance = Math.floor((oldBalance / 1000) * 150);
                     const pointDifference = newBalance - oldBalance;
+                    
+                    if(pointDifference !== 0){
+                         await incrementTotalPoints(pointDifference);
+                    }
 
                     setConversionResult({ oldBalance, newBalance });
                     await saveUserData(user, { balance: newBalance, hasConvertedToExn: true });
@@ -89,8 +93,14 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     break;
 
                 case OnboardingStage.LegacyBoosterReward:
-                    await claimLegacyBoostRewards(user, totalLegacyReward);
-                     if (initialData.hasOnboarded) {
+                    if (totalLegacyReward > 0) {
+                        await claimLegacyBoostRewards(user, totalLegacyReward);
+                    } else {
+                        // Still mark as claimed even if reward is 0 to prevent re-entry
+                        await saveUserData(user, { claimedLegacyBoosts: true });
+                    }
+                    
+                    if (initialData.hasOnboarded && !isNewUser) {
                         onComplete(); // Already onboarded, just needed reward
                     } else {
                         setStage(OnboardingStage.Welcome);
@@ -98,6 +108,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     break;
 
                 case OnboardingStage.Welcome:
+                    // This is the gate for both new and existing users to get their loyalty bonus.
                     const result = await completeOnboarding({ user });
                     if (result.success) {
                         setBonusResult({
@@ -315,3 +326,4 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 };
 
 export default Onboarding;
+
