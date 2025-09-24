@@ -80,7 +80,7 @@ export default function Home({}: {}) {
       setTotalPoints(totalActivePoints);
 
       // --- ONBOARDING & MERGE FLOW ---
-      if (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts) {
+      if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts || !freshUserData.hasConvertedToExn)) {
           setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 

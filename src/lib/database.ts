@@ -46,6 +46,7 @@ export interface UserData {
     claimedAchievements: AchievementKey[]; // Tracks awarded achievements
     claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
     claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
+    hasConvertedToExn?: boolean; // Flag to ensure one-time conversion
 }
 
 const generateReferralCode = () => {
@@ -96,6 +97,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     claimedAchievements: [],
     claimedBoostReward: false,
     claimedLegacyBoosts: false,
+    hasConvertedToExn: false,
 });
 
 // --- User Count Management ---
@@ -269,8 +271,16 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     // This logic handles the global counter update whenever the balance changes.
     if (typeof data.balance === 'number' && data.balance !== oldData.balance) {
          if (isCurrentlyActive) {
-            const difference = data.balance - oldData.balance;
-            await incrementTotalPoints(difference);
+            let difference = data.balance - oldData.balance;
+            // If converting, the logic is different
+            if (data.hasConvertedToExn && !oldData.hasConvertedToExn) {
+                const oldPoints = oldData.balance; // This is the large e-points amount
+                const newExn = data.balance; // This is the small EXN amount
+                const totalChange = newExn - oldPoints;
+                await incrementTotalPoints(totalChange);
+            } else {
+                await incrementTotalPoints(difference);
+            }
         }
     }
     
@@ -694,7 +704,6 @@ export const LEGACY_BOOST_REWARDS: Record<string, number> = {
 
 export const claimLegacyBoostRewards = async (user: { id: number | string } | null, totalReward: number) => {
     if (!user) return;
-    // Allow totalReward to be 0 to handle users with no legacy boosts
     if (totalReward < 0) return;
 
     const userId = getUserId(user);
@@ -776,3 +785,4 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
