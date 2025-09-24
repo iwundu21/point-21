@@ -15,12 +15,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials, getDisplayName, TelegramUser } from '@/lib/user-utils';
 
-const getLeagueInfo = (rank: number) => {
-    if (rank <= 10) return { name: "Diamond", progress: 100 };
-    if (rank <= 100) return { name: "Platinum", progress: ((100 - (rank-10)) / 90) * 100 };
-    if (rank <= 1000) return { name: "Gold", progress: ((1000 - (rank-100)) / 900) * 100 };
-    if (rank <= 10000) return { name: "Silver", progress: ((10000 - (rank-1000)) / 9000) * 100 };
-    return { name: "Bronze", progress: 5 };
+const getLeagueInfo = (balance: number) => {
+    if (balance > 1000000) return { name: "Diamond", progress: 100 };
+    if (balance > 500000) return { name: "Platinum", progress: (balance / 1000000) * 100 };
+    if (balance > 100000) return { name: "Gold", progress: (balance / 500000) * 100 };
+    if (balance > 10000) return { name: "Silver", progress: (balance / 100000) * 100 };
+    return { name: "Bronze", progress: (balance / 10000) * 100 };
 };
 
 
@@ -188,7 +188,7 @@ export default function LeaderboardPage() {
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
                                         <p className="font-bold text-gold">{user.balance.toLocaleString()} EXN</p>
-                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(rank + 1).name}</p>
+                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(user.balance).name}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -240,7 +240,7 @@ export default function LeaderboardPage() {
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
                                         <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()} EXN</p>
-                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1).name}</p>
+                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserData.balance).name}</p>
                                     </div>
                                 </CardContent>
                         </Card>

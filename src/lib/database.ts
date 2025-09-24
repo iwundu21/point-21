@@ -46,7 +46,6 @@ export interface UserData {
     claimedAchievements: AchievementKey[]; // Tracks awarded achievements
     claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
     claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
-    hasConvertedToExn?: boolean; // Flag to ensure one-time conversion
 }
 
 const generateReferralCode = () => {
@@ -97,7 +96,6 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     claimedAchievements: [],
     claimedBoostReward: false,
     claimedLegacyBoosts: false,
-    hasConvertedToExn: false,
 });
 
 // --- User Count Management ---
@@ -264,7 +262,24 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
     
-    await setDoc(userRef, data, { merge: true });
+    await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (userDoc.exists()) {
+            const oldBalance = userDoc.data().balance || 0;
+            const newBalance = data.balance;
+            
+            if (newBalance !== undefined && oldBalance !== newBalance) {
+                const difference = newBalance - oldBalance;
+                await incrementTotalPoints(difference);
+            }
+            transaction.set(userRef, data, { merge: true });
+        } else {
+             if (data.balance && data.balance > 0) {
+                await incrementTotalPoints(data.balance);
+            }
+            transaction.set(userRef, data, { merge: true });
+        }
+    });
 };
 
 export const findUserByReferralCode = async (code: string): Promise<UserData | null> => {
@@ -369,6 +384,13 @@ export const getUserRank = async (user: { id: number | string } | null): Promise
 
     const userBalance = currentUserData.balance;
 
+    // Determine league based on balance
+    let league = 'Bronze';
+    if (userBalance > 1000000) league = 'Diamond';
+    else if (userBalance > 500000) league = 'Platinum';
+    else if (userBalance > 100000) league = 'Gold';
+    else if (userBalance > 10000) league = 'Silver';
+
     if (userBalance === 0) {
         const totalUsers = await getTotalUsersCount();
         return { rank: totalUsers, league: 'Unranked' };
@@ -382,12 +404,6 @@ export const getUserRank = async (user: { id: number | string } | null): Promise
 
     const rank = higherRankedCount + 1;
 
-    let league = 'Bronze';
-    if (rank <= 10) league = 'Diamond';
-    else if (rank <= 100) league = 'Platinum';
-    else if (rank <= 1000) league = 'Gold';
-    else if (rank <= 10000) league = 'Silver';
-    
     return { rank, league };
 };
 
@@ -690,7 +706,7 @@ export const claimLegacyBoostRewards = async (user: { id: number | string } | nu
         }
         
         const currentData = userDoc.data();
-        if (currentData.claimedLegacyBoosts) {
+        if (currentData.claimedLegacyBoosts && totalReward > 0) {
             return; // Already claimed, do nothing.
         }
 
@@ -759,5 +775,6 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 
 
