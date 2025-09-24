@@ -113,12 +113,12 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     if (isNewUser) {
                         setStage(OnboardingStage.WelcomeTasks);
                     } else {
-                        onComplete(); // Existing users finish here
+                        onComplete();
                     }
                     break;
                 
                 case OnboardingStage.WelcomeTasks:
-                    onComplete(); // New users finish here
+                    onComplete();
                     break;
             }
         } catch (e) {
