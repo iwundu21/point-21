@@ -10,10 +10,11 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank, getUserId } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldBan, Loader2, Bot, Wallet, Zap, Star } from 'lucide-react';
+import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +59,7 @@ export default function Home({}: {}) {
   const [miningRate, setMiningRate] = useState(1000);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
+  const [totalUserCount, setTotalUserCount] = useState(0);
 
 
   const router = useRouter();
@@ -69,6 +71,8 @@ export default function Home({}: {}) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isNewUserForOnboarding, setIsNewUserForOnboarding] = useState(false);
   const [onboardingInitialData, setOnboardingInitialData] = useState<UserData | null>(null);
+  
+  const AIRDROP_CAP = 300000;
 
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
@@ -83,15 +87,18 @@ export default function Home({}: {}) {
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      const [dataResponse, userRankInfo] = await Promise.all([
+      const [dataResponse, userRankInfo, totalUsers] = await Promise.all([
         getUserData(currentUser),
-        getUserRank(currentUser)
+        getUserRank(currentUser),
+        getTotalUsersCount(),
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
+      setTotalUserCount(totalUsers);
+
       // --- ONBOARDING & MERGE FLOW ---
-      const needsConversion = !isNewUser && !freshUserData.hasConvertedToExn;
+      const needsConversion = !isNewUser && freshUserData.hasConvertedToExn === false;
       const needsBoosterReward = !isNewUser && freshUserData.purchasedBoosts?.includes('boost_1') && !freshUserData.claimedBoostReward;
 
       if (!freshUserData.hasOnboarded || needsConversion || needsBoosterReward) {
@@ -167,9 +174,13 @@ export default function Home({}: {}) {
       
       setBalance(currentBalance);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Initialization failed:", error);
-      showDialog("Error", "Could not load user data. Please try again later.");
+       if (error.message.includes("Airdrop capacity reached")) {
+           router.replace('/auth'); // Redirect to auth page which shows the gate.
+       } else {
+          showDialog("Error", "Could not load user data. Please try again later.");
+       }
     } finally {
       setIsLoading(false);
     }
@@ -403,6 +414,27 @@ export default function Home({}: {}) {
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
+             <div className="w-full max-w-sm px-4">
+                 <Card className="w-full bg-primary/10 border-primary/20">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                            <Users className="w-5 h-5 text-primary" />
+                            Airdrop Slots
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Progress value={(totalUserCount / AIRDROP_CAP) * 100} className="w-full h-3" />
+                        <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                            <span>Taken: {totalUserCount.toLocaleString()}</span>
+                            <span>Available: {(AIRDROP_CAP - totalUserCount).toLocaleString()}</span>
+                        </div>
+                         <p className="text-center text-xs text-muted-foreground mt-2">
+                            Total Slots: {AIRDROP_CAP.toLocaleString()}
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4">
               <div className="flex items-center justify-center space-x-2">
                 <MiningCircle 

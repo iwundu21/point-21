@@ -102,6 +102,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
 const statsRef = doc(db, 'app-stats', 'user-counter');
 const telegramUsersStatsRef = doc(db, 'app-stats', 'telegram-user-counter');
 const browserUsersStatsRef = doc(db, 'app-stats', 'browser-user-counter');
+const MAX_USERS = 300000;
 
 
 const incrementTelegramUserCount = async () => {
@@ -235,6 +236,11 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         
         return { userData: finalUserData, isNewUser: false };
     } else {
+        const currentTotalUsers = await getTotalUsersCount();
+        if (currentTotalUsers >= MAX_USERS) {
+            throw new Error("Airdrop capacity reached. No new users can be added.");
+        }
+
         const isTelegramUser = typeof user.id === 'number';
         const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(user),
@@ -677,6 +683,10 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
+        const currentTotalUsers = await getTotalUsersCount();
+        if (currentTotalUsers >= MAX_USERS) {
+            throw new Error("Airdrop capacity reached. No new users can be added.");
+        }
         // This is a new browser user, create their record now.
         const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(user as TelegramUser),
