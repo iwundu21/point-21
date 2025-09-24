@@ -171,23 +171,23 @@ export const getTotalBrowserUsersCount = async (): Promise<number> => {
     return 0;
 }
 
-// --- Total Points Management ---
-const pointsStatsRef = doc(db, 'app-stats', 'points-counter');
+// --- Total EXN Management ---
+const exnStatsRef = doc(db, 'app-stats', 'exn-counter');
 
 export const incrementTotalPoints = async (amount: number) => {
     if (isNaN(amount) || amount === 0) return;
-    await setDoc(pointsStatsRef, { total: increment(amount) }, { merge: true });
+    await setDoc(exnStatsRef, { total: increment(amount) }, { merge: true });
 }
 
 const decrementTotalPoints = async (amount: number) => {
     if (isNaN(amount) || amount === 0) return;
-    await setDoc(pointsStatsRef, { total: increment(-amount) }, { merge: true });
+    await setDoc(exnStatsRef, { total: increment(-amount) }, { merge: true });
 }
 
 export const getTotalActivePoints = async (): Promise<number> => {
-    const pointsSnap = await getDoc(pointsStatsRef);
-    if (pointsSnap.exists()) {
-        return pointsSnap.data().total || 0;
+    const exnSnap = await getDoc(exnStatsRef);
+    if (exnSnap.exists()) {
+        return exnSnap.data().total || 0;
     }
     return 0;
 };
@@ -251,7 +251,7 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         };
         const newUserData = { ...newUser, id: userId };
         await setDoc(userRef, newUser);
-        await incrementTotalPoints(newUserData.balance);
+        
         const userType = typeof user.id === 'number' ? 'telegram' : 'browser';
         if (userType === 'telegram') await incrementTelegramUserCount(); else await incrementBrowserUserCount();
         
@@ -348,7 +348,7 @@ export const applyReferralBonus = async (newUser: { id: number | string }, refer
                 });
             });
 
-            // After transaction, update total points for both users
+            // After transaction, update total EXN for both users
             await incrementTotalPoints(200 + 50);
 
             const { userData } = await getUserData(newUser as TelegramUser);
@@ -387,17 +387,10 @@ export const getUserRank = async (user: { id: number | string } | null): Promise
     }
 
     const userBalance = currentUserData.balance;
+    const totalUsers = await getTotalUsersCount();
 
-    // Determine league based on balance
-    let league = 'Bronze';
-    if (userBalance > 1000000) league = 'Diamond';
-    else if (userBalance > 500000) league = 'Platinum';
-    else if (userBalance > 100000) league = 'Gold';
-    else if (userBalance > 10000) league = 'Silver';
-
-    if (userBalance === 0) {
-        const totalUsers = await getTotalUsersCount();
-        return { rank: totalUsers, league: 'Unranked' };
+    if (userBalance === 0 && totalUsers > 0) {
+        return { rank: totalUsers, league: 'Bronze' };
     }
 
     const usersRef = collection(db, 'users');
@@ -407,6 +400,17 @@ export const getUserRank = async (user: { id: number | string } | null): Promise
     const higherRankedCount = snapshot.data().count;
 
     const rank = higherRankedCount + 1;
+
+    // Determine league based on rank percentile
+    let league = 'Bronze'; // Default for all
+    if (totalUsers > 0) {
+        const percentile = (rank / totalUsers) * 100;
+        if (percentile <= 1) league = 'Diamond';
+        else if (percentile <= 10) league = 'Platinum';
+        else if (percentile <= 25) league = 'Gold';
+        else if (percentile <= 50) league = 'Silver';
+    }
+
 
     return { rank, league };
 };
@@ -476,7 +480,7 @@ export const updateUserBalance = async (user: {id: string | number }, newBalance
 
     await setDoc(userRef, { balance: Number(newBalance) }, { merge: true });
     
-    // Only adjust total points if the user is active
+    // Only adjust total EXN if the user is active
     if (userSnap.data().status === 'active') {
         await incrementTotalPoints(difference);
     }
@@ -490,7 +494,7 @@ export const deleteUser = async (user: {id: string | number}) => {
 
     if (userSnap.exists()) {
         const userData = userSnap.data() as UserData;
-        // If the user was active, subtract their points from the total
+        // If the user was active, subtract their EXN from the total
         if (userData.status === 'active') {
             await decrementTotalPoints(userData.balance);
         }
@@ -610,8 +614,8 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
         transaction.delete(browserUserRef);
     });
     
-    // This function doesn't need to touch total points.
-    // The browser user's points were already in the total.
+    // This function doesn't need to touch total EXN.
+    // The browser user's EXN were already in the total.
     // We just transfer ownership.
     await decrementBrowserUserCount();
     
@@ -640,7 +644,7 @@ export const unbanAllUsers = async (): Promise<number> => {
 
     await batch.commit();
 
-    // After unbanning, restore their collective balance to the total points counter
+    // After unbanning, restore their collective balance to the total EXN counter
     if (totalPointsToAdd > 0) {
         await incrementTotalPoints(totalPointsToAdd);
     }
@@ -753,9 +757,8 @@ export const convertEPointsToExn = async (user: { id: number | string }): Promis
             hasConvertedToExn: true,
         });
         
-        // This transaction just updates the user. The global counter adjustment
-        // will be handled separately to avoid transaction complexity.
-        await incrementTotalPoints(newExn - oldPoints);
+        const pointDifference = newExn - oldPoints;
+        await incrementTotalPoints(pointDifference);
         
         result = { oldBalance: oldPoints, newBalance: newExn };
     });
@@ -817,6 +820,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 
 
 

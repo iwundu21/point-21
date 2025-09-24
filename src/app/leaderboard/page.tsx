@@ -16,12 +16,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials, getDisplayName, TelegramUser } from '@/lib/user-utils';
 import LoadingDots from '@/components/loading-dots';
 
-const getLeagueInfo = (balance: number) => {
-    if (balance > 1000000) return { name: "Diamond", progress: 100 };
-    if (balance > 500000) return { name: "Platinum", progress: (balance / 1000000) * 100 };
-    if (balance > 100000) return { name: "Gold", progress: (balance / 500000) * 100 };
-    if (balance > 10000) return { name: "Silver", progress: (balance / 100000) * 100 };
-    return { name: "Bronze", progress: (balance / 10000) * 100 };
+const getLeagueInfo = (rank: number, totalUsers: number) => {
+    if (totalUsers === 0) return { name: 'Bronze', progress: 0 };
+    if (rank <= 0) return { name: 'Unranked', progress: 0 };
+
+    const percentile = (rank / totalUsers) * 100;
+
+    if (percentile <= 1) return { name: "Diamond", progress: 100 };
+    if (percentile <= 10) return { name: "Platinum", progress: (10 - percentile) / 9 * 100 };
+    if (percentile <= 25) return { name: "Gold", progress: (25 - percentile) / 15 * 100 };
+    if (percentile <= 50) return { name: "Silver", progress: (50 - percentile) / 25 * 100 };
+    return { name: "Bronze", progress: (100 - percentile) / 50 * 100 };
 };
 
 
@@ -105,6 +110,7 @@ export default function LeaderboardPage() {
         init();
     }, []);
     
+    const totalUsers = totalTelegramUsers + totalBrowserUsers;
     // The total number of pages is based on the limited leaderboard size (100), not all users.
     const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
     
@@ -160,6 +166,7 @@ export default function LeaderboardPage() {
                 <div className="space-y-2">
                     {paginatedUsers.map((user, index) => {
                         const rank = (currentPage - 1) * USERS_PER_PAGE + index;
+                        const leagueInfo = getLeagueInfo(rank + 1, totalUsers);
                         
                         let currentUserId = null;
                         if(currentUser) {
@@ -189,7 +196,7 @@ export default function LeaderboardPage() {
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
                                         <p className="font-bold text-gold">{user.balance.toLocaleString()} EXN</p>
-                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(user.balance).name}</p>
+                                        <p className="text-xs text-muted-foreground">{leagueInfo.name}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -241,7 +248,7 @@ export default function LeaderboardPage() {
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
                                         <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()} EXN</p>
-                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserData.balance).name}</p>
+                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1, totalUsers).name}</p>
                                     </div>
                                 </CardContent>
                         </Card>
