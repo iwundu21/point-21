@@ -78,6 +78,7 @@ const Footer = () => {
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/tasks', label: 'Social', icon: Users, badge: availableTaskCount },
+    { href: '/welcome-tasks', label: 'Welcome', icon: Gift },
     { href: '/referral', label: 'Ref', icon: Handshake },
     { href: '/achievements', label: 'Achieve', icon: Award },
     { href: '/leaderboard', label: 'Leader', icon: Trophy },
