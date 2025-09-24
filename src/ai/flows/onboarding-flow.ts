@@ -10,7 +10,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { saveUserData, getUserData, UserData, incrementTotalPoints } from '@/lib/database';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { saveUserData, getUserData, UserData, incrementTotalPoints, getUserId } from '@/lib/database';
 import { TelegramUser } from '@/lib/user-utils';
 
 const OnboardingInputSchema = z.object({
@@ -55,9 +57,10 @@ const completeOnboardingFlow = ai.defineFlow(
     try {
         const { userData } = await getUserData(telegramUser);
         
-        // Prevent re-running onboarding bonus calculation if it's already done
+        const creationDate = getTelegramCreationDate(telegramUser.id);
+        
+        // If user has already onboarded, just return their current state without awarding more points.
         if (userData.hasOnboarded) {
-             const creationDate = getTelegramCreationDate(telegramUser.id);
              return { 
                 success: true, 
                 initialBalance: userData.balance, 
@@ -67,7 +70,6 @@ const completeOnboardingFlow = ai.defineFlow(
         }
         
         // Calculate bonus based on account age
-        const creationDate = getTelegramCreationDate(telegramUser.id);
         const now = new Date();
         const ageInMs = now.getTime() - creationDate.getTime();
         const ageInMonths = Math.floor(ageInMs / (1000 * 60 * 60 * 24 * 30.44)); // Average days in a month
@@ -90,8 +92,6 @@ const completeOnboardingFlow = ai.defineFlow(
             hasOnboarded: true,
         };
 
-        // We don't call saveUserData here because we want to increment the total points
-        // in a controlled way after setting the base.
         const userRef = doc(db, 'users', getUserId(telegramUser));
         await setDoc(userRef, dataToSave, { merge: true });
 
@@ -115,3 +115,4 @@ const completeOnboardingFlow = ai.defineFlow(
     }
   }
 );
+

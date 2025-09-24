@@ -60,9 +60,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 
     useEffect(() => {
         // Determine the initial stage based on user data
-        if (!isNewUser && !initialData.hasConvertedToExn) {
-            setStage(OnboardingStage.AccountConversion);
-        } else if (!isNewUser && !initialData.claimedLegacyBoosts) {
+        if (!isNewUser && !initialData.claimedLegacyBoosts) {
             setStage(OnboardingStage.LegacyBoosterReward);
         } else if (!initialData.hasOnboarded) {
             setStage(OnboardingStage.Welcome);
@@ -80,14 +78,14 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                  case OnboardingStage.AccountConversion:
                     const oldBalance = initialData.balance;
                     const newBalance = Math.floor((oldBalance / 1000) * 150);
-                    const pointDifference = newBalance - oldBalance;
                     
-                    if(pointDifference !== 0){
-                         await incrementTotalPoints(pointDifference);
+                    if (oldBalance !== newBalance) {
+                        const pointDifference = newBalance - oldBalance;
+                        await incrementTotalPoints(pointDifference);
                     }
 
                     setConversionResult({ oldBalance, newBalance });
-                    await saveUserData(user, { balance: newBalance, hasConvertedToExn: true });
+                    await saveUserData(user, { balance: newBalance });
                     
                     setStage(OnboardingStage.LegacyBoosterReward);
                     break;
@@ -96,19 +94,12 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     if (totalLegacyReward > 0) {
                         await claimLegacyBoostRewards(user, totalLegacyReward);
                     } else {
-                        // Still mark as claimed even if reward is 0 to prevent re-entry
                         await saveUserData(user, { claimedLegacyBoosts: true });
                     }
-                    
-                    if (initialData.hasOnboarded && !isNewUser) {
-                        onComplete(); // Already onboarded, just needed reward
-                    } else {
-                        setStage(OnboardingStage.Welcome);
-                    }
+                    setStage(OnboardingStage.Welcome);
                     break;
 
                 case OnboardingStage.Welcome:
-                    // This is the gate for both new and existing users to get their loyalty bonus.
                     const result = await completeOnboarding({ user });
                     if (result.success) {
                         setBonusResult({
@@ -326,4 +317,3 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 };
 
 export default Onboarding;
-
