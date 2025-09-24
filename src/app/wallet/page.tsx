@@ -34,16 +34,21 @@ const isValidSolanaAddress = (address: string): boolean => {
     return solanaAddressRegex.test(address);
 };
 
-const EligibilityItem = ({ text, isMet }: { text: string, isMet: boolean }) => (
-    <div className="flex items-center space-x-3">
-        {isMet ? (
-            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-        ) : (
-            <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-        )}
-        <span className={cn("text-sm", isMet ? "text-foreground" : "text-muted-foreground")}>{text}</span>
+const EligibilitySquare = ({ title, isMet, icon }: { title: string; isMet: boolean; icon: React.ReactNode }) => (
+    <div className={cn(
+        "relative w-full aspect-square rounded-lg flex flex-col items-center justify-center p-2 text-center transition-all duration-300",
+        isMet 
+            ? 'bg-green-500/10 border-2 border-green-500/30 text-foreground' 
+            : 'bg-primary/5 border border-primary/10 text-muted-foreground'
+    )}>
+        <div className="absolute top-2 right-2">
+            {isMet ? <CheckCircle className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-destructive/50" />}
+        </div>
+        <div className="mb-1">{icon}</div>
+        <p className="text-xs font-semibold leading-tight">{title}</p>
     </div>
 );
+
 
 export default function WalletPage() {
   const [savedAddress, setSavedAddress] = useState('');
@@ -299,11 +304,13 @@ export default function WalletPage() {
                         <CardTitle className="text-base">Airdrop Eligibility</CardTitle>
                         <CardDescription className="text-xs">You must meet all criteria to be eligible for the airdrop.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <EligibilityItem text="Wallet address submitted" isMet={!!savedAddress} />
-                        <EligibilityItem text="Account verified" isMet={isVerified} />
-                        <EligibilityItem text="Active user status" isMet={userData?.status === 'active'} />
-                        <EligibilityItem text="Purchased Booster Pack 1" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} />
+                    <CardContent>
+                       <div className="grid grid-cols-2 gap-3">
+                            <EligibilitySquare title="Wallet Submitted" isMet={!!savedAddress} icon={<WalletIcon className="w-8 h-8" />} />
+                            <EligibilitySquare title="Account Verified" isMet={isVerified} icon={<UserCheck className="w-8 h-8" />} />
+                            <EligibilitySquare title="Active User" isMet={userData?.status === 'active'} icon={<Bot className="w-8 h-8" />} />
+                            <EligibilitySquare title="Booster Active" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} icon={<Star className="w-8 h-8" />} />
+                       </div>
                     </CardContent>
                 </Card>
 
