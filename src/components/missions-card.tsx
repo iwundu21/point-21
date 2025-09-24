@@ -21,7 +21,7 @@ const MissionsCard = ({ streak, rank, league, userData }: MissionsCardProps) => 
                 <h2 className="text-lg font-semibold text-primary/90">Missions & Stats</h2>
             </div>
             <div className="space-y-4">
-                <DailyStreak streak={streak} />
+                {/* DailyStreak removed */}
             </div>
         </div>
     )
