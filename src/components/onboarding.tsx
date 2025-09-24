@@ -42,7 +42,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
     } | null>(null);
 
     // Data for conversion stage
-    const oldBalance = initialData.ePointsBalance || 0;
+    const oldBalance = initialData.balance || 0;
     const newBalance = Math.floor(oldBalance / 1000);
 
     // Data for booster reward stage
@@ -54,10 +54,13 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
             setStage(OnboardingStage.Conversion);
         } else if (!isNewUser && initialData.purchasedBoosts?.includes('boost_1') && !initialData.claimedBoostReward) {
             setStage(OnboardingStage.BoosterReward);
-        } else {
+        } else if (!initialData.hasOnboarded) {
             setStage(OnboardingStage.Welcome);
+        } else {
+            // User is fully onboarded and converted, so just complete.
+            onComplete();
         }
-    }, [isNewUser, initialData]);
+    }, [isNewUser, initialData, onComplete]);
 
     const handleNext = async () => {
         setIsLoading(true);

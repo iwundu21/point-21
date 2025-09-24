@@ -9,7 +9,6 @@ export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'we
 export interface UserData {
     id: string; // Document ID
     balance: number;
-    ePointsBalance?: number; // For one-time conversion
     miningEndTime: number | null;
     miningRate: number;
     dailyStreak: { count: number; lastLogin: string };
@@ -43,7 +42,7 @@ export interface UserData {
     purchasedBoosts: string[];
     miningActivationCount: number;
     hasOnboarded?: boolean; // New flag for the new onboarding flow
-    hasConvertedToExn?: boolean; // New flag for EXN conversion
+    hasConvertedToExn?: boolean; // Flag for EXN conversion
     claimedAchievements: AchievementKey[]; // Tracks awarded achievements
     claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
 }
@@ -60,7 +59,6 @@ export const getUserId = (user: { id: number | string } | null): string => {
 
 const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     balance: 0,
-    ePointsBalance: 0,
     miningEndTime: null,
     miningRate: user && typeof user.id === 'number' ? 1000 : 700,
     dailyStreak: { count: 0, lastLogin: '' },
@@ -220,16 +218,10 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             dataToUpdate.referralCode = generateReferralCode();
         }
 
-        // Logic to stage pre-conversion balances
-        if (fetchedData.hasConvertedToExn === false && fetchedData.ePointsBalance === undefined && (fetchedData.balance || 0) > 0) {
-            dataToUpdate.ePointsBalance = fetchedData.balance;
-            dataToUpdate.balance = 0;
-        }
-
         const finalUserData: UserData = { 
             ...defaultUserData(user), 
             ...fetchedData,
-            ...dataToUpdate, // Apply staging changes
+            ...dataToUpdate,
             id: userSnap.id 
         };
 
@@ -253,7 +245,6 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             ...defaultUserData(user),
             referralCode: generateReferralCode(),
             hasConvertedToExn: true, // New users start with EXN
-            ePointsBalance: 0,
         };
         await setDoc(userRef, newUser);
         await incrementUserCount(isTelegramUser ? 'telegram' : 'browser');
@@ -274,25 +265,20 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     // Check for point conversion
     const isConverting = data.hasConvertedToExn && !oldData.hasConvertedToExn;
     if (isConverting && data.balance !== undefined) {
-        const oldEPoints = oldData.ePointsBalance || 0;
+        const oldBalance = oldData.balance || 0; // This is now the E-Points balance
         const newExnBalance = data.balance;
         
-        if (isCurrentlyActive && oldEPoints > 0) {
+        if (isCurrentlyActive && oldBalance > 0) {
             // Correctly adjust the total points counter
-            await decrementTotalPoints(oldEPoints); // Remove old E-Points value
+            await decrementTotalPoints(oldBalance); // Remove old E-Points value
             await incrementTotalPoints(newExnBalance); // Add new EXN value
         }
-
-        // Save and exit to prevent double counting
-        await setDoc(userRef, {...data, ePointsBalance: 0}, { merge: true });
-        return;
     }
-
 
     await setDoc(userRef, data, { merge: true });
 
-    // If balance was updated, adjust total points
-    if (data.balance !== undefined && data.balance !== oldData.balance) {
+    // If balance was updated AFTER conversion, adjust total points
+    if (oldData.hasConvertedToExn && data.balance !== undefined && data.balance !== oldData.balance) {
          if (isCurrentlyActive) {
             const difference = data.balance - oldData.balance;
             await incrementTotalPoints(difference);
@@ -711,14 +697,4 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
-
-
-
-
-
-
-
-
-    
-
 

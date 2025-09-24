@@ -407,17 +407,12 @@ const UserTable = ({
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
-                                    {(user.ePointsBalance && user.ePointsBalance > 0) ? (
-                                        <div>
-                                            <span className="font-bold">{user.ePointsBalance.toLocaleString()}</span>
-                                            <span className="text-xs text-muted-foreground ml-1">E-Points</span>
-                                        </div>
-                                    ) : (
+                                    
                                         <div>
                                             <span className="text-gold font-bold">{user.balance.toLocaleString()}</span>
                                             <span className="text-xs text-gold ml-1">EXN</span>
                                         </div>
-                                    )}
+                                    
                                     <EditBalanceDialog user={user} onBalanceUpdated={onBalanceUpdated} />
                                     </div>
                                 </TableCell>
