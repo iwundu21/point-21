@@ -181,6 +181,22 @@ export const getTotalActivePoints = async (): Promise<number> => {
     return 0;
 };
 
+// --- Airdrop Stats Management ---
+const airdropStatsRef = doc(db, 'app-stats', 'airdrop-stats');
+
+export const getAirdropStats = async (): Promise<{ totalAirdrop: number }> => {
+    const docSnap = await getDoc(airdropStatsRef);
+    if (docSnap.exists()) {
+        return { totalAirdrop: docSnap.data().totalAirdrop || 200_000_000 };
+    }
+    // Default value if the document doesn't exist
+    return { totalAirdrop: 200_000_000 };
+};
+
+export const updateAirdropStats = async (newTotal: number) => {
+    await setDoc(airdropStatsRef, { totalAirdrop: newTotal });
+};
+
 
 export const getUserData = async (user: TelegramUser | null): Promise<{ userData: UserData, isNewUser: boolean }> => {
     if (!user) return { userData: { ...defaultUserData(null), id: 'guest' }, isNewUser: false };
@@ -247,14 +263,15 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     if (isConverting && data.balance !== undefined) {
         const oldEPoints = oldData.ePointsBalance || 0;
         const newExnBalance = data.balance;
-        const difference = newExnBalance - oldEPoints;
+        const difference = newExnBalance - oldEPoints; // This will be a large negative number
         
+        // Only adjust total if the user is active and had points
         if (isCurrentlyActive && oldEPoints > 0) {
             await incrementTotalPoints(difference);
         }
 
         // Save and exit to prevent double counting
-        await setDoc(userRef, {...data, ePointsBalance: null}, { merge: true });
+        await setDoc(userRef, {...data, ePointsBalance: 0}, { merge: true });
         return;
     }
 

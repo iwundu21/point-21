@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1 } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,6 @@ import { getInitials, getDisplayName } from '@/lib/user-utils';
 const ADMIN_IDS = [123, 12345, 6954452147]; 
 const ADMIN_ACCESS_CODE = '202020';
 const USERS_PER_PAGE = 20;
-const TOTAL_AIRDROP = 200_000_000;
 
 
 declare global {
@@ -324,6 +323,7 @@ const UserTable = ({
     onBalanceUpdated,
     onWalletUpdated,
     onForceBoost,
+    totalAirdrop
 }: {
     users: UserData[],
     onUpdateStatus: (user: UserData, status: 'active' | 'banned', reason?: string) => void,
@@ -333,6 +333,7 @@ const UserTable = ({
     onBalanceUpdated: (userId: string, newBalance: number) => void,
     onWalletUpdated: (userId: string, newAddress: string) => void,
     onForceBoost: (user: UserData) => void,
+    totalAirdrop: number
 }) => {
    
     return (
@@ -355,7 +356,7 @@ const UserTable = ({
                     </TableHeader>
                     <TableBody>
                         {users.map((user) => {
-                          const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                          const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * totalAirdrop : 0;
                           const isMiningActive = user.miningEndTime && user.miningEndTime > Date.now();
                           const isBrowserUser = !user.telegramUser;
                           const hasBoost1 = user.purchasedBoosts?.includes('boost_1');
@@ -478,6 +479,70 @@ const UserTable = ({
     );
 };
 
+const EditAirdropDialog = ({ currentTotal, onAirdropUpdated }: { currentTotal: number, onAirdropUpdated: (newTotal: number) => void }) => {
+    const [newTotal, setNewTotal] = useState(currentTotal.toString());
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        const totalValue = parseInt(newTotal, 10);
+        if (isNaN(totalValue) || totalValue < 0) {
+            toast({ variant: 'destructive', title: 'Invalid Total', description: 'Please enter a valid positive number.' });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await updateAirdropStats(totalValue);
+            onAirdropUpdated(totalValue);
+            toast({ title: 'Airdrop Total Updated', description: 'The total airdrop amount has been updated.' });
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Failed to update airdrop total:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the airdrop total.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                    <Pencil className="mr-2 h-3 w-3" /> Edit Total
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Edit Total Airdrop Amount</DialogTitle>
+                    <DialogDescription>
+                        Set the total number of EXN tokens to be distributed in the airdrop.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="airdrop-total" className="text-right">Total EXN</Label>
+                        <Input
+                            id="airdrop-total"
+                            type="number"
+                            value={newTotal}
+                            onChange={e => setNewTotal(e.target.value)}
+                            className="col-span-3"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                     <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Changes
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 
 export default function AdminPage() {
     const [allUsers, setAllUsers] = useState<UserData[]>([]);
@@ -501,6 +566,7 @@ export default function AdminPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
+    const [totalAirdrop, setTotalAirdrop] = useState(0);
     
     const { toast } = useToast();
 
@@ -508,13 +574,14 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStats] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
                 getTotalTelegramUsersCount(),
                 getTotalBrowserUsersCount(),
                 getTotalActivePoints(),
+                getAirdropStats(),
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -532,6 +599,7 @@ export default function AdminPage() {
             setTotalBrowserCount(totalBrowser);
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
+            setTotalAirdrop(airdropStats.totalAirdrop);
 
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -787,7 +855,7 @@ export default function AdminPage() {
                     (user.miningActivationCount || 0) >= 20
                 )
                 .map(user => {
-                    const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * TOTAL_AIRDROP : 0;
+                    const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * totalAirdrop : 0;
                     return {
                         walletAddress: user.walletAddress,
                         airdropAmount: airdropAmount.toFixed(4)
@@ -934,70 +1002,128 @@ export default function AdminPage() {
                     </Button>
                 )}
             </div>
-
-            <Card>
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle>Social Task Management</CardTitle>
-                    <AddTaskDialog onTaskAdded={fetchInitialData} />
-                </div>
-                <CardDescription>Create and manage social engagement tasks for users.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {isLoadingTasks ? (
-                    <div className="flex justify-center items-center h-24">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Social Task Management</CardTitle>
+                        <AddTaskDialog onTaskAdded={fetchInitialData} />
                     </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Icon</TableHead>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead>Points</TableHead>
-                                    <TableHead>Completions</TableHead>
-                                    <TableHead>Link</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {socialTasks.map((task) => (
-                                    <TableRow key={task.id}>
-                                        <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
-                                        <TableCell className="font-medium">{task.title}</TableCell>
-                                        <TableCell className="text-gold">{task.points}</TableCell>
-                                        <TableCell className="font-bold">{taskCompletionCounts[task.id] || 0}</TableCell>
-                                        <TableCell>
-                                            <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
-                                                {task.link}
-                                            </a>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This will permanently delete this social task.</AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeleteTask(task.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete Task</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </TableCell>
+                    <CardDescription>Create and manage social engagement tasks for users.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isLoadingTasks ? (
+                        <div className="flex justify-center items-center h-24">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Icon</TableHead>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Points</TableHead>
+                                        <TableHead>Completions</TableHead>
+                                        <TableHead>Link</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                )}
-            </CardContent>
-            </Card>
+                                </TableHeader>
+                                <TableBody>
+                                    {socialTasks.map((task) => (
+                                        <TableRow key={task.id}>
+                                            <TableCell>{renderIcon(task.icon, "w-6 h-6")}</TableCell>
+                                            <TableCell className="font-medium">{task.title}</TableCell>
+                                            <TableCell className="text-gold">{task.points}</TableCell>
+                                            <TableCell className="font-bold">{taskCompletionCounts[task.id] || 0}</TableCell>
+                                            <TableCell>
+                                                <a href={task.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] block">
+                                                    {task.link}
+                                                </a>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="outline" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>This will permanently delete this social task.</AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteTask(task.id)} className={cn(buttonVariants({variant: 'destructive'}))}>Delete Task</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>System Statistics</CardTitle>
+                        <CardDescription>An overview of key application metrics.</CardDescription>
+                    </CardHeader>
+                     <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                         <Card className="bg-primary/5">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                                <Users className="h-4 w-4 text-primary" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{totalUserCount.toLocaleString()}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-primary/5">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Telegram Users</CardTitle>
+                                <Bot className="h-4 w-4 text-primary" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{totalTelegramCount.toLocaleString()}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-primary/5">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Browser Users</CardTitle>
+                                <Monitor className="h-4 w-4 text-primary" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{totalBrowserCount.toLocaleString()}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-primary/5">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Points (Active)</CardTitle>
+                                <Star className="h-4 w-4 text-primary" />
+                            </CardHeader>
+                            <CardContent>
+                                    <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
+                            </CardContent>
+                        </Card>
+                         <Card className="bg-primary/5 col-span-1 lg:col-span-2">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
+                                <Coins className="h-4 w-4 text-primary" />
+                            </CardHeader>
+                            <CardContent className="flex items-center justify-between">
+                                    <div className="text-2xl font-bold">{totalAirdrop.toLocaleString()}</div>
+                                    <EditAirdropDialog currentTotal={totalAirdrop} onAirdropUpdated={setTotalAirdrop} />
+                            </CardContent>
+                        </Card>
+                    </CardContent>
+                </Card>
+            </div>
+
 
             <Card>
             <CardHeader>
@@ -1007,53 +1133,6 @@ export default function AdminPage() {
                         ? `Displaying ${usersToDisplay.length} search results.` 
                         : `Search, manage, and export user data. The airdrop export includes only active users with a valid wallet. Displaying ${allUsers.length} of ${totalUserCount} users.`}
                 </CardDescription>
-                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 pt-4">
-                     <Card className="bg-primary/5">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                            <Users className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalUserCount.toLocaleString()}</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-primary/5">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Telegram Users</CardTitle>
-                            <Bot className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalTelegramCount.toLocaleString()}</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-primary/5">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Browser Users</CardTitle>
-                            <Monitor className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalBrowserCount.toLocaleString()}</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-primary/5">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Points (Active)</CardTitle>
-                            <Star className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                                <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-primary/5">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
-                                <Coins className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                                <div className="text-2xl font-bold">{TOTAL_AIRDROP.toLocaleString()}</div>
-                        </CardContent>
-                    </Card>
-                </div>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center gap-2 py-4 flex-wrap">
@@ -1113,6 +1192,7 @@ export default function AdminPage() {
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
+                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                     <TabsContent value="tg-banned" className="mt-4">
@@ -1125,6 +1205,7 @@ export default function AdminPage() {
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
+                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                     <TabsContent value="browser-active" className="mt-4">
@@ -1137,6 +1218,7 @@ export default function AdminPage() {
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
+                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                      <TabsContent value="browser-banned" className="mt-4">
@@ -1149,6 +1231,7 @@ export default function AdminPage() {
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
+                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                 </Tabs>
