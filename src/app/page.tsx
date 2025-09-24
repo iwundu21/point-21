@@ -355,14 +355,14 @@ export default function Home({}: {}) {
   const hasBooster = userData.purchasedBoosts?.includes('boost_1');
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
+    <div className="flex flex-col min-h-screen bg-transparent text-foreground font-body">
+        <header className="sticky top-0 z-10 bg-transparent/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
             <BalanceCard balance={balance} user={user} />
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
              <div className="w-full max-w-sm px-4 space-y-4">
-                 <Card className="w-full bg-primary/10 border-primary/20">
+                 <Card className="w-full glass-card">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
                             <Users className="w-5 h-5 text-primary" />
@@ -384,7 +384,7 @@ export default function Home({}: {}) {
 
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
                 {!hasBooster && (
-                    <Card className="w-full p-6 text-center space-y-4 bg-primary/10 border-primary/20">
+                    <Card className="w-full p-6 text-center space-y-4 glass-card">
                         <Zap className="w-16 h-16 mx-auto text-primary" />
                         <h2 className="text-xl font-bold">Secure Your Airdrop Spot</h2>
                         <p className="text-muted-foreground text-sm">
@@ -400,7 +400,7 @@ export default function Home({}: {}) {
                     </Card>
                 )}
 
-                <Card className="w-full p-6 text-center space-y-4 bg-primary/5">
+                <Card className="w-full p-6 text-center space-y-4 glass-card">
                         <div 
                         className={cn(
                             "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300",

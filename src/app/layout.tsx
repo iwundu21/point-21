@@ -35,7 +35,6 @@ export default function RootLayout({
       </head>
       <body className={cn(
         "font-body antialiased"
-        // bg-background is now handled globally in globals.css
       )}>
         <LoaderProvider>
             <WalletProvider>
