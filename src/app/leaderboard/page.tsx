@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials, getDisplayName, TelegramUser } from '@/lib/user-utils';
+import LoadingDots from '@/components/loading-dots';
 
 const getLeagueInfo = (balance: number) => {
     if (balance > 1000000) return { name: "Diamond", progress: 100 };
@@ -154,7 +155,7 @@ export default function LeaderboardPage() {
                     </div>
                 </div>
 
-                {isLoading ? <LeaderboardSkeleton /> : (
+                {isLoading ? <div className="h-64 flex items-center justify-center"><LoadingDots /></div> : (
                 <>
                 <div className="space-y-2">
                     {paginatedUsers.map((user, index) => {

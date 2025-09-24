@@ -49,6 +49,7 @@ import { renderIcon } from '@/app/tasks/page';
 import Papa from 'papaparse';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { getInitials, getDisplayName } from '@/lib/user-utils';
+import LoadingDots from '@/components/loading-dots';
 
 
 // NOTE: Add your Telegram user ID here for admin access
@@ -982,7 +983,7 @@ export default function AdminPage() {
       <main className="flex-grow flex flex-col p-4 mt-8 relative">
         {isLoading ? (
              <div className="flex justify-center items-center h-64">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                <LoadingDots />
             </div>
         ) : (
         <div className="w-full max-w-7xl mx-auto space-y-6">

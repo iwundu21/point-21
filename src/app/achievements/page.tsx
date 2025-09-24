@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { TelegramUser } from '@/lib/user-utils';
 import { getUserRank } from '@/lib/database';
 import { awardAchievements } from '@/ai/flows/award-achievements-flow';
+import LoadingDots from '@/components/loading-dots';
 
 export default function AchievementsPage() {
     const [user, setUser] = useState<TelegramUser | null>(null);
@@ -74,7 +75,7 @@ export default function AchievementsPage() {
                 <main className="flex-grow flex flex-col p-4 mt-8 relative">
                     {isLoading ? (
                         <div className="flex justify-center items-center h-64">
-                           <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                           <LoadingDots />
                        </div>
                     ) : (
                         <div className="w-full max-w-sm mx-auto space-y-8">
