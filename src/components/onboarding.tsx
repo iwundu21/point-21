@@ -79,7 +79,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
             switch (stage) {
                  case OnboardingStage.AccountConversion:
                     const oldBalance = initialData.balance;
-                    const newBalance = Math.floor(oldBalance / 1000);
+                    const newBalance = Math.floor((oldBalance / 1000) * 150);
                     setConversionResult({ oldBalance, newBalance });
                     await saveUserData(user, { balance: newBalance, hasConvertedToExn: true });
                     setStage(OnboardingStage.LegacyBoosterReward);
@@ -156,12 +156,12 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 <div className="flex justify-between items-center text-lg">
                                     <span>Conversion Ratio:</span>
                                     <span className="font-bold text-muted-foreground">
-                                        1000 : 1
+                                        1000 : 150
                                     </span>
                                 </div>
                                 <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-2xl font-bold">
                                     <span>New EXN Balance:</span>
-                                    <span className="text-gold">{(Math.floor(initialData.balance / 1000)).toLocaleString()} EXN</span>
+                                    <span className="text-gold">{(Math.floor((initialData.balance / 1000) * 150)).toLocaleString()} EXN</span>
                                 </div>
                             </div>
                         </div>
@@ -312,3 +312,5 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 };
 
 export default Onboarding;
+
+    
