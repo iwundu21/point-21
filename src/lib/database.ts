@@ -175,12 +175,12 @@ export const getTotalBrowserUsersCount = async (): Promise<number> => {
 const pointsStatsRef = doc(db, 'app-stats', 'points-counter');
 
 export const incrementTotalPoints = async (amount: number) => {
-    if (isNaN(amount)) return;
+    if (isNaN(amount) || amount === 0) return;
     await setDoc(pointsStatsRef, { total: increment(amount) }, { merge: true });
 }
 
 const decrementTotalPoints = async (amount: number) => {
-    if (isNaN(amount)) return;
+    if (isNaN(amount) || amount === 0) return;
     await setDoc(pointsStatsRef, { total: increment(-amount) }, { merge: true });
 }
 
@@ -258,29 +258,21 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
     }
 };
 
-export const saveUserData = async (user: { id: number | string } | null, data: Partial<Omit<UserData, 'id'>>) => {
+export const saveUserData = async (user: { id: number | string } | null, data: Partial<Omit<UserData, 'id'>>, fromOnboarding: boolean = false) => {
     if (!user) return;
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
     
-    const oldSnap = await getDoc(userRef);
-    const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user as TelegramUser);
+    // During onboarding conversion, we don't adjust the total points.
+    // The points are just being converted, not earned.
+    if (!fromOnboarding && typeof data.balance === 'number') {
+        const oldSnap = await getDoc(userRef);
+        const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user as TelegramUser);
+        const isCurrentlyActive = oldData.status === 'active';
 
-    const isCurrentlyActive = oldData.status === 'active';
-    
-    // This logic handles the global counter update whenever the balance changes.
-    if (typeof data.balance === 'number' && data.balance !== oldData.balance) {
-         if (isCurrentlyActive) {
-            let difference = data.balance - oldData.balance;
-            // If converting, the logic is different
-            if (data.hasConvertedToExn && !oldData.hasConvertedToExn) {
-                const oldPoints = oldData.balance; // This is the large e-points amount
-                const newExn = data.balance; // This is the small EXN amount
-                const totalChange = newExn - oldPoints;
-                await incrementTotalPoints(totalChange);
-            } else {
-                await incrementTotalPoints(difference);
-            }
+        if (isCurrentlyActive) {
+            const difference = data.balance - oldData.balance;
+            await incrementTotalPoints(difference);
         }
     }
     
@@ -704,6 +696,7 @@ export const LEGACY_BOOST_REWARDS: Record<string, number> = {
 
 export const claimLegacyBoostRewards = async (user: { id: number | string } | null, totalReward: number) => {
     if (!user) return;
+    // Allow proceeding with 0 reward to not block users
     if (totalReward < 0) return;
 
     const userId = getUserId(user);
@@ -727,9 +720,7 @@ export const claimLegacyBoostRewards = async (user: { id: number | string } | nu
         });
     });
 
-    if (totalReward > 0) {
-      await incrementTotalPoints(totalReward);
-    }
+    // Do NOT increment total points for legacy rewards.
 };
 
 // --- Specific Data Functions ---
@@ -785,4 +776,3 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
-

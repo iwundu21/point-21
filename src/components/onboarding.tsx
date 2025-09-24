@@ -81,7 +81,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     const oldBalance = initialData.balance;
                     const newBalance = Math.floor((oldBalance / 1000) * 150);
                     setConversionResult({ oldBalance, newBalance });
-                    await saveUserData(user, { balance: newBalance, hasConvertedToExn: true });
+                    await saveUserData(user, { balance: newBalance, hasConvertedToExn: true }, true);
                     setStage(OnboardingStage.LegacyBoosterReward);
                     break;
 
@@ -144,7 +144,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                         <p className="text-xl text-muted-foreground">We're upgrading our points system!</p>
                          <div className="py-8 flex flex-col items-center justify-center gap-4 w-full max-w-sm">
                             <RefreshCw className="w-16 h-16 text-primary" />
-                            <p className="text-base text-muted-foreground">Your E-Points are being converted to EXN tokens.</p>
+                            <p className="text-base text-muted-foreground">Your E-Points are being converted to EXN.</p>
                             
                             <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg">
                                 <div className="flex justify-between items-center text-lg">
@@ -312,5 +312,3 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 };
 
 export default Onboarding;
-
-    

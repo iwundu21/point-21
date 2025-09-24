@@ -10,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { saveUserData, getUserData, UserData } from '@/lib/database';
+import { saveUserData, getUserData, UserData, incrementTotalPoints } from '@/lib/database';
 import { TelegramUser } from '@/lib/user-utils';
 
 const OnboardingInputSchema = z.object({
@@ -86,7 +86,8 @@ const completeOnboardingFlow = ai.defineFlow(
             hasOnboarded: true,
         };
 
-        await saveUserData(telegramUser, dataToSave);
+        // Pass 'true' to indicate this is an onboarding save, which should not affect total points
+        await saveUserData(telegramUser, dataToSave, true);
         
         return {
             success: true,
