@@ -80,7 +80,7 @@ export default function Home({}: {}) {
       setTotalPoints(totalActivePoints);
 
       // --- ONBOARDING & MERGE FLOW ---
-      if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts || !freshUserData.hasConvertedToExn)) {
+      if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts)) {
           setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 
@@ -355,20 +355,6 @@ export default function Home({}: {}) {
                         </p>
                     </CardContent>
                 </Card>
-                
-                <Card className="w-full bg-gold/10 border-gold/20">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium flex items-center gap-2">
-                            <Zap className="w-5 h-5 text-gold" />
-                            Total EXN Accumulated
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       <p className="text-center text-2xl font-bold text-gold">
-                           {totalPoints.toLocaleString()} EXN
-                       </p>
-                    </CardContent>
-                </Card>
             </div>
 
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
@@ -445,5 +431,6 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
 
 
