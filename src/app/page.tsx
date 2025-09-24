@@ -360,7 +360,7 @@ export default function Home({}: {}) {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
                             <Zap className="w-5 h-5 text-gold" />
-                            Total Points Accumulated
+                            Total EXN Accumulated
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -446,4 +446,3 @@ export default function Home({}: {}) {
   );
 }
 
-    
