@@ -85,7 +85,24 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-image: url('/1.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-color: hsl(var(--background)); /* Fallback */
+  }
+
+  /* Add a semi-transparent overlay to ensure text is readable */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(10, 10, 20, 0.5); 
+    z-index: -1;
   }
 }
 
@@ -95,7 +112,7 @@ body {
             @apply bg-card border border-white/10 backdrop-blur-lg;
         }
         body {
-            @apply bg-background;
+             /* We control body background in the @layer base above */
         }
     }
      .loading-dots span {

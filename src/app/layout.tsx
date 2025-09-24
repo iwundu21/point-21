@@ -34,8 +34,8 @@ export default function RootLayout({
         <script src="https://telegram.org/js/telegram-web-app.js" async></script>
       </head>
       <body className={cn(
-        "font-body antialiased",
-        'bg-background'
+        "font-body antialiased"
+        // bg-background is now handled globally in globals.css
       )}>
         <LoaderProvider>
             <WalletProvider>
