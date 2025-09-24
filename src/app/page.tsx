@@ -98,8 +98,10 @@ export default function Home({}: {}) {
       setBalance(freshUserData.balance);
       setRankInfo(userRankInfo || { rank: 0, league: 'Unranked' });
       
-      const today = new Date().toISOString().split('T')[0];
-      setCanTap(freshUserData.lastTapDate !== today);
+      const now = Date.now();
+      const lastTap = freshUserData.lastTapTimestamp || 0;
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      setCanTap(now - lastTap >= twentyFourHours);
       
       if (freshUserData.status === 'banned') {
         setIsLoading(false);
@@ -137,17 +139,16 @@ export default function Home({}: {}) {
   }, [initializeUser]);
 
    useEffect(() => {
-    if (canTap) {
+    if (canTap || !userData?.lastTapTimestamp) {
       setCountdown('');
       return;
     }
 
     const interval = setInterval(() => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setUTCHours(24, 0, 0, 0);
-
-      const diff = tomorrow.getTime() - now.getTime();
+      const now = Date.now();
+      const lastTap = userData.lastTapTimestamp || 0;
+      const nextClaimTime = lastTap + (24 * 60 * 60 * 1000);
+      const diff = nextClaimTime - now;
 
       if (diff <= 0) {
         setCountdown('');
@@ -164,7 +165,7 @@ export default function Home({}: {}) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [canTap]);
+  }, [canTap, userData?.lastTapTimestamp]);
   
   const handleSuccessfulPayment = useCallback(async () => {
       if (!user) return;
@@ -255,8 +256,8 @@ export default function Home({}: {}) {
         if (result.success && result.newBalance) {
             setBalance(result.newBalance);
             setCanTap(false);
-            const today = new Date().toISOString().split('T')[0];
-            setUserData(prev => prev ? {...prev, lastTapDate: today, balance: result.newBalance as number} : null);
+            const now = Date.now();
+            setUserData(prev => prev ? {...prev, lastTapTimestamp: now, balance: result.newBalance as number} : null);
             showDialog("Reward Claimed!", "You've earned 100 EXN. Come back tomorrow!");
         } else {
             showDialog("Already Claimed", "You have already claimed your daily tap reward for today.");

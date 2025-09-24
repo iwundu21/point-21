@@ -13,7 +13,7 @@ export interface UserData {
     miningEndTime: number | null;
     miningRate: number;
     dailyStreak: { count: number; lastLogin: string };
-    lastTapDate: string; // YYYY-MM-DD
+    lastTapTimestamp: number; // Unix timestamp in ms
     verificationStatus: 'verified' | 'unverified' | 'failed' | 'detecting';
     faceVerificationUri: string | null;
     faceFingerprint: string | null; // Unique identifier for the face
@@ -65,7 +65,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     miningEndTime: null,
     miningRate: 0, // Obsolete
     dailyStreak: { count: 0, lastLogin: '' },
-    lastTapDate: '',
+    lastTapTimestamp: 0,
     verificationStatus: 'unverified',
     faceVerificationUri: null,
     faceFingerprint: null,
@@ -389,7 +389,9 @@ export const getUserRank = async (user: { id: number | string } | null): Promise
     const userBalance = currentUserData.balance;
     const totalUsers = await getTotalUsersCount();
 
-    if (userBalance === 0 && totalUsers > 0) {
+    if (totalUsers === 0) return { rank: 0, league: 'Bronze'};
+
+    if (userBalance === 0) {
         return { rank: totalUsers, league: 'Bronze' };
     }
 
@@ -403,13 +405,12 @@ export const getUserRank = async (user: { id: number | string } | null): Promise
 
     // Determine league based on rank percentile
     let league = 'Bronze'; // Default for all
-    if (totalUsers > 0) {
-        const percentile = (rank / totalUsers) * 100;
-        if (percentile <= 1) league = 'Diamond';
-        else if (percentile <= 10) league = 'Platinum';
-        else if (percentile <= 25) league = 'Gold';
-        else if (percentile <= 50) league = 'Silver';
-    }
+    const percentile = (rank / totalUsers) * 100;
+    
+    if (percentile <= 1) league = 'Diamond';
+    else if (percentile <= 10) league = 'Platinum';
+    else if (percentile <= 25) league = 'Gold';
+    else if (percentile <= 50) league = 'Silver';
 
 
     return { rank, league };
@@ -654,7 +655,7 @@ export const unbanAllUsers = async (): Promise<number> => {
 
 export const claimDailyTapReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
     const userRef = doc(db, 'users', userId);
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
 
     try {
         let result: { success: boolean, newBalance?: number } = { success: false };
@@ -664,10 +665,12 @@ export const claimDailyTapReward = async (userId: string): Promise<{ success: bo
                 throw new Error("User not found.");
             }
             const userData = userDoc.data() as UserData;
+            const now = Date.now();
+            const lastTap = userData.lastTapTimestamp || 0;
 
-            if (userData.lastTapDate === today) {
-                // Already tapped today, but it's not an error.
-                result = { success: false }; // Indicate no change was made
+            if (now - lastTap < twentyFourHoursInMillis) {
+                // Not enough time has passed.
+                result = { success: false };
                 return;
             }
             
@@ -676,7 +679,7 @@ export const claimDailyTapReward = async (userId: string): Promise<{ success: bo
 
             transaction.update(userRef, {
                 balance: newBalance,
-                lastTapDate: today
+                lastTapTimestamp: now
             });
             result = { success: true, newBalance };
         });
@@ -820,6 +823,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 
 
 
