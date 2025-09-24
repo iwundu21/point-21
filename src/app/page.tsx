@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users } from 'lucide-react';
@@ -61,6 +61,7 @@ export default function Home({}: {}) {
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
   const [totalUserCount, setTotalUserCount] = useState(0);
   const [boosterCount, setBoosterCount] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
 
 
   const router = useRouter();
@@ -88,17 +89,19 @@ export default function Home({}: {}) {
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      const [dataResponse, userRankInfo, totalUsers, boosterUsers] = await Promise.all([
+      const [dataResponse, userRankInfo, totalUsers, boosterUsers, totalActivePoints] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser),
         getTotalUsersCount(),
-        getBoosterPack1UserCount()
+        getBoosterPack1UserCount(),
+        getTotalActivePoints(),
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
       setTotalUserCount(totalUsers);
       setBoosterCount(boosterUsers);
+      setTotalPoints(totalActivePoints);
 
       // --- ONBOARDING & MERGE FLOW ---
       const needsConversion = !isNewUser && freshUserData.hasConvertedToExn === false;
@@ -446,6 +449,19 @@ export default function Home({}: {}) {
                     <CardContent>
                        <p className="text-center text-2xl font-bold text-yellow-400">
                            {boosterCount.toLocaleString()}
+                       </p>
+                    </CardContent>
+                </Card>
+                <Card className="w-full bg-gold/10 border-gold/20">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                            <Zap className="w-5 h-5 text-gold" />
+                            Total Points Accumulated
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <p className="text-center text-2xl font-bold text-gold">
+                           {totalPoints.toLocaleString()} EXN
                        </p>
                     </CardContent>
                 </Card>
