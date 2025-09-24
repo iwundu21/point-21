@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, activateBoosterAndClaimReward, claimDailyTapReward } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, claimDailyTapReward } from '@/lib/database';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -27,6 +27,7 @@ import { TelegramUser, getDisplayName } from '@/lib/user-utils';
 import TelegramGate from '@/components/telegram-gate';
 import Onboarding from '@/components/onboarding';
 import { cn } from '@/lib/utils';
+import { processBoost } from '@/ai/flows/process-boost-flow';
 
 
 export default function Home({}: {}) {
@@ -129,7 +130,7 @@ export default function Home({}: {}) {
           const tg = window.Telegram.WebApp;
           currentUser = tg.initDataUnsafe.user;
           setIsTelegram(true);
-tg.ready();
+          tg.ready();
           initializeUser(currentUser);
       } else {
           setIsTelegram(false);
@@ -139,17 +140,46 @@ tg.ready();
     init();
   }, [initializeUser]);
   
+  const handleSuccessfulPayment = useCallback(async () => {
+      if (!user) return;
+      try {
+        const userId = getUserId(user);
+        const result = await processBoost({ userId, boostId: 'boost_1' });
+        
+        if (result.success && result.newBalance !== undefined) {
+          setUserData(prev => prev ? { ...prev, balance: result.newBalance!, purchasedBoosts: [...(prev.purchasedBoosts || []), 'boost_1'] } : null);
+          setBalance(result.newBalance);
+          setBoosterCount(prev => prev + 1);
+          showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
+        } else if (result.reason) {
+            // This might happen in a race condition, but it's good to handle.
+            showDialog("Already Activated", result.reason);
+        }
+
+      } catch (e) {
+        console.error("Error processing boost after payment:", e);
+        showDialog("Payment Process Error", "There was an issue crediting your account. Please contact support.");
+      }
+  }, [user]);
+
   useEffect(() => {
-    const handleVisibilityChange = () => {
-        if(document.visibilityState === 'visible' && user) {
-            initializeUser(user);
+    const handleInvoiceClosed = (event: {slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending'}) => {
+        if(event.status === 'paid') {
+           handleSuccessfulPayment();
+        } else {
+           showDialog('Payment Not Completed', `The payment was ${event.status}. Please try again.`);
+        }
+        setIsClaimingBooster(false); // Re-enable the button
+    }
+    
+    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.onEvent('invoiceClosed', handleInvoiceClosed);
+        return () => {
+             window.Telegram.WebApp.offEvent('invoiceClosed', handleInvoiceClosed);
         }
     }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }
-  }, [user, initializeUser]);
+  }, [handleSuccessfulPayment]);
+
 
   
   const handleSecureAirdrop = async () => {
@@ -158,20 +188,34 @@ tg.ready();
     setIsClaimingBooster(true);
     try {
         const userId = getUserId(user);
-        const result = await activateBoosterAndClaimReward(userId);
-        if (result) {
-            setUserData(result);
-            setBalance(result.balance);
-            setBoosterCount(prev => prev + 1); // Optimistically update UI
-            showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
-        } else {
-            showDialog("Error", "Could not activate the booster. You may have already claimed it.");
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: 'Booster Pack 1',
+                description: 'Activate your booster to get a 5,000 EXN welcome bonus and unlock daily rewards.',
+                payload: `boost_1_user_${userId}`,
+                currency: 'XTR',
+                amount: 70
+            })
+        });
+
+        const { invoiceUrl, error } = await response.json();
+
+        if (error) {
+            throw new Error(error);
         }
-    } catch (e) {
-        console.error("Error securing airdrop:", e);
-        showDialog("Error", "An unexpected error occurred.");
-    } finally {
-        setIsClaimingBooster(false);
+        
+        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.openInvoice(invoiceUrl);
+        } else {
+            throw new Error('Telegram WebApp context not found.');
+        }
+
+    } catch (e: any) {
+        console.error("Error creating invoice:", e);
+        showDialog("Error", `Could not initiate payment: ${e.message}`);
+        setIsClaimingBooster(false); // Re-enable button on failure
     }
   };
 
@@ -348,7 +392,7 @@ tg.ready();
                         <Zap className="w-16 h-16 mx-auto text-primary" />
                         <h2 className="text-xl font-bold">Secure Your Airdrop Spot</h2>
                         <p className="text-muted-foreground text-sm">
-                            Activate your Booster Pack to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus and unlock daily rewards.
+                            Activate your Booster Pack for <strong className="text-primary">70 Stars</strong> to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus and unlock daily rewards.
                         </p>
                         <Button 
                             onClick={handleSecureAirdrop} 
@@ -416,3 +460,5 @@ tg.ready();
     </div>
   );
 }
+
+    

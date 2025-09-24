@@ -8,3 +8,5 @@ const MiningCircle: FC<{}> = () => {
 };
 
 export default MiningCircle;
+
+    

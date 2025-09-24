@@ -48,6 +48,8 @@ const processBoostFlow = ai.defineFlow(
 
     try {
         let finalBalance: number | undefined;
+        let alreadyHadBoost = false;
+        
         await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists()) {
@@ -57,7 +59,8 @@ const processBoostFlow = ai.defineFlow(
             const userData = userDoc.data() as UserData;
             
             if (userData.purchasedBoosts?.includes('boost_1')) {
-                finalBalance = userData.balance; // No change
+                finalBalance = userData.balance;
+                alreadyHadBoost = true;
                 return;
             }
             
@@ -71,8 +74,8 @@ const processBoostFlow = ai.defineFlow(
             finalBalance = newBalance;
         });
 
-        // If a new balance was set (meaning the boost was just added)
-        if (finalBalance !== undefined) {
+        // If the boost was just added, increment total points
+        if (finalBalance !== undefined && !alreadyHadBoost) {
             await incrementTotalPoints(5000);
             return { success: true, newBalance: finalBalance };
         } else {
@@ -86,3 +89,5 @@ const processBoostFlow = ai.defineFlow(
     }
   }
 );
+
+    

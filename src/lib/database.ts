@@ -61,7 +61,7 @@ export const getUserId = (user: { id: number | string } | null): string => {
 const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     balance: 0,
     miningEndTime: null,
-    miningRate: user && typeof user.id === 'number' ? 1000 : 700,
+    miningRate: 0, // Obsolete
     dailyStreak: { count: 0, lastLogin: '' },
     lastTapDate: '',
     verificationStatus: 'unverified',
@@ -80,7 +80,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
         joinedDiscord: false,
         joinedTelegramCommunity: false,
     },
-    socialTasks: {
+    socialTasks: { // Obsolete
         commentedOnX: false,
         likedOnX: false,
         retweetedOnX: false,
@@ -650,49 +650,6 @@ export const unbanAllUsers = async (): Promise<number> => {
     return querySnapshot.size;
 }
 
-export const activateBoosterAndClaimReward = async (userId: string): Promise<UserData | null> => {
-    const userRef = doc(db, 'users', userId);
-    let updatedUserData: UserData | null = null;
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) {
-                throw new Error("User not found.");
-            }
-
-            const userData = userDoc.data() as UserData;
-
-            // Prevent re-activation
-            if (userData.purchasedBoosts?.includes('boost_1')) {
-                updatedUserData = userData;
-                return;
-            }
-
-            const REWARD = 5000;
-            const newBalance = userData.balance + REWARD;
-
-            transaction.update(userRef, {
-                balance: newBalance,
-                purchasedBoosts: arrayUnion('boost_1')
-            });
-
-            // For returning updated data
-            updatedUserData = { ...userData, balance: newBalance, purchasedBoosts: [...userData.purchasedBoosts, 'boost_1'] };
-        });
-
-        // If the transaction was successful and the user was not already boosted
-        if (updatedUserData && !updatedUserData.purchasedBoosts.includes('boost_1')) {
-            await incrementTotalPoints(5000);
-        }
-
-        return updatedUserData;
-    } catch (error) {
-        console.error("Failed to activate booster pack:", error);
-        return null;
-    }
-}
-
 export const claimDailyTapReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
     const userRef = doc(db, 'users', userId);
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -781,5 +738,7 @@ export const saveReferralCode = async (user: { id: number | string } | null, cod
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
 
 
+
+    
 
     

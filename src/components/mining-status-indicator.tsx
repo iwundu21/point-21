@@ -7,3 +7,5 @@ const MiningStatusIndicator = () => {
 };
 
 export default MiningStatusIndicator;
+
+    
