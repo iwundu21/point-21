@@ -393,7 +393,7 @@ export default function ProfilePage({}: ProfilePageProps) {
 
 
   return (
-    <div className="flex flex-col min-h-screen text-foreground font-body">
+    <div className="flex flex-col min-h-screen text-foreground font-body bg-profile-bg bg-cover bg-center bg-fixed">
       <div className="flex-grow pb-32">
         {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
@@ -497,5 +497,7 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
+
+    
 
     
