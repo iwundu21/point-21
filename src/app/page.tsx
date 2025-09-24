@@ -387,12 +387,12 @@ export default function Home({}: {}) {
             </div>
 
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
-                {!hasBooster ? (
+                {!hasBooster && (
                     <Card className="w-full p-6 text-center space-y-4 bg-primary/10 border-primary/20">
                         <Zap className="w-16 h-16 mx-auto text-primary" />
                         <h2 className="text-xl font-bold">Secure Your Airdrop Spot</h2>
                         <p className="text-muted-foreground text-sm">
-                            Activate your Booster Pack for <strong className="text-primary">70 Stars</strong> to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus and unlock daily rewards.
+                            Activate your Booster Pack for <strong className="text-primary">70 Stars</strong> to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus.
                         </p>
                         <Button 
                             onClick={handleSecureAirdrop} 
@@ -402,32 +402,32 @@ export default function Home({}: {}) {
                             {isClaimingBooster ? <Loader2 className="animate-spin" /> : "Secure Airdrop & Get 5,000 EXN"}
                         </Button>
                     </Card>
-                ) : (
-                    <Card className="w-full p-6 text-center space-y-4 bg-primary/5">
-                         <div 
-                            className={cn(
-                                "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300",
-                                !canTap ? "bg-muted/30 border-4 border-muted-foreground/30" : "bg-gold/20 border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
-                            )}
-                            onClick={handleDailyTap}
-                        >
-                            {isClaimingTap ? (
-                                <Loader2 className="w-16 h-16 text-gold animate-spin" />
-                            ) : !canTap ? (
-                                <CheckCircle className="w-16 h-16 text-muted-foreground/50" />
-                            ) : (
-                                <div className="text-center">
-                                    <p className="text-4xl font-bold text-gold">TAP</p>
-                                    <p className="text-sm font-semibold text-gold">+100 EXN</p>
-                                </div>
-                            )}
-                        </div>
-                        <h2 className="text-xl font-bold">Daily Tap Reward</h2>
-                        <p className="text-muted-foreground text-sm">
-                           {canTap ? "Tap the button to claim your 100 EXN for today!" : "You have already claimed your daily reward. Come back tomorrow!"}
-                        </p>
-                    </Card>
                 )}
+
+                <Card className="w-full p-6 text-center space-y-4 bg-primary/5">
+                        <div 
+                        className={cn(
+                            "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300",
+                            !canTap ? "bg-muted/30 border-4 border-muted-foreground/30" : "bg-gold/20 border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
+                        )}
+                        onClick={handleDailyTap}
+                    >
+                        {isClaimingTap ? (
+                            <Loader2 className="w-16 h-16 text-gold animate-spin" />
+                        ) : !canTap ? (
+                            <CheckCircle className="w-16 h-16 text-muted-foreground/50" />
+                        ) : (
+                            <div className="text-center">
+                                <p className="text-4xl font-bold text-gold">TAP</p>
+                                <p className="text-sm font-semibold text-gold">+100 EXN</p>
+                            </div>
+                        )}
+                    </div>
+                    <h2 className="text-xl font-bold">Daily Tap Reward</h2>
+                    <p className="text-muted-foreground text-sm">
+                        {canTap ? "Tap the button to claim your 100 EXN for today!" : "You have already claimed your daily reward. Come back tomorrow!"}
+                    </p>
+                </Card>
             </div>
 
             <Separator className="w-full max-w-sm my-4 bg-primary/10" />
@@ -460,5 +460,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    
