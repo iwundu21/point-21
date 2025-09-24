@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { doc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { UserData, incrementTotalPoints } from '@/lib/database';
+import { UserData, incrementTotalPoints, incrementUserCount, getUserId } from '@/lib/database';
 
 const ProcessBoostInputSchema = z.object({
   userId: z.string().describe('The unique identifier for the user (e.g., user_12345 or browser_xyz).'),
@@ -74,9 +74,11 @@ const processBoostFlow = ai.defineFlow(
             finalBalance = newBalance;
         });
 
-        // If the boost was just added, increment total points
+        // If the boost was just added, increment total points and user count
         if (finalBalance !== undefined && !alreadyHadBoost) {
             await incrementTotalPoints(5000);
+            const userType = userId.startsWith('user_') ? 'telegram' : 'browser';
+            await incrementUserCount(userType);
             return { success: true, newBalance: finalBalance };
         } else {
             // This happens if the user already had the boost

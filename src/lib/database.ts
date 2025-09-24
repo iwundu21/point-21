@@ -119,7 +119,7 @@ const decrementBrowserUserCount = async () => {
     await setDoc(browserUsersStatsRef, { count: increment(-1) }, { merge: true });
 };
 
-const incrementUserCount = async (userType: 'telegram' | 'browser') => {
+export const incrementUserCount = async (userType: 'telegram' | 'browser') => {
     await setDoc(statsRef, { count: increment(1) }, { merge: true });
     if (userType === 'telegram') {
         await incrementTelegramUserCount();
@@ -242,14 +242,13 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             throw new Error("Airdrop capacity reached. No new users can be added.");
         }
 
-        const isTelegramUser = typeof user.id === 'number';
         const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(user),
             referralCode: generateReferralCode(),
             hasConvertedToExn: true, // New users start with EXN
         };
         await setDoc(userRef, newUser);
-        await incrementUserCount(isTelegramUser ? 'telegram' : 'browser');
+        // User count is now incremented AFTER they purchase the booster pack
         return { userData: { ...newUser, id: userId }, isNewUser: true };
     }
 };
@@ -726,7 +725,6 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
             walletAddress: address,
         };
         await setDoc(userRef, newUser);
-        await incrementUserCount('browser');
     } else {
         // This is an existing user (Telegram or Browser) just updating their wallet.
         await setDoc(userRef, { walletAddress: address }, { merge: true });
