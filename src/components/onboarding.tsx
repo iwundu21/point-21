@@ -1,15 +1,15 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { TelegramUser } from '@/lib/user-utils';
+import { TelegramUser, getInitials } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck, RefreshCw } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
 import { UserData, saveUserData, getUserData, LEGACY_BOOST_REWARDS, claimLegacyBoostRewards, convertEPointsToExn } from '@/lib/database';
 import { cn } from '@/lib/utils';
 import LoadingDots from './loading-dots';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 interface OnboardingProps {
     user: TelegramUser;
@@ -198,7 +198,11 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                 );
             case OnboardingStage.Welcome:
                 return (
-                    <div className="text-center animate-fade-in space-y-4">
+                    <div className="text-center animate-fade-in space-y-6">
+                        <Avatar className="w-24 h-24 border-4 border-primary mx-auto">
+                            <AvatarImage src={user.photo_url} alt={user.first_name} />
+                            <AvatarFallback className="text-3xl">{getInitials(user)}</AvatarFallback>
+                        </Avatar>
                         <h1 className="text-4xl font-bold text-foreground">Welcome to the Exnus Family!</h1>
                         <p className="text-xl text-primary">{getGreeting()}, {user.first_name}!</p>
                         <p className="text-muted-foreground max-w-md mx-auto">
