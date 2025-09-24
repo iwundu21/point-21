@@ -43,7 +43,6 @@ export interface UserData {
     purchasedBoosts: string[];
     miningActivationCount: number;
     hasOnboarded?: boolean; // New flag for the new onboarding flow
-    hasConvertedToExn?: boolean; // Flag for EXN conversion
     claimedAchievements: AchievementKey[]; // Tracks awarded achievements
     claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
     claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
@@ -94,7 +93,6 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     purchasedBoosts: [],
     miningActivationCount: 0,
     hasOnboarded: false,
-    hasConvertedToExn: true,
     claimedAchievements: [],
     claimedBoostReward: false,
     claimedLegacyBoosts: false,
@@ -248,7 +246,6 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         const newUser: Omit<UserData, 'id'> = {
             ...defaultUserData(user),
             referralCode: generateReferralCode(),
-            hasConvertedToExn: true, // New users start with EXN
         };
         await setDoc(userRef, newUser);
         // User count is now incremented AFTER they purchase the booster pack
@@ -269,17 +266,8 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
 
     const isCurrentlyActive = oldData.status === 'active';
     
-    const isConverting = data.hasConvertedToExn && !oldData.hasConvertedToExn;
-
-    if (isConverting && typeof data.balance === 'number') {
-         if (isCurrentlyActive) {
-            const oldEPointsBalance = oldData.balance || 0;
-            const newExnBalance = data.balance;
-            // Correctly calculate the total change
-            await decrementTotalPoints(oldEPointsBalance);
-            await incrementTotalPoints(newExnBalance);
-        }
-    } else if (oldData.hasConvertedToExn && typeof data.balance === 'number' && data.balance !== oldData.balance) {
+    // This logic handles the global counter update whenever the balance changes.
+    if (typeof data.balance === 'number' && data.balance !== oldData.balance) {
          if (isCurrentlyActive) {
             const difference = data.balance - oldData.balance;
             await incrementTotalPoints(difference);

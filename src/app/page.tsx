@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -79,8 +80,7 @@ export default function Home({}: {}) {
       setTotalPoints(totalActivePoints);
 
       // --- ONBOARDING & MERGE FLOW ---
-      const needsConversion = !isNewUser && freshUserData.hasConvertedToExn === false;
-      if (!freshUserData.hasOnboarded || needsConversion || (!isNewUser && !freshUserData.claimedLegacyBoosts)) {
+      if (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts) {
           setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 
@@ -445,4 +445,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
 

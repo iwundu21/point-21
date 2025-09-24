@@ -18,7 +18,6 @@ interface OnboardingProps {
 }
 
 enum OnboardingStage {
-    Conversion,
     LegacyBoosterReward,
     Welcome,
     LoyaltyBonus,
@@ -42,9 +41,6 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
         bonus: number;
     } | null>(null);
 
-    // Data for conversion stage
-    const oldBalance = initialData.balance || 0;
-    const newBalance = Math.floor(oldBalance / 1000);
 
     // Data for legacy booster reward stage
     const legacyBoosts = useMemo(() => {
@@ -59,9 +55,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 
     useEffect(() => {
         // Determine the initial stage based on user data
-        if (!isNewUser && initialData.hasConvertedToExn === false) {
-            setStage(OnboardingStage.Conversion);
-        } else if (!isNewUser && !initialData.claimedLegacyBoosts) {
+        if (!isNewUser && !initialData.claimedLegacyBoosts) {
             setStage(OnboardingStage.LegacyBoosterReward);
         } else if (!initialData.hasOnboarded) {
             setStage(OnboardingStage.Welcome);
@@ -76,21 +70,6 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 
         try {
             switch (stage) {
-                case OnboardingStage.Conversion:
-                    await saveUserData(user, {
-                        balance: newBalance,
-                        hasConvertedToExn: true,
-                    });
-                     // After conversion, check if they are also eligible for legacy booster reward
-                    if (!isNewUser && !initialData.claimedLegacyBoosts) {
-                        setStage(OnboardingStage.LegacyBoosterReward);
-                    } else if (initialData.hasOnboarded) {
-                        onComplete(); // Already onboarded, just needed conversion
-                    } else {
-                        setStage(OnboardingStage.Welcome);
-                    }
-                    break;
-                
                 case OnboardingStage.LegacyBoosterReward:
                     await claimLegacyBoostRewards(user, totalLegacyReward);
                      if (initialData.hasOnboarded) {
@@ -143,25 +122,6 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
     
     const renderStageContent = () => {
         switch (stage) {
-            case OnboardingStage.Conversion:
-                return (
-                    <div className="text-center animate-fade-in space-y-6">
-                        <h1 className="text-4xl font-bold text-foreground">Welcome Back!</h1>
-                        <p className="text-xl text-muted-foreground">We've updated our points system.</p>
-                         <div className="py-8 flex flex-col items-center justify-center gap-4">
-                            <RefreshCw className="w-20 h-20 text-primary" />
-                            <p className="text-base text-muted-foreground">Your E-Points are being converted to EXN.</p>
-                            <div className="mt-4 space-y-2 text-center">
-                                <p className="text-lg text-muted-foreground">Previous Balance:</p>
-                                <p className="text-3xl font-bold text-muted-foreground line-through">{oldBalance.toLocaleString()} E-Points</p>
-                                <p className="text-sm text-primary mt-2">(Ratio: 1000 E-Points = 1 EXN)</p>
-                                <p className="text-lg text-gold mt-4">New Balance:</p>
-                                <p className="text-5xl font-bold text-gold animate-fast-pulse">{newBalance.toLocaleString()} EXN</p>
-                            </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Click below to confirm the conversion.</p>
-                    </div>
-                );
             case OnboardingStage.LegacyBoosterReward:
                  return (
                     <div className="text-center animate-fade-in space-y-6">
@@ -283,7 +243,6 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 
     const getButtonText = () => {
         switch (stage) {
-            case OnboardingStage.Conversion: return 'Convert to EXN';
             case OnboardingStage.LegacyBoosterReward: return totalLegacyReward > 0 ? 'Claim Reward' : 'Continue';
             case OnboardingStage.HowItWorks: return isNewUser ? 'Continue' : 'Enter App';
             case OnboardingStage.WelcomeTasks: return 'Enter App';
