@@ -80,7 +80,7 @@ export default function Home({}: {}) {
 
       // --- ONBOARDING & MERGE FLOW ---
       const needsConversion = !isNewUser && freshUserData.hasConvertedToExn === false;
-      if (!freshUserData.hasOnboarded || needsConversion) {
+      if (!freshUserData.hasOnboarded || needsConversion || (!isNewUser && !freshUserData.claimedLegacyBoosts)) {
           setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 
@@ -190,7 +190,7 @@ export default function Home({}: {}) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 title: 'Booster Pack 1',
-                description: 'Activate your booster to get a 5,000 EXN welcome bonus and unlock daily rewards.',
+                description: 'Activate your booster to get a 5,000 EXN welcome bonus and secure your airdrop spot.',
                 payload: `boost_1_user_${userId}`,
                 currency: 'XTR',
                 amount: 70
@@ -351,7 +351,7 @@ export default function Home({}: {}) {
                             <span>Available: {(AIRDROP_CAP - boosterCount).toLocaleString()}</span>
                         </div>
                          <p className="text-center text-xs text-muted-foreground mt-2">
-                            Total Slots: {AIRDROP_CAP.toLocaleString()}
+                            Only users who secure their airdrop slot are counted here.
                         </p>
                     </CardContent>
                 </Card>
