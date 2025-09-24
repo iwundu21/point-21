@@ -79,7 +79,7 @@ export default function MergeAccountPage() {
             });
 
             if (result.success) {
-                showDialog('Account Merged!', `Your balance of ${result.mergedBalance?.toLocaleString()} points has been transferred.`);
+                showDialog('Account Merged!', `Your balance of ${result.mergedBalance?.toLocaleString()} EXN has been transferred.`);
                 // We don't redirect from the dialog action handler, user closes it and is on the home page.
             } else {
                 showDialog('Merge Failed', result.reason || 'Could not find a browser account with that wallet address.', true);
@@ -119,7 +119,7 @@ export default function MergeAccountPage() {
                     </div>
                     <CardTitle>Link Your Browser Account</CardTitle>
                     <CardDescription>
-                        Did you use our app in a browser before? Enter your Solana wallet address to transfer your points.
+                        Did you use our app in a browser before? Enter your Solana wallet address to transfer your EXN.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

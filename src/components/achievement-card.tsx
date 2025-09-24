@@ -63,5 +63,3 @@ const AchievementCard: FC<AchievementCardProps> = ({ userData }) => {
 };
 
 export default AchievementCard;
-
-    

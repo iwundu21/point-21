@@ -63,5 +63,3 @@ const TaskItem = ({ icon, title, description, points, link, completed, isVerifyi
 };
 
 export default TaskItem;
-
-    

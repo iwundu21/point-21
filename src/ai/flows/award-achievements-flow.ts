@@ -21,7 +21,7 @@ export type AwardAchievementsInput = z.infer<typeof AwardAchievementsInputSchema
 
 const AwardAchievementsOutputSchema = z.object({
   success: z.boolean().describe('Whether the operation was successful.'),
-  awardedPoints: z.number().describe('Total points awarded in this run.'),
+  awardedPoints: z.number().describe('Total EXN awarded in this run.'),
   awardedAchievements: z.array(z.string()).describe('A list of achievements that were newly awarded.'),
 });
 export type AwardAchievementsOutput = z.infer<typeof AwardAchievementsOutputSchema>;

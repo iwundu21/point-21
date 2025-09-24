@@ -89,20 +89,16 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     break;
 
                 case OnboardingStage.Welcome:
-                    if (isNewUser) {
+                    const result = await completeOnboarding({ user });
+                    if (result.success) {
+                        const { userData } = await getUserData(user);
+                        setBonusResult({
+                            creationDate: result.accountCreationDate,
+                            bonus: userData.balance,
+                        });
                         setStage(OnboardingStage.LoyaltyBonus);
                     } else {
-                         const result = await completeOnboarding({ user });
-                        if (result.success) {
-                            const { userData } = await getUserData(user);
-                            setBonusResult({
-                                creationDate: result.accountCreationDate,
-                                bonus: userData.balance,
-                            });
-                            setStage(OnboardingStage.LoyaltyBonus);
-                        } else {
-                            showErrorAndExit();
-                        }
+                        showErrorAndExit();
                     }
                     break;
                 
@@ -140,7 +136,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                 return (
                     <div className="text-center animate-fade-in space-y-6">
                         <h1 className="text-4xl font-bold text-foreground">Account Update</h1>
-                        <p className="text-xl text-muted-foreground">We're upgrading our points system!</p>
+                        <p className="text-xl text-muted-foreground">We're upgrading our system!</p>
                          <div className="py-8 flex flex-col items-center justify-center gap-4 w-full max-w-sm">
                             <RefreshCw className="w-16 h-16 text-primary" />
                             <p className="text-base text-muted-foreground">Your E-Points are being converted to EXN.</p>
@@ -245,7 +241,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 <Users className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-bold text-foreground">Social Tasks</h3>
-                                    <p className="text-muted-foreground text-base">Engage with our social media and complete tasks to earn bonus points.</p>
+                                    <p className="text-muted-foreground text-base">Engage with our social media and complete tasks to earn bonus EXN.</p>
                                 </div>
                             </div>
                              <div className="flex items-start gap-4">
@@ -311,4 +307,3 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 };
 
 export default Onboarding;
-
