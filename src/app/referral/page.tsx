@@ -214,7 +214,7 @@ export default function ReferralPage({}: ReferralPageProps) {
                    </div>
                    <div className="flex justify-between items-center p-4 bg-primary/5 rounded-lg">
                        <span className="text-muted-foreground">Bonus Earned:</span>
-                       <span className="font-bold text-xl text-gold">{(friendsReferred * 200).toLocaleString()}</span>
+                       <span className="font-bold text-xl text-gold">{(friendsReferred * 200).toLocaleString()} EXN</span>
                    </div>
                  </div>
             </div>
@@ -237,4 +237,5 @@ export default function ReferralPage({}: ReferralPageProps) {
     </AlertDialog>
     </div>
   );
-}
+
+    
