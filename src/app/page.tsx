@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount } from '@/lib/database';
 import MiningStatusIndicator from '@/components/mining-status-indicator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users } from 'lucide-react';
@@ -60,6 +60,7 @@ export default function Home({}: {}) {
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
   const [totalUserCount, setTotalUserCount] = useState(0);
+  const [boosterCount, setBoosterCount] = useState(0);
 
 
   const router = useRouter();
@@ -87,15 +88,17 @@ export default function Home({}: {}) {
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
       const today = new Date().toLocaleDateString('en-CA');
-      const [dataResponse, userRankInfo, totalUsers] = await Promise.all([
+      const [dataResponse, userRankInfo, totalUsers, boosterUsers] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser),
         getTotalUsersCount(),
+        getBoosterPack1UserCount()
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
       setTotalUserCount(totalUsers);
+      setBoosterCount(boosterUsers);
 
       // --- ONBOARDING & MERGE FLOW ---
       const needsConversion = !isNewUser && freshUserData.hasConvertedToExn === false;
@@ -414,7 +417,7 @@ export default function Home({}: {}) {
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
-             <div className="w-full max-w-sm px-4">
+             <div className="w-full max-w-sm px-4 space-y-4">
                  <Card className="w-full bg-primary/10 border-primary/20">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
@@ -431,6 +434,19 @@ export default function Home({}: {}) {
                          <p className="text-center text-xs text-muted-foreground mt-2">
                             Total Slots: {AIRDROP_CAP.toLocaleString()}
                         </p>
+                    </CardContent>
+                </Card>
+                <Card className="w-full bg-yellow-500/10 border-yellow-500/20">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                            <Star className="w-5 h-5 text-yellow-500" />
+                            Booster Pack 1 Holders
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <p className="text-center text-2xl font-bold text-yellow-400">
+                           {boosterCount.toLocaleString()}
+                       </p>
                     </CardContent>
                 </Card>
             </div>
@@ -561,3 +577,4 @@ export default function Home({}: {}) {
     </div>
   );
 }
+

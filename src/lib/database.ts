@@ -145,6 +145,13 @@ export const getTotalUsersCount = async (): Promise<number> => {
     return 0;
 };
 
+export const getBoosterPack1UserCount = async (): Promise<number> => {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('purchasedBoosts', 'array-contains', 'boost_1'));
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+};
+
 export const getTotalTelegramUsersCount = async (): Promise<number> => {
     const statsSnap = await getDoc(telegramUsersStatsRef);
     if (statsSnap.exists()) {
@@ -713,3 +720,4 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
