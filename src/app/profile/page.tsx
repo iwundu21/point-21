@@ -394,7 +394,6 @@ export default function ProfilePage({}: ProfilePageProps) {
 
   return (
     <div className="flex flex-col min-h-screen text-foreground font-body bg-profile-bg bg-cover bg-center bg-fixed">
-        <div className="absolute inset-0 bg-black/60 z-0"></div>
         <div className="relative z-10 flex-grow flex flex-col">
             <div className="flex-grow pb-32">
                 {isLoading ? (
@@ -504,5 +503,3 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
-
-    
