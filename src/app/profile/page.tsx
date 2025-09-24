@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -311,7 +310,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   const renderVerificationContent = () => {
     return (
         <main className="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-sm mx-auto">
-            <Card className="w-full bg-profile-bg bg-cover bg-center">
+            <Card className="w-full">
                  <div className="w-full space-y-4 p-6 rounded-lg">
                     <div className="text-center">
                     {accountStatus === 'verified' && verificationSuccess ? (
@@ -394,11 +393,11 @@ export default function ProfilePage({}: ProfilePageProps) {
 
 
   return (
-    <div className="flex flex-col min-h-screen text-foreground font-body bg-background">
+    <div className="flex flex-col min-h-screen text-foreground font-body bg-profile-bg bg-cover bg-center">
       <div className="flex-grow pb-32">
         {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
-            <Card className="w-full max-w-sm bg-profile-bg bg-cover bg-center text-white">
+            <Card className="w-full max-w-sm glass-card">
                 <CardContent className="flex flex-col items-center text-center space-y-4 p-6">
                     <div className="relative group">
                         <Avatar className="w-24 h-24 border-4 border-primary" onClick={handleAvatarClick} >
@@ -439,7 +438,7 @@ export default function ProfilePage({}: ProfilePageProps) {
 
             <Separator className="w-full max-w-sm" />
             
-            <Card className="w-full max-w-sm bg-profile-bg bg-cover bg-center text-white">
+            <Card className="w-full max-w-sm glass-card">
                 <CardContent className="space-y-4 p-6">
                     <div className="text-center">
                     {accountStatus === 'verified' ? (
@@ -498,11 +497,3 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-
