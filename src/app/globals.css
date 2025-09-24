@@ -9,7 +9,7 @@ body {
 
 @layer base {
   :root {
-    --background: 207 39% 32%; /* #355C7D */
+    --background: 207 45% 22%; /* Darker, more saturated blue */
     --foreground: 280 25% 95%; /* A very light purple for text */
     --card: 207 39% 38%; /* Slightly lighter than background for cards */
     --card-foreground: 280 25% 95%;
@@ -45,7 +45,7 @@ body {
     --gold: 45 85% 55%; /* A vibrant gold that fits the new theme */
   }
   .dark {
-    --background: 207 39% 32%; /* #355C7D */
+    --background: 207 45% 22%; /* Darker, more saturated blue */
     --foreground: 280 25% 95%; /* A very light purple for text */
     --card: 207 39% 38%; /* Slightly lighter than background for cards */
     --card-foreground: 280 25% 95%;
