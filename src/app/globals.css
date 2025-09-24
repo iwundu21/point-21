@@ -46,7 +46,7 @@ body {
   .dark {
     --background: 235 21% 12%; /* #181725 */
     --foreground: 0 0% 98%; /* Off-white */
-    --card: 235 21% 12% / 0.6; /* Semi-transparent for glass effect */
+    --card: 235 21% 12% / 0.2; /* Semi-transparent for glass effect */
     --card-foreground: 0 0% 98%;
     --popover: 235 21% 12%;
     --popover-foreground: 0 0% 98%;
@@ -98,7 +98,7 @@ body {
 
 @layer components {
     .glass-card {
-        @apply bg-transparent border border-white/10 backdrop-blur-lg;
+        @apply bg-card border border-white/10 backdrop-blur-lg;
     }
      .loading-dots span {
         animation-name: loading-dots;
