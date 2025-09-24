@@ -232,8 +232,8 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                             <div className="flex items-start gap-4">
                                 <Zap className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
-                                    <h3 className="font-bold text-foreground">Daily Mining</h3>
-                                    <p className="text-muted-foreground text-base">Activate your mining session every 24 hours to earn tokens automatically.</p>
+                                    <h3 className="font-bold text-foreground">Daily Tapping</h3>
+                                    <p className="text-muted-foreground text-base">Tap the button every day to earn tokens automatically.</p>
                                 </div>
                             </div>
                              <div className="flex items-start gap-4">
@@ -257,13 +257,13 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                  return (
                     <div className="text-center animate-fade-in space-y-6">
                         <h1 className="text-4xl font-bold text-foreground">One Last Thing...</h1>
-                        <p className="text-xl text-muted-foreground">Complete your Welcome Tasks to unlock mining!</p>
+                        <p className="text-xl text-muted-foreground">Complete your Welcome Tasks to unlock your full potential!</p>
                         <div className="text-left max-w-md mx-auto space-y-6 text-lg">
                             <div className="flex items-start gap-4">
                                 <UserCheck className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-bold text-foreground">Welcome Tasks</h3>
-                                    <p className="text-muted-foreground text-base">Complete a few simple social tasks to get another bonus and unlock all app features, including daily mining.</p>
+                                    <p className="text-muted-foreground text-base">Complete a few simple social tasks to get another bonus and explore the app features.</p>
                                 </div>
                             </div>
                              <div className="flex items-start gap-4">
@@ -284,7 +284,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
     const getButtonText = () => {
         switch (stage) {
             case OnboardingStage.Conversion: return 'Convert to EXN';
-            case OnboardingStage.LegacyBoosterReward: return 'Claim Reward';
+            case OnboardingStage.LegacyBoosterReward: return totalLegacyReward > 0 ? 'Claim Reward' : 'Continue';
             case OnboardingStage.HowItWorks: return isNewUser ? 'Continue' : 'Enter App';
             case OnboardingStage.WelcomeTasks: return 'Enter App';
             default: return 'Continue';

@@ -705,7 +705,9 @@ export const LEGACY_BOOST_REWARDS: Record<string, number> = {
 };
 
 export const claimLegacyBoostRewards = async (user: { id: number | string } | null, totalReward: number) => {
-    if (!user || totalReward <= 0) return;
+    if (!user) return;
+    // Allow totalReward to be 0 to handle users with no legacy boosts
+    if (totalReward < 0) return;
 
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
@@ -715,15 +717,22 @@ export const claimLegacyBoostRewards = async (user: { id: number | string } | nu
         if (!userDoc.exists()) {
             throw new Error("User not found.");
         }
+        
+        const currentData = userDoc.data();
+        if (currentData.claimedLegacyBoosts) {
+            return; // Already claimed, do nothing.
+        }
 
-        const newBalance = userDoc.data().balance + totalReward;
+        const newBalance = currentData.balance + totalReward;
         transaction.update(userRef, {
             balance: newBalance,
             claimedLegacyBoosts: true,
         });
     });
 
-    await incrementTotalPoints(totalReward);
+    if (totalReward > 0) {
+      await incrementTotalPoints(totalReward);
+    }
 };
 
 // --- Specific Data Functions ---
