@@ -312,7 +312,7 @@ export default function ProfilePage({}: ProfilePageProps) {
     return (
         <main className="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-sm mx-auto">
             <Card className="w-full bg-profile-bg bg-cover bg-center">
-                 <div className="w-full space-y-4 bg-black/60 p-6 rounded-lg">
+                 <div className="w-full space-y-4 p-6 rounded-lg">
                     <div className="text-center">
                     {accountStatus === 'verified' && verificationSuccess ? (
                         <h2 className="text-2xl font-bold flex items-center justify-center gap-2 text-green-400">
@@ -399,7 +399,7 @@ export default function ProfilePage({}: ProfilePageProps) {
         {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
           <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
             <Card className="w-full max-w-sm bg-profile-bg bg-cover bg-center text-white">
-                <CardContent className="flex flex-col items-center text-center space-y-4 bg-black/60 p-6">
+                <CardContent className="flex flex-col items-center text-center space-y-4 p-6">
                     <div className="relative group">
                         <Avatar className="w-24 h-24 border-4 border-primary" onClick={handleAvatarClick} >
                             <AvatarImage src={avatarSrc} alt={displayName} />
@@ -440,7 +440,7 @@ export default function ProfilePage({}: ProfilePageProps) {
             <Separator className="w-full max-w-sm" />
             
             <Card className="w-full max-w-sm bg-profile-bg bg-cover bg-center text-white">
-                <CardContent className="space-y-4 bg-black/60 p-6">
+                <CardContent className="space-y-4 p-6">
                     <div className="text-center">
                     {accountStatus === 'verified' ? (
                         <h2 className="text-xl font-bold flex items-center justify-center gap-2 text-green-400">
@@ -502,6 +502,7 @@ export default function ProfilePage({}: ProfilePageProps) {
     
 
     
+
 
 
 
