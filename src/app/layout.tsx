@@ -24,7 +24,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>Exnus Points</title>
         <meta name="description" content="Your gateway to the Exnus ecosystem." />
