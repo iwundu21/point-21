@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { saveUserData, getUserData, UserData, incrementTotalPoints, getUserId } from '@/lib/database';
+import { saveUserData, getUserData, UserData, getUserId } from '@/lib/database';
 import { TelegramUser } from '@/lib/user-utils';
 
 const OnboardingInputSchema = z.object({
@@ -94,9 +94,6 @@ const completeOnboardingFlow = ai.defineFlow(
 
         const userRef = doc(db, 'users', getUserId(telegramUser));
         await setDoc(userRef, dataToSave, { merge: true });
-
-        // Now, increment the total points by the amount that was just added.
-        await incrementTotalPoints(pointsToAdd);
         
         return {
             success: true,
@@ -115,4 +112,3 @@ const completeOnboardingFlow = ai.defineFlow(
     }
   }
 );
-

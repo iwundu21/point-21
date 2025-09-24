@@ -320,21 +320,17 @@ const UserTable = ({
     onUpdateStatus,
     onDeleteUser,
     onCopy,
-    totalPoints,
     onBalanceUpdated,
     onWalletUpdated,
     onForceBoost,
-    totalAirdrop
 }: {
     users: UserData[],
     onUpdateStatus: (user: UserData, status: 'active' | 'banned', reason?: string) => void,
     onDeleteUser: (user: UserData) => void,
     onCopy: (text: string) => void,
-    totalPoints: number,
     onBalanceUpdated: (userId: string, newBalance: number) => void,
     onWalletUpdated: (userId: string, newAddress: string) => void,
     onForceBoost: (user: UserData) => void,
-    totalAirdrop: number
 }) => {
    
     return (
@@ -348,7 +344,6 @@ const UserTable = ({
                             <TableHead>Wallet</TableHead>
                             <TableHead>Balance</TableHead>
                             <TableHead>Referrals</TableHead>
-                            <TableHead>Airdrop Allocation</TableHead>
                             <TableHead>Boost 1</TableHead>
                             <TableHead>Mining Status</TableHead>
                             <TableHead>Status</TableHead>
@@ -357,7 +352,6 @@ const UserTable = ({
                     </TableHeader>
                     <TableBody>
                         {users.map((user) => {
-                          const userAirdrop = totalPoints > 0 ? (user.balance / totalPoints) * totalAirdrop : 0;
                           const isMiningActive = user.miningEndTime && user.miningEndTime > Date.now();
                           const isBrowserUser = !user.telegramUser;
                           const hasBoost1 = user.purchasedBoosts?.includes('boost_1');
@@ -418,11 +412,6 @@ const UserTable = ({
                                     </div>
                                 </TableCell>
                                 <TableCell>{user.referrals}</TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-1 text-gold">
-                                      {userAirdrop.toLocaleString(undefined, { maximumFractionDigits: 2 })} EXN
-                                  </div>
-                                </TableCell>
                                  <TableCell>
                                     <Badge variant={hasBoost1 ? 'default' : 'secondary'} className={cn('flex items-center gap-1', hasBoost1 ? 'bg-yellow-500/80' : 'bg-gray-500/80')}>
                                         <Star className="w-3 h-3" />
@@ -1184,11 +1173,9 @@ export default function AdminPage() {
                             onUpdateStatus={handleUpdateStatus}
                             onDeleteUser={handleDeleteUser}
                             onCopy={handleCopy}
-                            totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
-                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                     <TabsContent value="tg-banned" className="mt-4">
@@ -1197,11 +1184,9 @@ export default function AdminPage() {
                             onUpdateStatus={handleUpdateStatus}
                             onDeleteUser={handleDeleteUser}
                             onCopy={handleCopy}
-                            totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
-                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                     <TabsContent value="browser-active" className="mt-4">
@@ -1210,11 +1195,9 @@ export default function AdminPage() {
                             onUpdateStatus={handleUpdateStatus}
                             onDeleteUser={handleDeleteUser}
                             onCopy={handleCopy}
-                            totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
-                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                      <TabsContent value="browser-banned" className="mt-4">
@@ -1223,11 +1206,9 @@ export default function AdminPage() {
                             onUpdateStatus={handleUpdateStatus}
                             onDeleteUser={handleDeleteUser}
                             onCopy={handleCopy}
-                            totalPoints={totalPoints}
                             onBalanceUpdated={handleBalanceUpdated}
                             onWalletUpdated={handleWalletUpdated}
                             onForceBoost={handleForceBoost}
-                            totalAirdrop={totalAirdrop}
                         />
                     </TabsContent>
                 </Tabs>
@@ -1251,5 +1232,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

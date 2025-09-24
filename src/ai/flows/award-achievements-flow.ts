@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { doc, runTransaction, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { UserData, AchievementKey, incrementTotalPoints } from '@/lib/database';
+import { UserData, AchievementKey } from '@/lib/database';
 
 const AwardAchievementsInputSchema = z.object({
   userId: z.string().describe('The unique identifier for the user (e.g., user_12345 or browser_xyz).'),
@@ -84,10 +84,6 @@ const awardAchievementsFlow = ai.defineFlow(
                 totalPointsAwarded = pointsToAdd;
             }
         });
-
-        if (totalPointsAwarded > 0) {
-             await incrementTotalPoints(totalPointsAwarded);
-        }
 
         return { 
             success: true, 
