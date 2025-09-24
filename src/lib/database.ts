@@ -262,28 +262,23 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
 
     const isCurrentlyActive = oldData.status === 'active';
     
-    // Check for point conversion
     const isConverting = data.hasConvertedToExn && !oldData.hasConvertedToExn;
-    if (isConverting && data.balance !== undefined) {
-        const oldBalance = oldData.balance || 0; // This is now the E-Points balance
-        const newExnBalance = data.balance;
-        
-        if (isCurrentlyActive && oldBalance > 0) {
-            // Correctly adjust the total points counter
-            await decrementTotalPoints(oldBalance); // Remove old E-Points value
-            await incrementTotalPoints(newExnBalance); // Add new EXN value
+
+    if (isConverting && typeof data.balance === 'number') {
+         if (isCurrentlyActive) {
+            const oldEPointsBalance = oldData.balance || 0;
+            const newExnBalance = data.balance;
+            const totalChange = newExnBalance - oldEPointsBalance;
+            await incrementTotalPoints(totalChange);
         }
-    }
-
-    await setDoc(userRef, data, { merge: true });
-
-    // If balance was updated AFTER conversion, adjust total points
-    if (oldData.hasConvertedToExn && data.balance !== undefined && data.balance !== oldData.balance) {
+    } else if (oldData.hasConvertedToExn && typeof data.balance === 'number' && data.balance !== oldData.balance) {
          if (isCurrentlyActive) {
             const difference = data.balance - oldData.balance;
             await incrementTotalPoints(difference);
         }
     }
+    
+    await setDoc(userRef, data, { merge: true });
 };
 
 export const findUserByReferralCode = async (code: string): Promise<UserData | null> => {
@@ -698,3 +693,6 @@ export const getReferralCode = async (user: { id: number | string } | null) => (
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
 
+
+
+    
