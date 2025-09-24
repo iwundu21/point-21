@@ -89,7 +89,7 @@ const Footer = () => {
   const adminItem = { href: '/admin', label: 'Admin', icon: Shield };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-transparent border-t border-border/50 backdrop-blur-sm">
+    <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/50">
       <div className="flex justify-around items-center h-16 max-w-sm mx-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
