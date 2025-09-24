@@ -9,24 +9,24 @@ body {
 
 @layer base {
   :root {
-    --background: 280 15% 42%; /* #6C5B7B */
+    --background: 207 39% 32%; /* #355C7D */
     --foreground: 280 25% 95%; /* A very light purple for text */
-    --card: 280 15% 48%; /* Slightly lighter than background for cards */
+    --card: 207 39% 38%; /* Slightly lighter than background for cards */
     --card-foreground: 280 25% 95%;
-    --popover: 280 15% 48%;
+    --popover: 207 39% 38%;
     --popover-foreground: 280 25% 95%;
     --primary: 263 52% 84%; /* #d0bdf4 - A vibrant purple from your previous palette */
     --primary-foreground: 270 5% 15%; /* Dark text on primary buttons */
     --secondary: 263 38% 61%; /* #8458B3 */
     --secondary-foreground: 280 25% 95%;
-    --muted: 280 15% 55%;
+    --muted: 207 39% 45%;
     --muted-foreground: 280 15% 75%;
     --accent: 202 69% 83%; /* #a0d2eb */
     --accent-foreground: 270 5% 15%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 280 15% 55%;
-    --input: 280 15% 50%;
+    --border: 207 39% 45%;
+    --input: 207 39% 42%;
     --ring: 263 52% 84%; /* #d0bdf4 */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -45,24 +45,24 @@ body {
     --gold: 45 85% 55%; /* A vibrant gold that fits the new theme */
   }
   .dark {
-    --background: 280 15% 42%; /* #6C5B7B */
+    --background: 207 39% 32%; /* #355C7D */
     --foreground: 280 25% 95%; /* A very light purple for text */
-    --card: 280 15% 48%; /* Slightly lighter than background for cards */
+    --card: 207 39% 38%; /* Slightly lighter than background for cards */
     --card-foreground: 280 25% 95%;
-    --popover: 280 15% 48%;
+    --popover: 207 39% 38%;
     --popover-foreground: 280 25% 95%;
     --primary: 263 52% 84%; /* #d0bdf4 - A vibrant purple from your previous palette */
     --primary-foreground: 270 5% 15%; /* Dark text on primary buttons */
     --secondary: 263 38% 61%; /* #8458B3 */
     --secondary-foreground: 280 25% 95%;
-    --muted: 280 15% 55%;
+    --muted: 207 39% 45%;
     --muted-foreground: 280 15% 75%;
     --accent: 202 69% 83%; /* #a0d2eb */
     --accent-foreground: 270 5% 15%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 280 15% 55%;
-    --input: 280 15% 50%;
+    --border: 207 39% 45%;
+    --input: 207 39% 42%;
     --ring: 263 52% 84%; /* #d0bdf4 */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
