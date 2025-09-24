@@ -403,26 +403,31 @@ export default function Home({}: {}) {
                 <Card className="w-full p-6 text-center space-y-4 glass-card">
                         <div 
                         className={cn(
-                            "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300",
-                            !canTap ? "bg-muted/30 border-4 border-muted-foreground/30" : "bg-gold/20 border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
+                            "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300 bg-cover bg-center",
+                            !canTap 
+                                ? "border-4 border-muted-foreground/30" 
+                                : "border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
                         )}
+                        style={{ backgroundImage: `url('/5.jpg')` }}
                         onClick={handleDailyTap}
                     >
                         {isClaimingTap ? (
                             <LoadingDots />
                         ) : !canTap ? (
                              countdown ? (
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-muted-foreground tabular-nums">{countdown}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Next claim</p>
+                                <div className="text-center bg-black/50 p-4 rounded-full">
+                                    <p className="text-2xl font-bold text-white tabular-nums">{countdown}</p>
+                                    <p className="text-xs text-white/80 mt-1">Next claim</p>
                                 </div>
                             ) : (
-                                <CheckCircle className="w-16 h-16 text-muted-foreground/50" />
+                                <div className="text-center bg-black/50 p-4 rounded-full">
+                                    <CheckCircle className="w-12 h-12 text-white/80" />
+                                </div>
                             )
                         ) : (
-                            <div className="text-center">
-                                <p className="text-4xl font-bold text-gold">TAP</p>
-                                <p className="text-sm font-semibold text-gold">+100 EXN</p>
+                            <div className="text-center bg-black/50 p-4 rounded-full">
+                                <p className="text-4xl font-bold text-white">TAP</p>
+                                <p className="text-sm font-semibold text-white">+100 EXN</p>
                             </div>
                         )}
                     </div>
