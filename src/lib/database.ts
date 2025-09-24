@@ -258,14 +258,13 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
     }
 };
 
-export const saveUserData = async (user: { id: number | string } | null, data: Partial<Omit<UserData, 'id'>>, fromOnboarding: boolean = false) => {
+export const saveUserData = async (user: { id: number | string } | null, data: Partial<Omit<UserData, 'id'>>) => {
     if (!user) return;
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
     
-    // During onboarding conversion, we don't adjust the total points.
-    // The points are just being converted, not earned.
-    if (!fromOnboarding && typeof data.balance === 'number') {
+    // Always track balance changes to keep the total accurate.
+    if (typeof data.balance === 'number') {
         const oldSnap = await getDoc(userRef);
         const oldData = oldSnap.exists() ? oldSnap.data() as UserData : defaultUserData(user as TelegramUser);
         const isCurrentlyActive = oldData.status === 'active';
@@ -342,8 +341,7 @@ export const applyReferralBonus = async (newUser: { id: number | string }, refer
             });
 
             // After transaction, update total points for both users
-            await incrementTotalPoints(200); // For referrer
-            await incrementTotalPoints(50); // For new user
+            await incrementTotalPoints(200 + 50);
 
             const { userData } = await getUserData(newUser as TelegramUser);
             return userData;
@@ -580,6 +578,7 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
     const telegramUserId = getUserId(telegramUser);
     const telegramUserRef = doc(db, 'users', telegramUserId);
     const browserUserRef = doc(db, 'users', browserUserData.id);
+    let pointsToAdd = 0;
     
     await runTransaction(db, async (transaction) => {
         const telegramUserDoc = await transaction.get(telegramUserRef);
@@ -590,28 +589,23 @@ export const mergeBrowserDataToTelegram = async (telegramUser: TelegramUser, bro
         }
         
         const telegramData = telegramUserDoc.exists() ? telegramUserDoc.data() as UserData : defaultUserData(telegramUser);
-
-        // Calculate the new balance by summing the two accounts.
-        const mergedBalance = (telegramData.balance || 0) + (browserUserData.balance || 0);
+        pointsToAdd = browserUserData.balance || 0;
+        const mergedBalance = (telegramData.balance || 0) + pointsToAdd;
        
-        // Update the Telegram user document with the new balance, the browser wallet, and mark as merged.
-        // All other data for the Telegram user (like their new referral code) is retained.
         transaction.set(telegramUserRef, { 
             balance: mergedBalance,
-            walletAddress: browserUserData.walletAddress, // Bring over the wallet address
+            walletAddress: browserUserData.walletAddress,
             hasMergedBrowserAccount: true,
         }, { merge: true });
         
-        // Delete the old browser user document
         transaction.delete(browserUserRef);
     });
-
-    // Since the browser user is deleted, their points were part of the total.
-    // The points are now owned by the TG user. The total points count does not need to change.
-    // However, we must decrement the browser user count.
-    await decrementUserCount('browser');
     
-    // Return the updated telegram user data
+    // This function doesn't need to touch total points.
+    // The browser user's points were already in the total.
+    // We just transfer ownership.
+    await decrementBrowserUserCount();
+    
     const { userData } = await getUserData(telegramUser);
     return userData;
 }
@@ -696,8 +690,6 @@ export const LEGACY_BOOST_REWARDS: Record<string, number> = {
 
 export const claimLegacyBoostRewards = async (user: { id: number | string } | null, totalReward: number) => {
     if (!user) return;
-    // Allow proceeding with 0 reward to not block users
-    if (totalReward < 0) return;
 
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
@@ -719,8 +711,10 @@ export const claimLegacyBoostRewards = async (user: { id: number | string } | nu
             claimedLegacyBoosts: true,
         });
     });
-
-    // Do NOT increment total points for legacy rewards.
+    
+    if (totalReward > 0) {
+        await incrementTotalPoints(totalReward);
+    }
 };
 
 // --- Specific Data Functions ---
@@ -776,3 +770,4 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+

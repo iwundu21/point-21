@@ -72,22 +72,31 @@ const completeOnboardingFlow = ai.defineFlow(
         const ageInMs = now.getTime() - creationDate.getTime();
         const ageInMonths = Math.floor(ageInMs / (1000 * 60 * 60 * 24 * 30.44)); // Average days in a month
 
-        let initialBalance = userData.balance; // Start with the converted balance
+        let initialBalance = userData.balance;
+        let pointsToAdd = 0;
+
         if (ageInMonths >= 1) {
             const ageBonus = ageInMonths * 10;
-            initialBalance += ageBonus;
+            pointsToAdd += ageBonus;
         }
 
         // Add base bonus for all users completing onboarding for the first time
-        initialBalance += 500;
+        pointsToAdd += 500;
+        
+        initialBalance += pointsToAdd;
 
         const dataToSave: Partial<UserData> = {
             balance: initialBalance,
             hasOnboarded: true,
         };
 
-        // Pass 'true' to indicate this is an onboarding save, which should not affect total points
-        await saveUserData(telegramUser, dataToSave, true);
+        // We don't call saveUserData here because we want to increment the total points
+        // in a controlled way after setting the base.
+        const userRef = doc(db, 'users', getUserId(telegramUser));
+        await setDoc(userRef, dataToSave, { merge: true });
+
+        // Now, increment the total points by the amount that was just added.
+        await incrementTotalPoints(pointsToAdd);
         
         return {
             success: true,

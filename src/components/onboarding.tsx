@@ -7,7 +7,7 @@ import { TelegramUser } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck, RefreshCw } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
-import { UserData, saveUserData, getUserData, LEGACY_BOOST_REWARDS, claimLegacyBoostRewards } from '@/lib/database';
+import { UserData, saveUserData, getUserData, LEGACY_BOOST_REWARDS, claimLegacyBoostRewards, incrementTotalPoints } from '@/lib/database';
 import { cn } from '@/lib/utils';
 
 interface OnboardingProps {
@@ -80,8 +80,11 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                  case OnboardingStage.AccountConversion:
                     const oldBalance = initialData.balance;
                     const newBalance = Math.floor((oldBalance / 1000) * 150);
+                    const pointDifference = newBalance - oldBalance;
+
                     setConversionResult({ oldBalance, newBalance });
-                    await saveUserData(user, { balance: newBalance, hasConvertedToExn: true }, true);
+                    await saveUserData(user, { balance: newBalance, hasConvertedToExn: true });
+                    
                     setStage(OnboardingStage.LegacyBoosterReward);
                     break;
 
