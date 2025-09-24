@@ -370,7 +370,7 @@ export default function Home({}: {}) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Progress value={(boosterCount / AIRDROP_CAP) * 100} className="w-full h-3" />
+                        <Progress value={boosterCount / AIRDROP_CAP * 100} className="w-full h-3" />
                         <div className="flex justify-between text-xs text-muted-foreground mt-2">
                             <span>Taken: {boosterCount.toLocaleString()}</span>
                             <span>Available: {(AIRDROP_CAP - boosterCount).toLocaleString()}</span>
@@ -474,3 +474,4 @@ export default function Home({}: {}) {
 
 
     
+
