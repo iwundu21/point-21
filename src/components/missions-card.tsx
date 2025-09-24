@@ -22,10 +22,6 @@ const MissionsCard = ({ streak, rank, league, userData }: MissionsCardProps) => 
             </div>
             <div className="space-y-4">
                 <DailyStreak streak={streak} />
-                <RankCard 
-                    rank={rank}
-                    league={league}
-                />
             </div>
         </div>
     )
