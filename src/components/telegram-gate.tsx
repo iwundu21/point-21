@@ -6,6 +6,7 @@ import { Bot, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getTotalUsersCount } from '@/lib/database';
 import { Loader2 } from 'lucide-react';
+import LoadingDots from './loading-dots';
 
 export default function TelegramGate() {
   const [isFull, setIsFull] = useState<boolean | null>(null);
@@ -23,7 +24,7 @@ export default function TelegramGate() {
   if (isFull === null) {
     return (
       <div className="flex justify-center items-center h-screen">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <LoadingDots />
       </div>
     );
   }

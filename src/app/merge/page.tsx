@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import LoadingDots from '@/components/loading-dots';
 
 declare global {
   interface Window {
@@ -106,7 +107,7 @@ export default function MergeAccountPage() {
     };
 
     if (!user) {
-        return <div className="flex justify-center items-center h-screen"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
+        return <div className="flex justify-center items-center h-screen"><LoadingDots /></div>;
     }
 
     return (
@@ -131,8 +132,8 @@ export default function MergeAccountPage() {
                         />
                     </div>
                     <Button onClick={handleMerge} disabled={isMerging || !walletAddress.trim()} className="w-full">
-                        {isMerging ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
-                        {isMerging ? 'Merging...' : 'Merge Account'}
+                        {isMerging ? <LoadingDots /> : <Wallet className="mr-2 h-4 w-4" />}
+                        {isMerging ? '' : 'Merge Account'}
                     </Button>
                     <Button variant="link" onClick={handleSkip} className="w-full">
                         Skip / I'm a new user
@@ -156,5 +157,7 @@ export default function MergeAccountPage() {
         </div>
     );
 }
+
+    
 
     

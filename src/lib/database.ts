@@ -9,6 +9,7 @@ export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'we
 export interface UserData {
     id: string; // Document ID
     balance: number;
+    ePointsBalance?: number; // Legacy balance
     miningEndTime: number | null;
     miningRate: number;
     dailyStreak: { count: number; lastLogin: string };
@@ -46,6 +47,7 @@ export interface UserData {
     claimedAchievements: AchievementKey[]; // Tracks awarded achievements
     claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
     claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
+    hasConvertedToExn?: boolean;
 }
 
 const generateReferralCode = () => {
@@ -270,7 +272,9 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
             
             if (newBalance !== undefined && oldBalance !== newBalance) {
                 const difference = newBalance - oldBalance;
-                await incrementTotalPoints(difference);
+                if (userDoc.data().status === 'active') {
+                    await incrementTotalPoints(difference);
+                }
             }
             transaction.set(userRef, data, { merge: true });
         } else {
@@ -706,8 +710,8 @@ export const claimLegacyBoostRewards = async (user: { id: number | string } | nu
         }
         
         const currentData = userDoc.data();
-        if (currentData.claimedLegacyBoosts && totalReward > 0) {
-            return; // Already claimed, do nothing.
+        if (currentData.claimedLegacyBoosts) {
+            return;
         }
 
         const newBalance = currentData.balance + totalReward;
@@ -721,6 +725,44 @@ export const claimLegacyBoostRewards = async (user: { id: number | string } | nu
         await incrementTotalPoints(totalReward);
     }
 };
+
+export const convertEPointsToExn = async (user: { id: number | string }): Promise<{ oldBalance: number; newBalance: number }> => {
+    const userId = getUserId(user);
+    const userRef = doc(db, 'users', userId);
+    let result = { oldBalance: 0, newBalance: 0 };
+
+    await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (!userDoc.exists()) {
+            throw new Error("User not found for conversion.");
+        }
+
+        const userData = userDoc.data() as UserData;
+
+        if (userData.hasConvertedToExn) {
+            result = { oldBalance: userData.balance, newBalance: userData.balance };
+            return;
+        }
+        
+        const oldPoints = userData.ePointsBalance || userData.balance;
+        const newExn = Math.floor((oldPoints / 1000) * 150);
+
+        transaction.update(userRef, {
+            balance: newExn,
+            ePointsBalance: 0, // Zero out old balance
+            hasConvertedToExn: true,
+        });
+        
+        // This transaction just updates the user. The global counter adjustment
+        // will be handled separately to avoid transaction complexity.
+        await incrementTotalPoints(newExn - oldPoints);
+        
+        result = { oldBalance: oldPoints, newBalance: newExn };
+    });
+
+    return result;
+};
+
 
 // --- Specific Data Functions ---
 
@@ -775,6 +817,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 
 
 

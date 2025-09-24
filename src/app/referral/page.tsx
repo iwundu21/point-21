@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { TelegramUser } from '@/lib/user-utils';
+import LoadingDots from '@/components/loading-dots';
 
 interface ReferralPageProps {}
 
@@ -160,7 +161,7 @@ export default function ReferralPage({}: ReferralPageProps) {
                                 disabled={isRedeeming}
                             />
                             <Button type="submit" onClick={handleRedeemCode} disabled={isRedeeming || !enteredCode.trim()}>
-                                {isRedeeming ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Redeem'}
+                                {isRedeeming ? <LoadingDots /> : 'Redeem'}
                             </Button>
                         </div>
                     </div>
@@ -237,6 +238,8 @@ export default function ReferralPage({}: ReferralPageProps) {
     </AlertDialog>
     </div>
   );
+
+    
 
     
 

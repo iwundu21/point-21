@@ -7,8 +7,9 @@ import { TelegramUser } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck, RefreshCw } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
-import { UserData, saveUserData, getUserData, LEGACY_BOOST_REWARDS, claimLegacyBoostRewards, incrementTotalPoints } from '@/lib/database';
+import { UserData, saveUserData, getUserData, LEGACY_BOOST_REWARDS, claimLegacyBoostRewards, convertEPointsToExn } from '@/lib/database';
 import { cn } from '@/lib/utils';
+import LoadingDots from './loading-dots';
 
 interface OnboardingProps {
     user: TelegramUser;
@@ -59,8 +60,9 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 
 
     useEffect(() => {
-        // Determine the initial stage based on user data
-        if (!isNewUser && !initialData.claimedLegacyBoosts) {
+        if (!initialData.hasConvertedToExn && !isNewUser) {
+            setStage(OnboardingStage.AccountConversion);
+        } else if (!initialData.claimedLegacyBoosts) {
             setStage(OnboardingStage.LegacyBoosterReward);
         } else if (!initialData.hasOnboarded) {
             setStage(OnboardingStage.Welcome);
@@ -76,39 +78,31 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
         try {
             switch (stage) {
                  case OnboardingStage.AccountConversion:
-                    const oldBalance = initialData.balance;
-                    const newBalance = Math.floor((oldBalance / 1000) * 150);
-                    
-                    if (oldBalance !== newBalance) {
-                        const pointDifference = newBalance - oldBalance;
-                        await incrementTotalPoints(pointDifference);
-                    }
-
+                    const { oldBalance, newBalance } = await convertEPointsToExn(user);
                     setConversionResult({ oldBalance, newBalance });
-                    await saveUserData(user, { balance: newBalance });
-                    
                     setStage(OnboardingStage.LegacyBoosterReward);
                     break;
 
                 case OnboardingStage.LegacyBoosterReward:
-                    if (totalLegacyReward > 0) {
-                        await claimLegacyBoostRewards(user, totalLegacyReward);
-                    } else {
-                        await saveUserData(user, { claimedLegacyBoosts: true });
-                    }
+                    await claimLegacyBoostRewards(user, totalLegacyReward);
                     setStage(OnboardingStage.Welcome);
                     break;
 
                 case OnboardingStage.Welcome:
-                    const result = await completeOnboarding({ user });
-                    if (result.success) {
-                        setBonusResult({
-                            creationDate: result.accountCreationDate,
-                            bonus: result.initialBalance
-                        });
+                    if (isNewUser) {
                         setStage(OnboardingStage.LoyaltyBonus);
                     } else {
-                        showErrorAndExit();
+                         const result = await completeOnboarding({ user });
+                        if (result.success) {
+                            const { userData } = await getUserData(user);
+                            setBonusResult({
+                                creationDate: result.accountCreationDate,
+                                bonus: userData.balance,
+                            });
+                            setStage(OnboardingStage.LoyaltyBonus);
+                        } else {
+                            showErrorAndExit();
+                        }
                     }
                     break;
                 
@@ -155,7 +149,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 <div className="flex justify-between items-center text-lg">
                                     <span>Old E-Points Balance:</span>
                                     <span className="font-bold text-muted-foreground">
-                                        {initialData.balance.toLocaleString()}
+                                        {initialData.ePointsBalance?.toLocaleString() || initialData.balance.toLocaleString()}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center text-lg">
@@ -166,7 +160,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 </div>
                                 <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-2xl font-bold">
                                     <span>New EXN Balance:</span>
-                                    <span className="text-gold">{(Math.floor((initialData.balance / 1000) * 150)).toLocaleString()} EXN</span>
+                                    <span className="text-gold">{(Math.floor(((initialData.ePointsBalance || initialData.balance) / 1000) * 150)).toLocaleString()} EXN</span>
                                 </div>
                             </div>
                         </div>
@@ -288,7 +282,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     </div>
                 );
             default:
-                return  <div className="flex justify-center items-center"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
+                return  <div className="flex justify-center items-center"><LoadingDots /></div>;
         }
     }
 
@@ -309,7 +303,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
             </div>
             <div className="w-full max-w-sm pb-8">
                 <Button onClick={handleNext} disabled={isLoading || stage === null} className="w-full h-12 text-lg">
-                    {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : getButtonText()}
+                    {isLoading ? <LoadingDots /> : getButtonText()}
                 </Button>
             </div>
         </div>
@@ -317,3 +311,4 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 };
 
 export default Onboarding;
+

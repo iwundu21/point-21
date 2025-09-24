@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 import { Button } from './ui/button';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import LoadingDots from './loading-dots';
 
 interface TaskItemProps {
     icon: ReactNode;
@@ -45,10 +46,9 @@ const TaskItem = ({ icon, title, description, points, link, completed, isVerifyi
                 )}
             >
                 {isVerifying ? (
-                    <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Verifying
-                    </>
+                    <div className="flex items-center gap-1">
+                        <LoadingDots />
+                    </div>
                 ) : completed ? (
                     <>
                         <CheckCircle className="w-5 h-5 mr-1" />

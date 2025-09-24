@@ -29,6 +29,7 @@ import TelegramGate from '@/components/telegram-gate';
 import Onboarding from '@/components/onboarding';
 import { cn } from '@/lib/utils';
 import { processBoost } from '@/ai/flows/process-boost-flow';
+import LoadingDots from '@/components/loading-dots';
 
 
 export default function Home({}: {}) {
@@ -40,7 +41,6 @@ export default function Home({}: {}) {
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
   const [boosterCount, setBoosterCount] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
 
 
   const router = useRouter();
@@ -67,20 +67,18 @@ export default function Home({}: {}) {
 
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
-      const [dataResponse, userRankInfo, boosterUsers, totalActivePoints] = await Promise.all([
+      const [dataResponse, userRankInfo, boosterUsers] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser),
         getBoosterPack1UserCount(),
-        getTotalActivePoints(),
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
       setBoosterCount(boosterUsers);
-      setTotalPoints(totalActivePoints);
 
       // --- ONBOARDING & MERGE FLOW ---
-      if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts)) {
+      if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts || !freshUserData.hasConvertedToExn)) {
           setOnboardingInitialData(freshUserData);
           setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 
@@ -253,7 +251,7 @@ export default function Home({}: {}) {
   if (isLoading) {
     return (
         <div className="flex justify-center items-center h-screen">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <LoadingDots />
         </div>
     );
   }
@@ -305,7 +303,7 @@ export default function Home({}: {}) {
             <Card className="max-w-md w-full text-center">
                 <CardHeader>
                     <div className="flex justify-center mb-4">
-                        <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                        <LoadingDots />
                     </div>
                     <CardTitle className="text-2xl">Loading Application</CardTitle>
                     <CardDescription>
@@ -370,7 +368,7 @@ export default function Home({}: {}) {
                             disabled={isClaimingBooster} 
                             className="w-full h-12 text-lg animate-heartbeat"
                         >
-                            {isClaimingBooster ? <Loader2 className="animate-spin" /> : "Secure Airdrop & Get 5,000 EXN"}
+                            {isClaimingBooster ? <LoadingDots /> : "Secure Airdrop & Get 5,000 EXN"}
                         </Button>
                     </Card>
                 )}
@@ -384,7 +382,7 @@ export default function Home({}: {}) {
                         onClick={handleDailyTap}
                     >
                         {isClaimingTap ? (
-                            <Loader2 className="w-16 h-16 text-gold animate-spin" />
+                            <LoadingDots />
                         ) : !canTap ? (
                             <CheckCircle className="w-16 h-16 text-muted-foreground/50" />
                         ) : (
@@ -434,3 +432,6 @@ export default function Home({}: {}) {
 
 
 
+
+
+    

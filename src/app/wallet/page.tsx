@@ -26,6 +26,7 @@ import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
 import { TelegramUser } from '@/lib/user-utils';
+import LoadingDots from '@/components/loading-dots';
 
 
 const isValidSolanaAddress = (address: string): boolean => {
@@ -236,8 +237,8 @@ export default function WalletPage() {
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isSaving ? 'Saving...' : 'Confirm & Save'}
+                        {isSaving && <LoadingDots />}
+                        {isSaving ? '' : 'Confirm & Save'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                     </AlertDialogContent>
@@ -254,7 +255,7 @@ export default function WalletPage() {
         <main className="flex-grow flex flex-col p-4 mt-8 relative">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                <LoadingDots />
             </div>
           ) : (
              <div className="w-full max-w-sm mx-auto space-y-6">
@@ -336,6 +337,8 @@ export default function WalletPage() {
 
     
 
+
+    
 
     
 

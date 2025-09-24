@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { getInitials, TelegramUser } from '@/lib/user-utils';
+import LoadingDots from '@/components/loading-dots';
 
 
 interface ProfilePageProps {}
@@ -332,7 +333,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                 
                 {isVerifying ? (
                     <div className="flex flex-col items-center justify-center space-y-4 p-8">
-                      <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                      <LoadingDots />
                       <p className="text-muted-foreground">Please wait...</p>
                     </div>
                 ) : isCameraActive ? (
@@ -356,7 +357,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                             <img src={capturedImage} alt="Captured" className="rounded-full w-full h-full object-cover" />
                             {isProcessingVerification && (
                                 <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center">
-                                    <Loader2 className="w-12 h-12 animate-spin text-white" />
+                                    <LoadingDots />
                                     <p className="text-white mt-2 font-semibold">Verifying...</p>
                                 </div>
                             )}
@@ -401,7 +402,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                     </Avatar>
                      {isBrowserUser && (
                         <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
-                           {isUploading ? <Loader2 className="w-8 h-8 animate-spin text-white" /> : <Upload className="w-8 h-8 text-white" />}
+                           {isUploading ? <LoadingDots /> : <Upload className="w-8 h-8 text-white" />}
                         </div>
                     )}
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
@@ -489,3 +490,5 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
+
+    
