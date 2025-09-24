@@ -22,7 +22,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isProfilePage = pathname === '/profile';
 
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
@@ -36,7 +35,7 @@ export default function RootLayout({
       </head>
       <body className={cn(
         "font-body antialiased",
-        isProfilePage ? 'bg-profile-bg bg-cover bg-center' : 'bg-background'
+        'bg-background'
       )}>
         <LoaderProvider>
             <WalletProvider>
