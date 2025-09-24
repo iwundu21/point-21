@@ -3,7 +3,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import UserCard from '@/components/user-card';
 import BalanceCard from '@/components/balance-card';
 import MissionsCard from '@/components/missions-card';
 import { Separator } from '@/components/ui/separator';
@@ -358,11 +357,7 @@ export default function Home({}: {}) {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
-            <UserCard 
-                user={user}
-                userData={userData}
-            />
-            <BalanceCard balance={balance} />
+            <BalanceCard balance={balance} user={user} />
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
