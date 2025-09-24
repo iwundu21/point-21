@@ -397,7 +397,11 @@ export default function ProfilePage({}: ProfilePageProps) {
         <div className="absolute inset-0 bg-black/60 z-0"></div>
         <div className="relative z-10 flex-grow flex flex-col">
             <div className="flex-grow pb-32">
-                {isLoading ? null : isVerificationInProgress ? renderVerificationContent() : (
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-screen">
+                        <LoadingDots />
+                    </div>
+                ) : isVerificationInProgress ? renderVerificationContent() : (
                 <main className="flex-grow flex flex-col items-center p-4 space-y-8 mt-8">
                     <Card className="w-full max-w-sm glass-card">
                         <CardContent className="flex flex-col items-center text-center space-y-4 p-6">
@@ -502,6 +506,3 @@ export default function ProfilePage({}: ProfilePageProps) {
 }
 
     
-
-    
-
