@@ -2,12 +2,13 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { TelegramUser } from '@/lib/user-utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, Zap, Gift, Users, Star, CalendarDays, Award, UserCheck, RefreshCw } from 'lucide-react';
 import { completeOnboarding } from '@/ai/flows/onboarding-flow';
-import { UserData, saveUserData, getUserData } from '@/lib/database';
+import { UserData, saveUserData, getUserData, LEGACY_BOOST_REWARDS, claimLegacyBoostRewards } from '@/lib/database';
+import { cn } from '@/lib/utils';
 
 interface OnboardingProps {
     user: TelegramUser;
@@ -18,7 +19,7 @@ interface OnboardingProps {
 
 enum OnboardingStage {
     Conversion,
-    BoosterReward,
+    LegacyBoosterReward,
     Welcome,
     LoyaltyBonus,
     HowItWorks,
@@ -45,15 +46,23 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
     const oldBalance = initialData.balance || 0;
     const newBalance = Math.floor(oldBalance / 1000);
 
-    // Data for booster reward stage
-    const BOOSTER_REWARD = 5000;
+    // Data for legacy booster reward stage
+    const legacyBoosts = useMemo(() => {
+        return (initialData.purchasedBoosts || [])
+            .filter(boostId => LEGACY_BOOST_REWARDS.hasOwnProperty(boostId));
+    }, [initialData.purchasedBoosts]);
+
+    const totalLegacyReward = useMemo(() => {
+        return legacyBoosts.reduce((total, boostId) => total + LEGACY_BOOST_REWARDS[boostId], 0);
+    }, [legacyBoosts]);
+
 
     useEffect(() => {
         // Determine the initial stage based on user data
         if (!isNewUser && initialData.hasConvertedToExn === false) {
             setStage(OnboardingStage.Conversion);
-        } else if (!isNewUser && initialData.purchasedBoosts?.includes('boost_1') && !initialData.claimedBoostReward) {
-            setStage(OnboardingStage.BoosterReward);
+        } else if (!isNewUser && !initialData.claimedLegacyBoosts) {
+            setStage(OnboardingStage.LegacyBoosterReward);
         } else if (!initialData.hasOnboarded) {
             setStage(OnboardingStage.Welcome);
         } else {
@@ -72,9 +81,9 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                         balance: newBalance,
                         hasConvertedToExn: true,
                     });
-                     // After conversion, check if they are also eligible for booster reward
-                    if (!isNewUser && initialData.purchasedBoosts?.includes('boost_1') && !initialData.claimedBoostReward) {
-                        setStage(OnboardingStage.BoosterReward);
+                     // After conversion, check if they are also eligible for legacy booster reward
+                    if (!isNewUser && !initialData.claimedLegacyBoosts) {
+                        setStage(OnboardingStage.LegacyBoosterReward);
                     } else if (initialData.hasOnboarded) {
                         onComplete(); // Already onboarded, just needed conversion
                     } else {
@@ -82,12 +91,8 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                     }
                     break;
                 
-                case OnboardingStage.BoosterReward:
-                    const { userData } = await getUserData(user);
-                    await saveUserData(user, {
-                        balance: userData.balance + BOOSTER_REWARD,
-                        claimedBoostReward: true,
-                    });
+                case OnboardingStage.LegacyBoosterReward:
+                    await claimLegacyBoostRewards(user, totalLegacyReward);
                      if (initialData.hasOnboarded) {
                         onComplete(); // Already onboarded, just needed reward
                     } else {
@@ -157,15 +162,35 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                         <p className="text-sm text-muted-foreground">Click below to confirm the conversion.</p>
                     </div>
                 );
-            case OnboardingStage.BoosterReward:
+            case OnboardingStage.LegacyBoosterReward:
                  return (
                     <div className="text-center animate-fade-in space-y-6">
                         <h1 className="text-4xl font-bold text-foreground">A Gift For Your Support!</h1>
                         <p className="text-xl text-muted-foreground">Thank you for being an early supporter.</p>
-                         <div className="py-8 flex flex-col items-center justify-center gap-4">
-                            <Star className="w-20 h-20 text-gold" />
-                            <p className="text-base text-muted-foreground">Because you purchased Booster Pack 1, we're giving you a special reward.</p>
-                            <p className="text-6xl font-bold text-gold my-4 animate-fast-pulse">{BOOSTER_REWARD.toLocaleString()} EXN</p>
+                         <div className="py-8 flex flex-col items-center justify-center gap-4 w-full max-w-sm">
+                            <Star className="w-16 h-16 text-gold" />
+                            <p className="text-base text-muted-foreground">For your previous Booster Pack purchases, we're giving you a special EXN reward.</p>
+                            
+                            <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg">
+                                {Object.keys(LEGACY_BOOST_REWARDS).map((boostId) => {
+                                    const hasBoost = legacyBoosts.includes(boostId);
+                                    const reward = LEGACY_BOOST_REWARDS[boostId];
+                                    const packNumber = boostId.split('_')[1];
+                                    return (
+                                        <div key={boostId} className={cn("flex justify-between items-center text-sm", hasBoost ? "text-foreground" : "text-muted-foreground/50")}>
+                                            <span>Booster Pack {packNumber}</span>
+                                            <span className={cn(hasBoost ? "font-bold text-gold" : "line-through")}>
+                                                {reward.toLocaleString()} EXN
+                                            </span>
+                                        </div>
+                                    )
+                                })}
+                                <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-lg font-bold">
+                                    <span>Total Reward:</span>
+                                    <span className="text-gold">{totalLegacyReward.toLocaleString()} EXN</span>
+                                </div>
+                            </div>
+                            
                         </div>
                         <p className="text-sm text-muted-foreground">Click below to claim your bonus.</p>
                     </div>
@@ -259,7 +284,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
     const getButtonText = () => {
         switch (stage) {
             case OnboardingStage.Conversion: return 'Convert to EXN';
-            case OnboardingStage.BoosterReward: return 'Claim Reward';
+            case OnboardingStage.LegacyBoosterReward: return 'Claim Reward';
             case OnboardingStage.HowItWorks: return isNewUser ? 'Continue' : 'Enter App';
             case OnboardingStage.WelcomeTasks: return 'Enter App';
             default: return 'Continue';

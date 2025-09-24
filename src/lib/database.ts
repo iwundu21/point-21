@@ -46,6 +46,7 @@ export interface UserData {
     hasConvertedToExn?: boolean; // Flag for EXN conversion
     claimedAchievements: AchievementKey[]; // Tracks awarded achievements
     claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
+    claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
 }
 
 const generateReferralCode = () => {
@@ -96,6 +97,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     hasConvertedToExn: true,
     claimedAchievements: [],
     claimedBoostReward: false,
+    claimedLegacyBoosts: false,
 });
 
 // --- User Count Management ---
@@ -689,6 +691,36 @@ export const claimDailyTapReward = async (userId: string): Promise<{ success: bo
         return { success: false };
     }
 }
+
+export const LEGACY_BOOST_REWARDS: Record<string, number> = {
+    'boost_1': 5000,
+    'boost_2': 10000,
+    'boost_3': 30000,
+    'boost_4': 40000,
+    'boost_5': 50000,
+};
+
+export const claimLegacyBoostRewards = async (user: { id: number | string } | null, totalReward: number) => {
+    if (!user || totalReward <= 0) return;
+
+    const userId = getUserId(user);
+    const userRef = doc(db, 'users', userId);
+    
+    await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (!userDoc.exists()) {
+            throw new Error("User not found.");
+        }
+
+        const newBalance = userDoc.data().balance + totalReward;
+        transaction.update(userRef, {
+            balance: newBalance,
+            claimedLegacyBoosts: true,
+        });
+    });
+
+    await incrementTotalPoints(totalReward);
+};
 
 // --- Specific Data Functions ---
 
