@@ -276,11 +276,11 @@ export const saveUserData = async (user: { id: number | string } | null, data: P
     if (isConverting && data.balance !== undefined) {
         const oldEPoints = oldData.ePointsBalance || 0;
         const newExnBalance = data.balance;
-        const difference = newExnBalance - oldEPoints; // This will be a large negative number
         
-        // Only adjust total if the user is active and had points
         if (isCurrentlyActive && oldEPoints > 0) {
-            await incrementTotalPoints(difference);
+            // Correctly adjust the total points counter
+            await decrementTotalPoints(oldEPoints); // Remove old E-Points value
+            await incrementTotalPoints(newExnBalance); // Add new EXN value
         }
 
         // Save and exit to prevent double counting
@@ -720,4 +720,5 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 
