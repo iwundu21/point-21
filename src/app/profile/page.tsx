@@ -310,7 +310,7 @@ export default function ProfilePage({}: ProfilePageProps) {
   const renderVerificationContent = () => {
     return (
         <main className="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-sm mx-auto">
-            <Card className="w-full">
+            <Card className="w-full glass-card">
                  <div className="w-full space-y-4 p-6 rounded-lg">
                     <div className="text-center">
                     {accountStatus === 'verified' && verificationSuccess ? (
@@ -497,3 +497,5 @@ export default function ProfilePage({}: ProfilePageProps) {
     </div>
   );
 }
+
+    
