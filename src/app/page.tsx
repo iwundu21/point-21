@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -360,6 +359,7 @@ export default function Home({}: {}) {
   }
 
   const hasBooster = userData.purchasedBoosts?.includes('boost_1');
+  const prerequisitesMet = Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent text-foreground font-body">
@@ -418,40 +418,61 @@ export default function Home({}: {}) {
                 )}
 
                 <Card className="w-full p-6 text-center space-y-4 glass-card">
-                        <div 
-                        className={cn(
-                            "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300 bg-cover bg-center",
-                            !canTap 
-                                ? "border-4 border-muted-foreground/30" 
-                                : "border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
-                        )}
-                        style={{ backgroundImage: `url('/5.jpg')` }}
-                        onClick={handleDailyTap}
-                    >
-                        {isClaimingTap ? (
-                            <LoadingDots />
-                        ) : !canTap ? (
-                             countdown ? (
-                                <div className="text-center p-4 rounded-full">
-                                    <p className="text-2xl font-bold text-white tabular-nums">{countdown}</p>
-                                    <p className="text-xs text-white/80 mt-1">Next claim</p>
-                                </div>
-                            ) : (
-                                <div className="text-center p-4 rounded-full">
-                                    <CheckCircle className="w-12 h-12 text-white/80" />
-                                </div>
-                            )
-                        ) : (
-                            <div className="text-center p-4 rounded-full">
-                                <p className="text-4xl font-bold text-white">TAP</p>
-                                <p className="text-sm font-semibold text-white">+100 EXN</p>
+                    {prerequisitesMet ? (
+                        <>
+                            <div 
+                                className={cn(
+                                    "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300 bg-cover bg-center",
+                                    !canTap 
+                                        ? "border-4 border-muted-foreground/30" 
+                                        : "border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
+                                )}
+                                style={{ backgroundImage: `url('/5.jpg')` }}
+                                onClick={handleDailyTap}
+                            >
+                                {isClaimingTap ? (
+                                    <LoadingDots />
+                                ) : !canTap ? (
+                                    countdown ? (
+                                        <div className="text-center p-4 rounded-full">
+                                            <p className="text-2xl font-bold text-white tabular-nums">{countdown}</p>
+                                            <p className="text-xs text-white/80 mt-1">Next claim</p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center p-4 rounded-full">
+                                            <CheckCircle className="w-12 h-12 text-white/80" />
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="text-center p-4 rounded-full">
+                                        <p className="text-4xl font-bold text-white">TAP</p>
+                                        <p className="text-sm font-semibold text-white">+100 EXN</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-                    <h2 className="text-xl font-bold">Daily Tap Reward</h2>
-                    <p className="text-muted-foreground text-sm">
-                        {canTap ? "Tap the button to claim your 100 EXN for today!" : "You have already claimed your daily reward. Come back tomorrow!"}
-                    </p>
+                            <h2 className="text-xl font-bold">Daily Tap Reward</h2>
+                            <p className="text-muted-foreground text-sm">
+                                {canTap ? "Tap the button to claim your 100 EXN for today!" : "You have already claimed your daily reward. Come back tomorrow!"}
+                            </p>
+                        </>
+                    ) : (
+                         <div className="text-center p-4 rounded-full space-y-4">
+                            <h2 className="text-xl font-bold">Unlock Daily Tapping</h2>
+                            <p className="text-muted-foreground text-sm">
+                                To unlock your daily tap rewards, you must complete all Welcome Tasks and redeem a referral code.
+                            </p>
+                            <div className='flex gap-4 justify-center'>
+                                <Button onClick={() => router.push('/welcome-tasks')} variant='outline'>
+                                    <Gift className="w-4 h-4 mr-2" />
+                                    Welcome Tasks
+                                </Button>
+                                <Button onClick={() => router.push('/referral')} variant='outline'>
+                                    <Handshake className="w-4 h-4 mr-2" />
+                                    Referral Code
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </Card>
             </div>
 
@@ -486,4 +507,3 @@ export default function Home({}: {}) {
   );
 }
 
-    

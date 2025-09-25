@@ -107,12 +107,12 @@ export default function WelcomeTasksPage() {
                  if (user) { 
                     const { userData } = await getUserData(user);
                     const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
-                    const updatedBalance = userData.balance + 80;
+                    const updatedBalance = userData.balance + 20;
                     
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 80 EXN.");
+                    showDialog("Success!", "You've earned 20 EXN.");
                 }
                 setVerifyingTaskId(null);
             }, 10000); // 10 second delay to simulate action
@@ -130,10 +130,10 @@ export default function WelcomeTasksPage() {
                 if (result.isMember) {
                     const { userData } = await getUserData(user);
                     const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
-                    const updatedBalance = userData.balance + 80;
+                    const updatedBalance = userData.balance + 20;
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 80 EXN.");
+                    showDialog("Success!", "You've earned 20 EXN.");
                 } else {
                     showDialog("Verification Failed", result.error || "You must join the channel first.");
                 }
@@ -149,12 +149,12 @@ export default function WelcomeTasksPage() {
                  if (user) { 
                     const { userData } = await getUserData(user);
                     const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
-                    const updatedBalance = userData.balance + 80;
+                    const updatedBalance = userData.balance + 20;
                     
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 80 EXN.");
+                    showDialog("Success!", "You've earned 20 EXN.");
                 }
                 setVerifyingTaskId(null);
             }, 9000); // 9 second delay for user to perform action
@@ -187,7 +187,7 @@ export default function WelcomeTasksPage() {
                                 icon={<Image src="/x.jpg" alt="X/Twitter" width={24} height={24} />}
                                 title="Follow on X"
                                 description="Stay up-to-date with our latest news."
-                                points={80}
+                                points={20}
                                 link="https://x.com/exnusprotocol"
                                 completed={tasks.followedOnX}
                                 isVerifying={verifyingTaskId === 'followedOnX'}
@@ -197,7 +197,7 @@ export default function WelcomeTasksPage() {
                                 icon={<Image src="/tg.jpg" alt="Telegram" width={24} height={24} />}
                                 title="Subscribe on Telegram"
                                 description="Get announcements directly from the source."
-                                points={80}
+                                points={20}
                                 link="https://t.me/Exnusprotocol"
                                 completed={tasks.subscribedOnTelegram}
                                 isVerifying={verifyingTaskId === 'subscribedOnTelegram'}
@@ -207,7 +207,7 @@ export default function WelcomeTasksPage() {
                                 icon={<Image src="/tg.jpg" alt="Telegram" width={24} height={24} />}
                                 title="Join Telegram Community"
                                 description="Chat with other members."
-                                points={80}
+                                points={20}
                                 link="https://t.me/exnusprotocolchat"
                                 completed={tasks.joinedTelegramCommunity}
                                 isVerifying={verifyingTaskId === 'joinedTelegramCommunity'}
@@ -217,7 +217,7 @@ export default function WelcomeTasksPage() {
                                 icon={<Image src="/discord.jpg" alt="Discord" width={24} height={24} />}
                                 title="Join our Discord"
                                 description="Become a part of our community."
-                                points={80}
+                                points={20}
                                 link="https://discord.gg/v8MpYYFdP8"
                                 completed={tasks.joinedDiscord}
                                 isVerifying={verifyingTaskId === 'joinedDiscord'}
@@ -252,4 +252,3 @@ export default function WelcomeTasksPage() {
     );
 }
 
-    
