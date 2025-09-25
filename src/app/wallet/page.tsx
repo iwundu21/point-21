@@ -341,13 +341,4 @@ export default function WalletPage() {
         </AlertDialog>
     </div>
   );
-
-    
-
-
-    
-
-    
-
-    
-
+}

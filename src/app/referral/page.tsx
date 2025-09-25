@@ -238,11 +238,4 @@ export default function ReferralPage({}: ReferralPageProps) {
     </AlertDialog>
     </div>
   );
-
-    
-
-    
-
-    
-
-
+}
