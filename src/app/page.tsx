@@ -397,6 +397,9 @@ export default function Home({}: {}) {
                         >
                             {isClaimingBooster ? <LoadingDots /> : "Secure Your Airdrop To Get In"}
                         </Button>
+                         <p className="text-xs text-muted-foreground pt-2">
+                            Note: Star contributions are allocated towards future CEX/DEX listing fees and enhancing the application experience, not for team personal use.
+                        </p>
                     </Card>
                 )}
 
@@ -474,6 +477,7 @@ export default function Home({}: {}) {
 
 
     
+
 
 
 
