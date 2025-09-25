@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -551,6 +551,7 @@ export default function AdminPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
+    const [isDeletingAllTasks, setIsDeletingAllTasks] = useState(false);
     
     const { toast } = useToast();
 
@@ -785,6 +786,20 @@ export default function AdminPage() {
         setSocialTasks(socialTasks.filter(t => t.id !== taskId));
         toast({ variant: 'destructive', title: 'Task Deleted'});
     }
+
+    const handleDeleteAllTasks = async () => {
+        setIsDeletingAllTasks(true);
+        try {
+            const deletedCount = await deleteAllSocialTasks();
+            toast({ variant: 'destructive', title: 'All Tasks Deleted', description: `${deletedCount} tasks have been removed.` });
+            setSocialTasks([]);
+        } catch (error) {
+            console.error("Failed to delete all tasks:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete all tasks.' });
+        } finally {
+            setIsDeletingAllTasks(false);
+        }
+    }
     
     const handleCodeSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -986,7 +1001,28 @@ export default function AdminPage() {
                 <CardHeader>
                     <div className="flex justify-between items-center">
                         <CardTitle>Social Task Management</CardTitle>
-                        <AddTaskDialog onTaskAdded={fetchInitialData} />
+                        <div className="flex gap-2">
+                           <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="icon" disabled={socialTasks.length === 0 || isDeletingAllTasks}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete All Tasks?</AlertDialogTitle>
+                                        <AlertDialogDescription>This will permanently delete all social tasks. This action cannot be undone.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteAllTasks} className={cn(buttonVariants({variant: 'destructive'}))}>
+                                            {isDeletingAllTasks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Delete All'}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            <AddTaskDialog onTaskAdded={fetchInitialData} />
+                        </div>
                     </div>
                     <CardDescription>Create and manage social engagement tasks for users.</CardDescription>
                 </CardHeader>

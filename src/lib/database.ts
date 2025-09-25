@@ -514,6 +514,23 @@ export const deleteSocialTask = async (taskId: string) => {
     await deleteDoc(taskRef);
 };
 
+export const deleteAllSocialTasks = async (): Promise<number> => {
+    const tasksCollection = collection(db, 'socialTasks');
+    const querySnapshot = await getDocs(tasksCollection);
+
+    if (querySnapshot.empty) {
+        return 0;
+    }
+
+    const batch = writeBatch(db);
+    querySnapshot.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+    });
+
+    await batch.commit();
+    return querySnapshot.size;
+}
+
 export const incrementTaskCompletionCount = async (taskId: string) => {
     if (!taskId) return;
     const taskRef = doc(db, 'socialTasks', taskId);
