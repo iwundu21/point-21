@@ -218,8 +218,8 @@ export default function Home({}: {}) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                title: 'Booster Pack 1',
-                description: 'Activate your booster to get a 5,000 EXN welcome bonus and secure your airdrop spot.',
+                title: 'Airdrop License',
+                description: 'Purchase your Airdrop License to get a 5,000 EXN welcome bonus and secure your airdrop spot.',
                 payload: `boost_1_user_${userId}`,
                 currency: 'XTR',
                 amount: 70
@@ -370,7 +370,7 @@ export default function Home({}: {}) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Progress value={boosterCount / AIRDROP_CAP * 100} className="w-full h-3" />
+                        <Progress value={(boosterCount / AIRDROP_CAP) * 100} className="w-full h-3" />
                         <div className="flex justify-between text-xs text-muted-foreground mt-2">
                             <span>Taken: {boosterCount.toLocaleString()}</span>
                             <span>Available: {(AIRDROP_CAP - boosterCount).toLocaleString()}</span>
@@ -388,14 +388,14 @@ export default function Home({}: {}) {
                         <Zap className="w-16 h-16 mx-auto text-primary" />
                         <h2 className="text-xl font-bold">Secure Your Airdrop Spot</h2>
                         <p className="text-muted-foreground text-sm">
-                            Activate your Booster Pack for <strong className="text-primary">70 Stars</strong> to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus.
+                           Purchase your Airdrop License for <strong className="text-primary">70 Stars</strong> to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus.
                         </p>
                         <Button 
                             onClick={handleSecureAirdrop} 
                             disabled={isClaimingBooster} 
                             className="w-full h-12 text-lg animate-heartbeat"
                         >
-                            {isClaimingBooster ? <LoadingDots /> : "Secure Airdrop & Get 5,000 EXN"}
+                            {isClaimingBooster ? <LoadingDots /> : "Secure Airdrop License & Get 5,000 EXN"}
                         </Button>
                     </Card>
                 )}
@@ -474,4 +474,5 @@ export default function Home({}: {}) {
 
 
     
+
 
