@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Users, Monitor, Bot } from 'lucide-react';
 import Footer from '@/components/footer';
-import { getLeaderboardUsers, getTotalTelegramUsersCount, getTotalBrowserUsersCount, UserData } from '@/lib/database';
+import { getLeaderboardUsers, getTotalTelegramUsersCount, UserData } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -58,7 +58,6 @@ const LeaderboardSkeleton = () => (
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
     const [totalTelegramUsers, setTotalTelegramUsers] = useState(0);
-    const [totalBrowserUsers, setTotalBrowserUsers] = useState(0);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -68,15 +67,13 @@ export default function LeaderboardPage() {
             setIsLoading(true);
             try {
                 // Fetch all data concurrently for efficiency
-                const [leaderboardData, telegramCount, browserCount] = await Promise.all([
+                const [leaderboardData, telegramCount] = await Promise.all([
                     getLeaderboardUsers(),
                     getTotalTelegramUsersCount(),
-                    getTotalBrowserUsersCount()
                 ]);
 
                 setLeaderboard(leaderboardData.users);
                 setTotalTelegramUsers(telegramCount);
-                setTotalBrowserUsers(browserCount);
 
             } catch (error) {
                 console.error("Failed to fetch leaderboard data:", error);
@@ -110,7 +107,7 @@ export default function LeaderboardPage() {
         init();
     }, []);
     
-    const totalUsers = totalTelegramUsers + totalBrowserUsers;
+    const totalUsers = totalTelegramUsers;
     // The total number of pages is based on the limited leaderboard size (100), not all users.
     const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
     
@@ -152,11 +149,8 @@ export default function LeaderboardPage() {
                         Leaderboard
                     </h1>
                      <div className="text-xs text-muted-foreground flex items-center justify-center gap-4 mt-2">
-                        {(totalTelegramUsers > 0 || totalBrowserUsers > 0) && (
-                            <>
-                                <span className="flex items-center gap-1.5"><Bot className="w-4 h-4" /> {totalTelegramUsers.toLocaleString()} Telegram</span>
-                                <span className="flex items-center gap-1.5"><Monitor className="w-4 h-4" /> {totalBrowserUsers.toLocaleString()} Browser</span>
-                            </>
+                        {totalTelegramUsers > 0 && (
+                            <span className="flex items-center gap-1.5"><Bot className="w-4 h-4" /> {totalTelegramUsers.toLocaleString()} Telegram Users</span>
                         )}
                     </div>
                 </div>
