@@ -391,8 +391,8 @@ export default function Home({}: {}) {
 
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
                  <ContributeDialog user={user} userData={userData} onContribution={handleContribution}>
-                    <Button variant="outline" className="w-full h-12 text-lg bg-primary/10 border-primary/20 hover:bg-primary/20">
-                        <Sparkles className="w-5 h-5 mr-2 text-primary" />
+                    <Button className="w-full h-12 text-lg animate-heartbeat bg-primary/80 hover:bg-primary/90">
+                        <Sparkles className="w-5 h-5 mr-2 text-primary-foreground" />
                         Contribute to the Ecosystem
                     </Button>
                 </ContributeDialog>
@@ -485,3 +485,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
