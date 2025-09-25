@@ -1,7 +1,7 @@
 
 'use client';
 import type { FC } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Award, CheckCircle, Handshake, ShieldCheck, UserCheck, Users, Zap } from 'lucide-react';
 import type { UserData } from '@/lib/database';
 import { cn } from '@/lib/utils';
@@ -60,6 +60,11 @@ const AchievementCard: FC<AchievementCardProps> = ({ userData }) => {
           <AchievementSquare title="Social Butterfly" isAchieved={achievements.socialTasks} icon={<Users className="w-8 h-8"/>} />
         </div>
       </CardContent>
+       <CardFooter className="p-4 pt-0">
+        <p className="text-xs text-muted-foreground text-center w-full">
+          A fully achieved card can be converted to extra EXN rewards.
+        </p>
+      </CardFooter>
     </Card>
   );
 };
