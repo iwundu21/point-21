@@ -359,7 +359,7 @@ export default function Home({}: {}) {
   }
 
   const hasBooster = userData.purchasedBoosts?.includes('boost_1');
-  const prerequisitesMet = Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
+  const prerequisitesMet = userData.verificationStatus === 'verified' && Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent text-foreground font-body">
@@ -459,16 +459,20 @@ export default function Home({}: {}) {
                          <div className="text-center p-4 rounded-full space-y-4">
                             <h2 className="text-xl font-bold">Unlock Daily Tapping</h2>
                             <p className="text-muted-foreground text-sm">
-                                To unlock your daily tap rewards, you must complete all Welcome Tasks and redeem a referral code.
+                                To unlock your daily tap rewards, you must complete all Welcome Tasks, redeem a referral code, and verify your account.
                             </p>
-                            <div className='flex gap-4 justify-center'>
-                                <Button onClick={() => router.push('/welcome-tasks')} variant='outline'>
+                            <div className='flex flex-wrap gap-2 justify-center'>
+                                <Button onClick={() => router.push('/welcome-tasks')} variant='outline' size="sm">
                                     <Gift className="w-4 h-4 mr-2" />
                                     Welcome Tasks
                                 </Button>
-                                <Button onClick={() => router.push('/referral')} variant='outline'>
+                                <Button onClick={() => router.push('/referral')} variant='outline' size="sm">
                                     <Handshake className="w-4 h-4 mr-2" />
                                     Referral Code
+                                </Button>
+                                <Button onClick={() => router.push('/profile')} variant='outline' size="sm">
+                                    <UserCheck className="w-4 h-4 mr-2" />
+                                    Verify Account
                                 </Button>
                             </div>
                         </div>
@@ -506,4 +510,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
