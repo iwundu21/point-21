@@ -28,7 +28,7 @@ const TaskItem = ({ icon, title, description, points, link, completed, isVerifyi
                 "w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center",
                  completed ? "bg-green-500/20 text-green-500" : "bg-primary/10 text-primary"
             )}>
-                {icon}
+                <div className="w-6 h-6 flex items-center justify-center">{icon}</div>
             </div>
             <div className="flex-grow space-y-1">
                 <h3 className="font-semibold">{title}</h3>
