@@ -551,7 +551,6 @@ export default function AdminPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
-    const [totalAirdrop, setTotalAirdrop] = useState(0);
     
     const { toast } = useToast();
 
@@ -559,14 +558,13 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStats] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
                 getTotalTelegramUsersCount(),
                 getTotalBrowserUsersCount(),
                 getTotalActivePoints(),
-                getAirdropStats(),
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -584,7 +582,6 @@ export default function AdminPage() {
             setTotalBrowserCount(totalBrowser);
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
-            setTotalAirdrop(airdropStats.totalAirdrop);
 
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -834,21 +831,17 @@ export default function AdminPage() {
                     user.walletAddress && 
                     isValidSolanaAddress(user.walletAddress) &&
                     user.status === 'active' &&
-                    user.verificationStatus === 'verified' &&
-                    user.balance >= 10000 &&
-                    user.purchasedBoosts?.includes('boost_1') &&
-                    (user.miningActivationCount || 0) >= 20
+                    user.purchasedBoosts?.includes('boost_1')
                 )
                 .map(user => {
-                    const airdropAmount = totalPoints > 0 ? (user.balance / totalPoints) * totalAirdrop : 0;
                     return {
                         walletAddress: user.walletAddress,
-                        airdropAmount: airdropAmount.toFixed(4)
+                        balance: user.balance
                     };
                 });
             
             if (airdropData.length === 0) {
-                 toast({ variant: 'destructive', title: 'No Eligible Users', description: 'No users who meet all airdrop criteria were found.' });
+                 toast({ variant: 'destructive', title: 'No Eligible Users', description: 'No users who have secured their airdrop slot were found.' });
                  setIsExportingAirdrop(false);
                  return;
             }
@@ -858,7 +851,7 @@ export default function AdminPage() {
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', 'airdrop_distribution_eligible_users.csv');
+            link.setAttribute('download', 'airdrop_eligible_users.csv');
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -1086,23 +1079,13 @@ export default function AdminPage() {
                                 <div className="text-2xl font-bold">{totalBrowserCount.toLocaleString()}</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-primary/5">
+                        <Card className="bg-primary/5 col-span-1 lg:col-span-3">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total EXN (Active)</CardTitle>
                                 <Star className="h-4 w-4 text-primary" />
                             </CardHeader>
                             <CardContent>
                                     <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
-                            </CardContent>
-                        </Card>
-                         <Card className="bg-primary/5 col-span-1 lg:col-span-2">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Airdrop</CardTitle>
-                                <Coins className="h-4 w-4 text-primary" />
-                            </CardHeader>
-                            <CardContent className="flex items-center justify-between">
-                                    <div className="text-2xl font-bold">{totalAirdrop.toLocaleString()}</div>
-                                    <EditAirdropDialog currentTotal={totalAirdrop} onAirdropUpdated={setTotalAirdrop} />
                             </CardContent>
                         </Card>
                     </CardContent>
