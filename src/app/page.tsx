@@ -395,7 +395,7 @@ export default function Home({}: {}) {
                             disabled={isClaimingBooster} 
                             className="w-full h-12 text-lg animate-heartbeat"
                         >
-                            {isClaimingBooster ? <LoadingDots /> : "Secure Airdrop License & Get 5,000 EXN"}
+                            {isClaimingBooster ? <LoadingDots /> : "Secure Your Airdrop To Get In"}
                         </Button>
                     </Card>
                 )}
@@ -474,5 +474,6 @@ export default function Home({}: {}) {
 
 
     
+
 
 
