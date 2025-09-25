@@ -228,7 +228,7 @@ const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [link, setLink] = useState('');
-    const [points, setPoints] = useState(100);
+    const [points, setPoints] = useState(80);
     const [icon, setIcon] = useState('MessageCircle');
     const [isOpen, setIsOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -246,7 +246,7 @@ const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
             onTaskAdded();
             setIsOpen(false);
             // Reset form
-            setTitle(''); setDescription(''); setLink(''); setPoints(100); setIcon('MessageCircle');
+            setTitle(''); setDescription(''); setLink(''); setPoints(80); setIcon('MessageCircle');
         } catch (error) {
             console.error("Failed to add task:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not add the task.' });
