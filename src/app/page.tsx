@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, claimDailyTapReward } from '@/lib/database';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake } from 'lucide-react';
+import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
@@ -29,6 +29,7 @@ import Onboarding from '@/components/onboarding';
 import { cn } from '@/lib/utils';
 import { processBoost } from '@/ai/flows/process-boost-flow';
 import LoadingDots from '@/components/loading-dots';
+import { ContributeDialog } from '@/components/contribute-dialog';
 
 
 export default function Home({}: {}) {
@@ -190,11 +191,12 @@ export default function Home({}: {}) {
 
   useEffect(() => {
     const handleInvoiceClosed = (event: {slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending'}) => {
-        if(event.status === 'paid') {
+        if(event.slug.startsWith('boost_1') && event.status === 'paid') {
            handleSuccessfulPayment();
-        } else {
+        } else if (!event.slug.startsWith('contribution_')) {
            showDialog('Payment Not Completed', `The payment was ${event.status}. Please try again.`);
         }
+        // Contribution payments are handled in the ContributeDialog component
         setIsClaimingBooster(false); // Re-enable the button
     }
     
@@ -278,6 +280,11 @@ export default function Home({}: {}) {
         initializeUser(user);
       }
   }
+
+  const handleContribution = (newBalance: number, newTotalContributed: number) => {
+      setBalance(newBalance);
+      setUserData(prev => prev ? { ...prev, balance: newBalance, totalContributedStars: newTotalContributed } : null);
+  };
 
   if (isLoading) {
     return (
@@ -383,6 +390,13 @@ export default function Home({}: {}) {
             </div>
 
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
+                 <ContributeDialog user={user} userData={userData} onContribution={handleContribution}>
+                    <Button variant="outline" className="w-full h-12 text-lg bg-primary/10 border-primary/20 hover:bg-primary/20">
+                        <Sparkles className="w-5 h-5 mr-2 text-primary" />
+                        Contribute to the Ecosystem
+                    </Button>
+                </ContributeDialog>
+                
                 {!hasBooster && (
                     <Card className="w-full p-6 text-center space-y-4 glass-card">
                         <Zap className="w-16 h-16 mx-auto text-primary" />
@@ -471,13 +485,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-
-
-
-
-    
-
-
-
-

@@ -48,6 +48,7 @@ export interface UserData {
     claimedBoostReward?: boolean; // Flag for the retroactive booster pack 1 reward
     claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
     hasConvertedToExn?: boolean;
+    totalContributedStars?: number; // New field for contributions
 }
 
 const generateReferralCode = () => {
@@ -98,6 +99,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     claimedAchievements: [],
     claimedBoostReward: false,
     claimedLegacyBoosts: false,
+    totalContributedStars: 0,
 });
 
 // --- User Count Management ---
