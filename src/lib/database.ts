@@ -4,7 +4,7 @@ import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { TelegramUser } from './user-utils';
 
-export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'welcomeTasks' | 'socialTasks';
+export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'welcomeTasks' | 'socialTasks' | 'ref10' | 'ref30' | 'ref50' | 'ref100' | 'ref250' | 'ref500';
 
 export interface UserData {
     id: string; // Document ID

@@ -12,6 +12,8 @@ import { TelegramUser } from '@/lib/user-utils';
 import { getUserRank } from '@/lib/database';
 import { awardAchievements } from '@/ai/flows/award-achievements-flow';
 import LoadingDots from '@/components/loading-dots';
+import ReferralAchievementsCard from '@/components/referral-achievements-card';
+import { Separator } from '@/components/ui/separator';
 
 export default function AchievementsPage() {
     const [user, setUser] = useState<TelegramUser | null>(null);
@@ -90,6 +92,8 @@ export default function AchievementsPage() {
                                     <>
                                         <RankCard rank={rankInfo.rank} league={rankInfo.league} />
                                         <AchievementCard userData={userData} />
+                                        <Separator />
+                                        <ReferralAchievementsCard userData={userData} />
                                     </>
                                 )}
                             </div>

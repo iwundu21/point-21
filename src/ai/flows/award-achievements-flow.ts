@@ -26,7 +26,20 @@ const AwardAchievementsOutputSchema = z.object({
 });
 export type AwardAchievementsOutput = z.infer<typeof AwardAchievementsOutputSchema>;
 
-const ACHIEVEMENT_REWARD = 100;
+const ACHIEVEMENT_REWARDS: Record<AchievementKey, number> = {
+    verified: 100,
+    firstMining: 100,
+    referredFriend: 100,
+    welcomeTasks: 100,
+    socialTasks: 100,
+    ref10: 300,
+    ref30: 400,
+    ref50: 500,
+    ref100: 1000,
+    ref250: 2500,
+    ref500: 5000,
+};
+
 
 export async function awardAchievements(input: AwardAchievementsInput): Promise<AwardAchievementsOutput> {
     return awardAchievementsFlow(input);
@@ -56,13 +69,20 @@ const awardAchievementsFlow = ai.defineFlow(
 
             const userData = userDoc.data() as UserData;
             const claimed = userData.claimedAchievements || [];
+            const referrals = userData.referrals || 0;
             
             const achievements: Record<AchievementKey, boolean> = {
                 verified: userData.verificationStatus === 'verified',
                 firstMining: (userData.miningActivationCount || 0) > 0,
-                referredFriend: userData.referrals > 0,
+                referredFriend: referrals > 0,
                 welcomeTasks: Object.values(userData.welcomeTasks || {}).every(Boolean),
                 socialTasks: (userData.completedSocialTasks?.length || 0) >= 5,
+                ref10: referrals >= 10,
+                ref30: referrals >= 30,
+                ref50: referrals >= 50,
+                ref100: referrals >= 100,
+                ref250: referrals >= 250,
+                ref500: referrals >= 500,
             };
 
             let pointsToAdd = 0;
@@ -70,7 +90,7 @@ const awardAchievementsFlow = ai.defineFlow(
             for (const key in achievements) {
                 const achievementKey = key as AchievementKey;
                 if (achievements[achievementKey] && !claimed.includes(achievementKey)) {
-                    pointsToAdd += ACHIEVEMENT_REWARD;
+                    pointsToAdd += ACHIEVEMENT_REWARDS[achievementKey] || 0;
                     newAchievements.push(achievementKey);
                 }
             }
