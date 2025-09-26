@@ -175,12 +175,10 @@ export default function Home({}: {}) {
         if (result.success && result.newBalance !== undefined) {
           setUserData(prev => prev ? { ...prev, balance: result.newBalance!, purchasedBoosts: [...(prev.purchasedBoosts || []), 'boost_1'] } : null);
           setBalance(result.newBalance);
-          // Re-fetch the booster count to get the most up-to-date number
           const latestBoosterCount = await getBoosterPack1UserCount();
           setBoosterCount(latestBoosterCount);
           showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
         } else if (result.reason) {
-            // This might happen in a race condition, but it's good to handle.
             showDialog("Already Activated", result.reason);
         }
 
@@ -197,7 +195,6 @@ export default function Home({}: {}) {
         } else if (event.status !== 'paid') {
            showDialog('Payment Not Completed', `The payment was ${event.status}. Please try again.`);
         }
-        // Always re-enable button after payment window is closed
         setIsClaimingBooster(false);
     }
     

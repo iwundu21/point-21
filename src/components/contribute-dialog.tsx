@@ -30,17 +30,17 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
     const currentContribution = userData?.totalContributedStars || 0;
     const remainingContribution = MAX_CONTRIBUTION - currentContribution;
     
-    const processPaidContribution = useCallback(async (payload: string) => {
+    const handleSuccessfulContribution = useCallback(async (payload: string) => {
         const [, userId, amountStr] = payload.split('_');
-        const amount = parseInt(amountStr, 10);
+        const contributionAmount = parseInt(amountStr, 10);
         
-        if (userId && !isNaN(amount)) {
-          const result = await processContribution({ userId, amount });
+        if (userId && !isNaN(contributionAmount)) {
+          const result = await processContribution({ userId, amount: contributionAmount });
           if(result.success && result.newBalance !== undefined && result.newTotalContributed !== undefined){
               onContribution(result.newBalance, result.newTotalContributed);
               toast({
                 title: 'Contribution Successful!',
-                description: `Your balance has been updated. Thank you for your support!`,
+                description: `Your balance has been updated with ${contributionAmount} EXN. Thank you!`,
               });
           } else {
              toast({
@@ -54,21 +54,18 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
     
     useEffect(() => {
         const handleInvoiceClosed = (event: {slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending'}) => {
-            if(event.slug.startsWith('contribution_') && event.status === 'paid') {
-                toast({
-                    title: 'Payment Sent!',
-                    description: "Your contribution is being processed. Your balance will update shortly.",
-                });
-                // Process the contribution right after the success toast
-                processPaidContribution(event.slug);
-            } else if (event.status !== 'paid') {
-                toast({
-                    variant: 'destructive',
-                    title: 'Payment Not Completed',
-                    description: `The payment was ${event.status}. Please try again.`,
-                });
+            if(event.slug.startsWith('contribution_')) {
+                if (event.status === 'paid') {
+                    handleSuccessfulContribution(event.slug);
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Payment Not Completed',
+                        description: `The payment was ${event.status}. Please try again.`,
+                    });
+                }
             }
-             // Always re-enable the button
+             // Always close dialog and re-enable button
             setIsOpen(false);
             setIsContributing(false);
         }
@@ -79,7 +76,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                  window.Telegram.WebApp.offEvent('invoiceClosed', handleInvoiceClosed);
             }
         }
-    }, [processPaidContribution, toast]);
+    }, [handleSuccessfulContribution, toast]);
 
 
     const handleAmountChange = (value: string) => {
