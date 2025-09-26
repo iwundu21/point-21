@@ -344,7 +344,7 @@ const UserTable = ({
                             <TableHead>Wallet</TableHead>
                             <TableHead>Balance</TableHead>
                             <TableHead>Referrals</TableHead>
-                            <TableHead>Boost 1</TableHead>
+                            <TableHead>Airdrop</TableHead>
                             <TableHead>Mining Status</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -354,7 +354,7 @@ const UserTable = ({
                         {users.map((user) => {
                           const isMiningActive = user.miningEndTime && user.miningEndTime > Date.now();
                           const isBrowserUser = !user.telegramUser;
-                          const hasBoost1 = user.purchasedBoosts?.includes('boost_1');
+                          const hasAirdropSlot = user.purchasedBoosts?.includes('boost_1');
 
                           return (
                             <TableRow key={user.id}>
@@ -413,9 +413,9 @@ const UserTable = ({
                                 </TableCell>
                                 <TableCell>{user.referrals}</TableCell>
                                  <TableCell>
-                                    <Badge variant={hasBoost1 ? 'default' : 'secondary'} className={cn('flex items-center gap-1', hasBoost1 ? 'bg-yellow-500/80' : 'bg-gray-500/80')}>
+                                    <Badge variant={hasAirdropSlot ? 'default' : 'secondary'} className={cn('flex items-center gap-1', hasAirdropSlot ? 'bg-yellow-500/80' : 'bg-gray-500/80')}>
                                         <Star className="w-3 h-3" />
-                                        {hasBoost1 ? 'Yes' : 'No'}
+                                        {hasAirdropSlot ? 'Yes' : 'No'}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
@@ -428,10 +428,26 @@ const UserTable = ({
                                     <Badge variant={user.status === 'active' ? 'default' : 'destructive'} className={cn(user.status === 'active' && 'bg-green-500/80')}>{user.status}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right space-x-2">
-                                    {!hasBoost1 && (
-                                        <Button variant="outline" size="icon" onClick={() => onForceBoost(user)}>
-                                            <Star className="h-4 w-4 text-yellow-500"/>
-                                        </Button>
+                                    {!hasAirdropSlot && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="outline" size="icon">
+                                                    <Star className="h-4 w-4 text-yellow-500"/>
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Grant Airdrop Slot?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will grant the user an airdrop slot and credit them with 5,000 EXN. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => onForceBoost(user)} className={cn(buttonVariants({variant: 'default'}))}>Confirm</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     )}
                                     {user.status === 'active' ? (
                                         <Button variant="destructive" size="icon" onClick={() => onUpdateStatus(user, 'banned', 'Your account is blocked. If you think this is a mistake, please contact support.')}><UserX className="h-4 w-4"/></Button>
@@ -740,16 +756,18 @@ export default function AdminPage() {
         const setUsers = searchTerm.trim() ? setSearchedUsers : setAllUsers;
 
         try {
-            await forceAddBoosterPack1(userIdentifier);
+            const newBalance = await forceAddBoosterPack1(userIdentifier);
             setUsers(currentUsers =>
                 currentUsers.map(u =>
-                    u.id === user.id ? { ...u, purchasedBoosts: [...(u.purchasedBoosts || []), 'boost_1'] } : u
+                    u.id === user.id ? { ...u, purchasedBoosts: [...(u.purchasedBoosts || []), 'boost_1'], balance: newBalance } : u
                 )
             );
-            toast({ title: 'Boost Granted', description: `${getDisplayName(user)} has been granted Booster Pack 1.` });
+            toast({ title: 'Airdrop Slot Granted', description: `${getDisplayName(user)} has been granted an airdrop slot and 5,000 EXN.` });
+            const newTotalPoints = await getTotalActivePoints();
+            setTotalPoints(newTotalPoints);
         } catch (error) {
             console.error("Failed to force boost:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not grant the boost.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not grant the airdrop slot.' });
         }
     };
 

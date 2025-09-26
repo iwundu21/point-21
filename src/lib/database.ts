@@ -465,15 +465,36 @@ export const banUser = async (user: {id: number | string} | null, reason?: strin
     await saveUserData(user, dataToSave);
 }
 
-export const forceAddBoosterPack1 = async (user: {id: string | number}) => {
+export const forceAddBoosterPack1 = async (user: {id: string | number}): Promise<number> => {
     const userDocId = getUserId(user);
     const userRef = doc(db, 'users', userDocId);
     
-    // Atomically add 'boost_1' to the purchasedBoosts array.
-    // arrayUnion ensures no duplicates are added.
-    await setDoc(userRef, { 
-        purchasedBoosts: arrayUnion('boost_1') 
-    }, { merge: true });
+    let finalBalance = 0;
+    
+    await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (!userDoc.exists()) {
+            throw new Error(`User ${userDocId} not found`);
+        }
+
+        const userData = userDoc.data() as UserData;
+        
+        if (userData.purchasedBoosts?.includes('boost_1')) {
+            finalBalance = userData.balance;
+            return;
+        }
+            
+        const REWARD = 5000;
+        const newBalance = userData.balance + REWARD;
+            
+        transaction.update(userRef, {
+            balance: newBalance,
+            purchasedBoosts: arrayUnion('boost_1')
+        });
+        finalBalance = newBalance;
+    });
+
+    return finalBalance;
 };
 
 
@@ -744,4 +765,5 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
