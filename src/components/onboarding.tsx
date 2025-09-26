@@ -133,6 +133,8 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
     const renderStageContent = () => {
         switch (stage) {
             case OnboardingStage.AccountConversion:
+                 const oldBalance = initialData.ePointsBalance || initialData.balance;
+                 const newExnBalance = Math.floor((oldBalance / 1000) * 150);
                 return (
                     <div className="text-center animate-fade-in space-y-6">
                         <h1 className="text-4xl font-bold text-foreground">Early Supporter Snapshot</h1>
@@ -145,7 +147,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 <div className="flex justify-between items-center text-lg">
                                     <span>Old E-Points Balance:</span>
                                     <span className="font-bold text-muted-foreground">
-                                        {initialData.ePointsBalance?.toLocaleString() || initialData.balance.toLocaleString()}
+                                        {oldBalance.toLocaleString()}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center text-lg">
@@ -156,7 +158,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 </div>
                                 <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-2xl font-bold">
                                     <span>New EXN Balance:</span>
-                                    <span className="text-gold">{(Math.floor(((initialData.ePointsBalance || initialData.balance) / 1000) * 150)).toLocaleString()} EXN</span>
+                                    <span className="text-gold">{newExnBalance.toLocaleString()} EXN</span>
                                 </div>
                             </div>
                         </div>
@@ -311,5 +313,3 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 };
 
 export default Onboarding;
-
-    
