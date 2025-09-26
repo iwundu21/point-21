@@ -157,34 +157,35 @@ const EditWalletDialog = ({ user, onWalletUpdated }: { user: UserData, onWalletU
 }
 
 const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalanceUpdated: (userId: string, newBalance: number) => void }) => {
-    const [newBalance, setNewBalance] = useState(user.balance.toString());
+    const [balanceValue, setBalanceValue] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
 
-    const handleSubmit = async () => {
-         if (!user.telegramUser && !user.id.startsWith('browser_')) return;
-        
-        const balanceValue = parseInt(newBalance, 10);
-        if (isNaN(balanceValue) || balanceValue < 0) {
-            toast({ variant: 'destructive', title: 'Invalid Balance', description: 'Please enter a valid positive number.' });
+    const handleSubmit = async (operation: 'set' | 'increment') => {
+        if (!user.telegramUser && !user.id.startsWith('browser_')) return;
+
+        const amount = parseInt(balanceValue, 10);
+        if (isNaN(amount)) {
+            toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Please enter a valid number.' });
             return;
         }
 
         setIsSaving(true);
         try {
             const userIdentifier = user.telegramUser || { id: user.id };
-            await updateUserBalance(userIdentifier, balanceValue);
-            onBalanceUpdated(user.id, balanceValue);
-            toast({ title: 'Balance Updated', description: `${getDisplayName(user)}'s balance has been updated.` });
+            const newBalance = await updateUserBalance(userIdentifier, amount, operation);
+            onBalanceUpdated(user.id, newBalance);
+            toast({ title: 'Balance Updated', description: `${getDisplayName(user)}'s balance has been updated to ${newBalance.toLocaleString()}.` });
             setIsOpen(false);
-        } catch (error) {
+            setBalanceValue(''); // Reset input
+        } catch (error: any) {
             console.error("Failed to update balance:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the balance.' });
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not update the balance.' });
         } finally {
             setIsSaving(false);
         }
-    }
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -197,31 +198,36 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
                 <DialogHeader>
                     <DialogTitle>Edit Balance for {getDisplayName(user)}</DialogTitle>
                     <DialogDescription>
-                        Set a new EXN balance for this user.
+                        Current balance: {user.balance.toLocaleString()} EXN. Add to or set a new balance.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="balance" className="text-right">Balance</Label>
-                        <Input 
-                            id="balance" 
-                            type="number" 
-                            value={newBalance} 
-                            onChange={e => setNewBalance(e.target.value)} 
+                        <Label htmlFor="balance" className="text-right">Amount</Label>
+                        <Input
+                            id="balance"
+                            type="number"
+                            value={balanceValue}
+                            onChange={e => setBalanceValue(e.target.value)}
                             className="col-span-3"
+                            placeholder="e.g., 5000"
                         />
                     </div>
                 </div>
-                <DialogFooter>
-                     <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                <DialogFooter className="sm:justify-between">
+                    <Button type="button" onClick={() => handleSubmit('increment')} disabled={isSaving || !balanceValue}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Changes
+                        Add to Balance
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => handleSubmit('set')} disabled={isSaving || !balanceValue}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Set as New Balance
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
-}
+    );
+};
 
 
 const AddTaskDialog = ({ onTaskAdded }: { onTaskAdded: () => void }) => {

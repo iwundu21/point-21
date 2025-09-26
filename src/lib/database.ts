@@ -428,17 +428,34 @@ export const updateUserStatus = async (user: {id: string | number}, status: 'act
     await setDoc(userRef, dataToUpdate, { merge: true });
 };
 
-export const updateUserBalance = async (user: {id: string | number }, newBalance: number) => {
+export const updateUserBalance = async (user: {id: string | number }, amount: number, operation: 'set' | 'increment' = 'set'): Promise<number> => {
     const userDocId = getUserId(user);
     const userRef = doc(db, 'users', userDocId);
-    
-    if (isNaN(newBalance)) {
-        console.error("Invalid balance provided.");
-        return;
-    }
 
-    await setDoc(userRef, { balance: Number(newBalance) }, { merge: true });
-}
+    if (isNaN(amount)) {
+        throw new Error("Invalid balance provided.");
+    }
+    
+    let finalBalance = 0;
+
+    await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (!userDoc.exists()) {
+            throw new Error("User not found.");
+        }
+
+        if (operation === 'set') {
+            finalBalance = Number(amount);
+            transaction.update(userRef, { balance: finalBalance });
+        } else { // increment
+            const currentBalance = userDoc.data().balance || 0;
+            finalBalance = currentBalance + Number(amount);
+            transaction.update(userRef, { balance: finalBalance });
+        }
+    });
+
+    return finalBalance;
+};
 
 export const deleteUser = async (user: {id: string | number}) => {
     const userId = getUserId(user);
@@ -765,5 +782,6 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
 
