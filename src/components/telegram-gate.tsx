@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getTotalUsersCount } from '@/lib/database';
+import { getBoosterPack1UserCount } from '@/lib/database';
 import { Loader2 } from 'lucide-react';
 import LoadingDots from './loading-dots';
 
@@ -14,7 +14,7 @@ export default function TelegramGate() {
 
   useEffect(() => {
     const checkCapacity = async () => {
-        const totalUsers = await getTotalUsersCount();
+        const totalUsers = await getBoosterPack1UserCount();
         setIsFull(totalUsers >= AIRDROP_CAP);
     };
     checkCapacity();
@@ -84,5 +84,3 @@ export default function TelegramGate() {
     </div>
   );
 }
-
-    
