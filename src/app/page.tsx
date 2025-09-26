@@ -175,7 +175,9 @@ export default function Home({}: {}) {
         if (result.success && result.newBalance !== undefined) {
           setUserData(prev => prev ? { ...prev, balance: result.newBalance!, purchasedBoosts: [...(prev.purchasedBoosts || []), 'boost_1'] } : null);
           setBalance(result.newBalance);
-          setBoosterCount(prev => prev + 1);
+          // Re-fetch the booster count to get the most up-to-date number
+          const latestBoosterCount = await getBoosterPack1UserCount();
+          setBoosterCount(latestBoosterCount);
           showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
         } else if (result.reason) {
             // This might happen in a race condition, but it's good to handle.
