@@ -29,6 +29,58 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
     const currentContribution = userData?.totalContributedStars || 0;
     const remainingContribution = MAX_CONTRIBUTION - currentContribution;
+    
+    const processPaidContribution = useCallback(async (payload: string) => {
+        const [, userId, amountStr] = payload.split('_');
+        const amount = parseInt(amountStr, 10);
+        
+        if (userId && !isNaN(amount)) {
+          const result = await processContribution({ userId, amount });
+          if(result.success && result.newBalance !== undefined && result.newTotalContributed !== undefined){
+              onContribution(result.newBalance, result.newTotalContributed);
+              toast({
+                title: 'Contribution Successful!',
+                description: `Your balance has been updated. Thank you for your support!`,
+              });
+          } else {
+             toast({
+                variant: 'destructive',
+                title: 'Processing Error',
+                description: result.reason || "There was an issue crediting your contribution.",
+             });
+          }
+        }
+    }, [onContribution, toast]);
+    
+    useEffect(() => {
+        const handleInvoiceClosed = (event: {slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending'}) => {
+            if(event.slug.startsWith('contribution_') && event.status === 'paid') {
+                toast({
+                    title: 'Payment Sent!',
+                    description: "Your contribution is being processed. Your balance will update shortly.",
+                });
+                // Process the contribution right after the success toast
+                processPaidContribution(event.slug);
+            } else if (event.status !== 'paid') {
+                toast({
+                    variant: 'destructive',
+                    title: 'Payment Not Completed',
+                    description: `The payment was ${event.status}. Please try again.`,
+                });
+            }
+             // Always re-enable the button
+            setIsOpen(false);
+            setIsContributing(false);
+        }
+    
+        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.onEvent('invoiceClosed', handleInvoiceClosed);
+            return () => {
+                 window.Telegram.WebApp.offEvent('invoiceClosed', handleInvoiceClosed);
+            }
+        }
+    }, [processPaidContribution, toast]);
+
 
     const handleAmountChange = (value: string) => {
         const numericValue = parseInt(value, 10);
@@ -74,24 +126,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
             if (error) { throw new Error(error); }
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
-                    if (status === 'paid') {
-                        // Webhook will handle crediting. We can show an optimistic message.
-                         toast({
-                            title: 'Payment Sent!',
-                            description: "Your contribution is being processed. Your EXN balance will update shortly.",
-                        });
-                        setIsOpen(false);
-                    } else {
-                         toast({
-                            variant: 'destructive',
-                            title: 'Payment Not Completed',
-                            description: `The payment was ${status}. Please try again.`,
-                        });
-                    }
-                    // Re-enable button regardless of status
-                    setIsContributing(false);
-                });
+                window.Telegram.WebApp.openInvoice(invoiceUrl);
             } else {
                 throw new Error('Telegram WebApp context not found.');
             }

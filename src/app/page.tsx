@@ -193,11 +193,11 @@ export default function Home({}: {}) {
   useEffect(() => {
     const handleInvoiceClosed = (event: {slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending'}) => {
         if(event.slug.startsWith('boost_1') && event.status === 'paid') {
-           // The webhook will handle crediting. We can show an optimistic message.
-            showDialog('Payment Sent!', 'Your purchase is being processed. Your balance will update shortly.');
+            handleSuccessfulPayment();
         } else if (event.status !== 'paid') {
            showDialog('Payment Not Completed', `The payment was ${event.status}. Please try again.`);
         }
+        // Always re-enable button after payment window is closed
         setIsClaimingBooster(false);
     }
     
@@ -207,7 +207,7 @@ export default function Home({}: {}) {
              window.Telegram.WebApp.offEvent('invoiceClosed', handleInvoiceClosed);
         }
     }
-  }, []);
+  }, [handleSuccessfulPayment]);
 
 
   
