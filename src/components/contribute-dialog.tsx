@@ -42,57 +42,6 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
     const selectPreset = (preset: number) => {
         setAmount(Math.min(preset, remainingContribution));
     }
-    
-    const handleSuccessfulPayment = useCallback(async (contributionAmount: number) => {
-        if (!user) return;
-        try {
-            const userId = getUserId(user);
-            const result = await processContribution({ userId, amount: contributionAmount });
-
-            if (result.success && result.newBalance !== undefined && result.newTotalContributed !== undefined) {
-                onContribution(result.newBalance, result.newTotalContributed);
-                toast({
-                    title: "Contribution Successful!",
-                    description: `You've received ${contributionAmount} EXN. Thank you for supporting the ecosystem!`,
-                });
-            } else if (result.reason) {
-                toast({ variant: 'destructive', title: "Contribution Error", description: result.reason });
-            }
-        } catch (e: any) {
-            console.error("Error processing contribution:", e);
-            toast({ variant: 'destructive', title: "Processing Error", description: "There was an issue crediting your account. Please contact support." });
-        } finally {
-            setIsContributing(false);
-            setIsOpen(false);
-            setAmount('');
-        }
-    }, [user, onContribution, toast]);
-
-    useEffect(() => {
-        const handleInvoiceClosed = (event: { slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending' }) => {
-            if (event.slug.startsWith('contribution_') && event.status === 'paid') {
-                const parts = event.slug.split('_');
-                const paidAmount = parseInt(parts[2], 10);
-                if (!isNaN(paidAmount)) {
-                    handleSuccessfulPayment(paidAmount);
-                }
-            } else {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Payment Not Completed',
-                    description: `The payment was ${event.status}. Please try again.`,
-                });
-                setIsContributing(false);
-            }
-        };
-
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.onEvent('invoiceClosed', handleInvoiceClosed);
-            return () => {
-                window.Telegram.WebApp.offEvent('invoiceClosed', handleInvoiceClosed);
-            };
-        }
-    }, [handleSuccessfulPayment, toast]);
 
     const handleContribute = async () => {
         if (!user || isContributing || !amount || Number(amount) <= 0) {
@@ -125,7 +74,24 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
             if (error) { throw new Error(error); }
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openInvoice(invoiceUrl);
+                window.Telegram.WebApp.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
+                    if (status === 'paid') {
+                        // Webhook will handle crediting. We can show an optimistic message.
+                         toast({
+                            title: 'Payment Sent!',
+                            description: "Your contribution is being processed. Your EXN balance will update shortly.",
+                        });
+                        setIsOpen(false);
+                    } else {
+                         toast({
+                            variant: 'destructive',
+                            title: 'Payment Not Completed',
+                            description: `The payment was ${status}. Please try again.`,
+                        });
+                    }
+                    // Re-enable button regardless of status
+                    setIsContributing(false);
+                });
             } else {
                 throw new Error('Telegram WebApp context not found.');
             }
