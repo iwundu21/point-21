@@ -641,7 +641,7 @@ export const unbanAllUsers = async (): Promise<number> => {
 export const claimDailyMiningReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
     const userRef = doc(db, 'users', userId);
     const twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
-    const DAILY_REWARD = 100;
+    const DAILY_REWARD = 500;
 
     try {
         let result: { success: boolean, newBalance?: number } = { success: false };

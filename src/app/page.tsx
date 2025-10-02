@@ -59,7 +59,7 @@ export default function Home({}: {}) {
   const [minedAmount, setMinedAmount] = useState(0);
   
   const AIRDROP_CAP = 300000;
-  const DAILY_REWARD = 100;
+  const DAILY_REWARD = 500;
 
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
