@@ -869,8 +869,7 @@ export default function AdminPage() {
                 .filter(user => 
                     user.walletAddress && 
                     isValidSolanaAddress(user.walletAddress) &&
-                    user.status === 'active' &&
-                    user.purchasedBoosts?.includes('boost_1')
+                    user.status === 'active'
                 )
                 .map(user => {
                     return {
@@ -880,7 +879,7 @@ export default function AdminPage() {
                 });
             
             if (airdropData.length === 0) {
-                 toast({ variant: 'destructive', title: 'No Eligible Users', description: 'No users who have secured their airdrop slot were found.' });
+                 toast({ variant: 'destructive', title: 'No Eligible Users', description: 'No active users with a valid wallet were found.' });
                  setIsExportingAirdrop(false);
                  return;
             }
@@ -890,7 +889,7 @@ export default function AdminPage() {
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', 'airdrop_eligible_users.csv');
+            link.setAttribute('download', 'airdrop_export.csv');
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -1159,7 +1158,7 @@ export default function AdminPage() {
                 <CardDescription>
                     {searchTerm.trim() 
                         ? `Displaying ${usersToDisplay.length} search results.` 
-                        : `Search, manage, and export user data. The airdrop export includes only active users with a valid wallet. Displaying ${allUsers.length} of ${totalUserCount} users.`}
+                        : `Search, manage, and export user data. The airdrop export includes all active users with a valid wallet. Displaying ${allUsers.length} of ${totalUserCount} users.`}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1195,7 +1194,7 @@ export default function AdminPage() {
                         </AlertDialog>
                         <Button onClick={handleExportAirdrop} disabled={isExportingAirdrop} variant="outline" className="flex-shrink-0">
                             {isExportingAirdrop ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                            Export Airdrop List
+                            Export Airdrop
                         </Button>
                          <Button onClick={handleExportAllUsers} disabled={isExporting} variant="outline" className="flex-shrink-0">
                             {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
