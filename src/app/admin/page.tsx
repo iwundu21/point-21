@@ -873,8 +873,8 @@ export default function AdminPage() {
                 )
                 .map(user => {
                     return {
-                        walletAddress: user.walletAddress,
-                        balance: user.balance
+                        balance: user.balance,
+                        walletAddress: user.walletAddress
                     };
                 });
             
