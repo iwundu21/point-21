@@ -302,15 +302,18 @@ export default function WalletPage() {
                  <Card className="bg-primary/5 border-primary/10">
                     <CardHeader>
                         <CardTitle className="text-base">Airdrop Eligibility</CardTitle>
-                        <CardDescription className="text-xs">You must meet all criteria to be eligible for the airdrop.</CardDescription>
+                        <CardDescription className="text-xs">Complete the following to secure your airdrop.</CardDescription>
                     </CardHeader>
                     <CardContent>
                        <div className="grid grid-cols-2 gap-3">
                             <EligibilitySquare title="Wallet Submitted" isMet={!!savedAddress} icon={<WalletIcon className="w-8 h-8" />} />
                             <EligibilitySquare title="Account Verified" isMet={isVerified} icon={<UserCheck className="w-8 h-8" />} />
                             <EligibilitySquare title="Active User" isMet={userData?.status === 'active'} icon={<Bot className="w-8 h-8" />} />
-                            <EligibilitySquare title="Secure Airdrop" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} icon={<Star className="w-8 h-8" />} />
+                            <EligibilitySquare title="Extra Airdrop" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} icon={<Star className="w-8 h-8" />} />
                        </div>
+                       <p className="text-xs text-muted-foreground mt-3 text-center">
+                         Securing the "Extra Airdrop" with a license is optional but recommended for a larger reward.
+                       </p>
                     </CardContent>
                 </Card>
 
