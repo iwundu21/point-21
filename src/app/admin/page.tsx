@@ -883,18 +883,24 @@ export default function AdminPage() {
                  setIsExportingAirdrop(false);
                  return;
             }
+            
+            const CHUNK_SIZE = 60;
+            for (let i = 0; i < airdropData.length; i += CHUNK_SIZE) {
+                const chunk = airdropData.slice(i, i + CHUNK_SIZE);
+                const csv = Papa.unparse(chunk);
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `airdrop_export_${Math.floor(i / CHUNK_SIZE) + 1}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
 
-            const csv = Papa.unparse(airdropData);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'airdrop_export.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            toast({ title: 'Export Complete!', description: `${airdropData.length} eligible users have been exported for the airdrop.` });
+
+            toast({ title: 'Export Complete!', description: `${airdropData.length} eligible users have been exported in chunks of ${CHUNK_SIZE}.` });
 
         } catch (error) {
             console.error("Failed to export airdrop data:", error);
