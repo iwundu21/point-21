@@ -399,16 +399,16 @@ export default function Home({}: {}) {
                 {!hasBooster && (
                     <Card className="w-full p-6 text-center space-y-4 glass-card">
                         <Zap className="w-16 h-16 mx-auto text-primary" />
-                        <h2 className="text-xl font-bold">Secure Your Airdrop Spot</h2>
+                        <h2 className="text-xl font-bold">Boost Your Airdrop</h2>
                         <p className="text-muted-foreground text-sm">
-                           Purchase your Airdrop License for <strong className="text-primary">70 Stars</strong> to get a <strong className="text-gold">5,000 EXN</strong> welcome bonus.
+                           All users are eligible for the airdrop! Boost your reward with a license for <strong className="text-primary">70 Stars</strong> and get an instant <strong className="text-gold">5,000 EXN</strong> bonus.
                         </p>
                         <Button 
                             onClick={handleSecureAirdrop} 
                             disabled={isClaimingBooster} 
                             className="w-full h-12 text-lg animate-heartbeat"
                         >
-                            {isClaimingBooster ? <LoadingDots /> : "Secure Your Airdrop To Get In"}
+                            {isClaimingBooster ? <LoadingDots /> : "Boost Your Airdrop"}
                         </Button>
                          <p className="text-xs text-muted-foreground pt-2">
                             Note: Star contributions are allocated towards future CEX/DEX listing fees and enhancing the application experience, not for team personal use.
@@ -509,3 +509,5 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
