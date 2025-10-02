@@ -20,11 +20,10 @@ export async function POST(req: NextRequest) {
 
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/createInvoiceLink`;
 
-    // For Telegram Stars, the provider_token must be omitted.
     const requestBody: any = {
         title,
         description,
-        payload: payload,
+        payload,
         currency,
         prices: [{ label: 'Star', amount }],
     };
@@ -50,5 +49,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
-    

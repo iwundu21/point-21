@@ -9,8 +9,6 @@ const botToken = process.env.TELEGRAM_BOT_TOKEN;
 async function answerPreCheckoutQuery(preCheckoutQueryId: string, ok: boolean, errorMessage?: string) {
   if (!botToken) {
     console.error("Bot token not configured");
-    // We must return OK here, or the payment will fail.
-    // The server-side check is a secondary validation. Client-side will handle crediting.
     return;
   }
   const url = `https://api.telegram.org/bot${botToken}/answerPreCheckoutQuery`;
@@ -36,21 +34,20 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Handle Pre-Checkout Query for both contributions and boosts
+    // Handle Pre-Checkout Query for all payments
     if (body.pre_checkout_query) {
       const preCheckoutQuery = body.pre_checkout_query;
-      // We'll approve all pre-checkout queries here. The final processing
-      // will be handled on the client-side after payment confirmation.
+      // We approve all pre-checkout queries here. The final processing
+      // is handled on the client-side after payment confirmation.
       await answerPreCheckoutQuery(preCheckoutQuery.id, true);
       return NextResponse.json({ status: 'ok' });
     }
 
-    // The 'successful_payment' is now handled on the client-side.
-    // This webhook's primary job is just to ACK the pre-checkout.
+    // The 'successful_payment' message is not used for confirmation logic.
+    // The client-side flow handles crediting the user upon receiving the 'invoiceClosed' event.
     if (body.message && body.message.successful_payment) {
-        // We log it, but the client is responsible for crediting.
-        console.log("Successful payment received, client will handle processing:", body.message.successful_payment.invoice_payload);
-        return NextResponse.json({ status: 'ok' });
+        console.log("Webhook received a successful_payment update, but client is responsible for processing.");
+        return NextResponse.json({ status: 'ok_unhandled' });
     }
 
     return NextResponse.json({ status: 'unhandled_update' });
