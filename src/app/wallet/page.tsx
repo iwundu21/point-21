@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Alert, AlertDescription as AlertBoxDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription as AlertBoxDescription, AlertTitle as AlertBoxTitle } from '@/components/ui/alert';
 import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData, getUserId } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
@@ -273,7 +273,7 @@ export default function WalletPage() {
 
                 <Alert className="border-primary/20 bg-primary/5 text-center">
                     <Info className="h-4 w-4" />
-                    <CardTitle className="text-primary text-base">Airdrop Coming Soon!</CardTitle>
+                    <AlertBoxTitle className="text-primary text-base">Airdrop Coming Soon!</AlertBoxTitle>
                     <AlertBoxDescription>
                         The official Exnus EXN airdrop is scheduled for Q4 2025.
                     </AlertBoxDescription>
@@ -295,6 +295,13 @@ export default function WalletPage() {
                  <div className="space-y-6">
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
+                        <Alert className="border-blue-500/20 bg-blue-500/10 text-center mb-4">
+                            <Info className="h-4 w-4 text-blue-400" />
+                            <AlertBoxTitle className="text-blue-400 text-base">Eligibility Clarification</AlertBoxTitle>
+                            <AlertBoxDescription className="text-blue-400/80">
+                                All users with earned EXN and a submitted wallet address are eligible for the airdrop, regardless of ecosystem contribution.
+                            </AlertBoxDescription>
+                        </Alert>
                         {renderWalletUI()}
                     </div>
                  </div>
@@ -319,7 +326,7 @@ export default function WalletPage() {
 
                 <Alert variant="destructive" className="mt-12">
                     <AlertTriangle className="h-4 w-4" />
-                    <CardTitle className="text-destructive text-base">Important Notice</CardTitle>
+                    <AlertBoxTitle className="text-destructive text-base">Important Notice</AlertBoxTitle>
                     <AlertBoxDescription>
                     Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
                     </AlertBoxDescription>
