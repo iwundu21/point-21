@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, claimDailyTapReward } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, claimDailyTapReward, getUsersWithWalletCount } from '@/lib/database';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -39,7 +39,7 @@ export default function Home({}: {}) {
   const [isTelegram, setIsTelegram] = useState(false);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
-  const [boosterCount, setBoosterCount] = useState(0);
+  const [walletSubmittedCount, setWalletSubmittedCount] = useState(0);
 
 
   const router = useRouter();
@@ -67,15 +67,15 @@ export default function Home({}: {}) {
 
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
-      const [dataResponse, userRankInfo, boosterUsers] = await Promise.all([
+      const [dataResponse, userRankInfo, walletCount] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser),
-        getBoosterPack1UserCount(),
+        getUsersWithWalletCount(),
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
-      setBoosterCount(boosterUsers);
+      setWalletSubmittedCount(walletCount);
 
       // --- ONBOARDING & MERGE FLOW ---
       if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts || !freshUserData.hasConvertedToExn)) {
@@ -175,8 +175,6 @@ export default function Home({}: {}) {
         if (result.success && result.newBalance !== undefined) {
           setUserData(prev => prev ? { ...prev, balance: result.newBalance!, purchasedBoosts: [...(prev.purchasedBoosts || []), 'boost_1'] } : null);
           setBalance(result.newBalance);
-          const latestBoosterCount = await getBoosterPack1UserCount();
-          setBoosterCount(latestBoosterCount);
           showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
         } else if (result.reason) {
             showDialog("Already Activated", result.reason);
@@ -371,18 +369,18 @@ export default function Home({}: {}) {
                  <Card className="w-full glass-card">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
-                            <Users className="w-5 h-5 text-primary" />
-                            Airdrop Slots Secured
+                            <Wallet className="w-5 h-5 text-primary" />
+                            Airdrop Wallet Submissions
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Progress value={(boosterCount / AIRDROP_CAP) * 100} className="w-full h-3" />
+                        <Progress value={(walletSubmittedCount / AIRDROP_CAP) * 100} className="w-full h-3" />
                         <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                            <span>Taken: {boosterCount.toLocaleString()}</span>
-                            <span>Available: {(AIRDROP_CAP - boosterCount).toLocaleString()}</span>
+                            <span>Submitted: {walletSubmittedCount.toLocaleString()}</span>
+                            <span>Target: {(AIRDROP_CAP).toLocaleString()}</span>
                         </div>
                          <p className="text-center text-xs text-muted-foreground mt-2">
-                            Only users who secure their airdrop slot are counted here.
+                            Progress towards our goal of 300,000 wallet submissions.
                         </p>
                     </CardContent>
                 </Card>
@@ -509,5 +507,7 @@ export default function Home({}: {}) {
     </div>
   );
 }
+
+    
 
     
