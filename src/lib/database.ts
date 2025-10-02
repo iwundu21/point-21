@@ -48,6 +48,7 @@ export interface UserData {
     claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
     hasConvertedToExn?: boolean;
     totalContributedStars?: number; // New field for contributions
+    hasReceivedLowBalanceBonus?: boolean; // Flag for the one-time low balance bonus
 }
 
 const generateReferralCode = () => {
@@ -99,6 +100,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     claimedBoostReward: false,
     claimedLegacyBoosts: false,
     totalContributedStars: 0,
+    hasReceivedLowBalanceBonus: true, // Default to true for new users
 });
 
 // --- User Count Management ---
@@ -223,6 +225,13 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         if (!fetchedData.referralCode) {
             dataToUpdate.referralCode = generateReferralCode();
         }
+
+        // ONE-TIME BONUS LOGIC
+        if (fetchedData.balance !== undefined && fetchedData.balance < 7000 && !fetchedData.hasReceivedLowBalanceBonus) {
+            dataToUpdate.balance = (fetchedData.balance || 0) + 6000;
+            dataToUpdate.hasReceivedLowBalanceBonus = true;
+        }
+
 
         const finalUserData: UserData = { 
             ...defaultUserData(user), 
@@ -793,5 +802,7 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
 
+
+    
 
     
