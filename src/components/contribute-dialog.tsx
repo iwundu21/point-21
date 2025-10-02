@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Star, Sparkles } from 'lucide-react';
 import { UserData, getUserId, TelegramUser } from '@/lib/database';
 import { processContribution } from '@/ai/flows/process-contribution-flow';
-import LoadingDots from './loading-dots';
 
 interface ContributeDialogProps {
     user: TelegramUser;
@@ -199,7 +198,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                             onClick={handleContribute}
                             disabled={isContributing || !amount || Number(amount) <= 0 || remainingContribution <= 0}
                         >
-                            {isContributing ? <LoadingDots /> : `Contribute ${Number(amount) > 0 ? Number(amount).toLocaleString() : ''} Stars`}
+                            {`Contribute ${Number(amount) > 0 ? Number(amount).toLocaleString() : ''} Stars`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
