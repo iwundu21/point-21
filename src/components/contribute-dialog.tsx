@@ -114,7 +114,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                         setIsContributing(false);
                     }
                 });
-                setIsOpen(false); // Close the dialog after opening the invoice
+                
             } else {
                 throw new Error('Telegram WebApp context not found.');
             }
