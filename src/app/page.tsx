@@ -58,7 +58,7 @@ export default function Home({}: {}) {
   const [progress, setProgress] = useState(0);
   const [minedAmount, setMinedAmount] = useState(0);
   
-  const AIRDROP_CAP = 200000;
+  const AIRDROP_CAP = 10000;
   const DAILY_REWARD = 500;
 
 
