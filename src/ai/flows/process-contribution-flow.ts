@@ -44,6 +44,9 @@ const processContributionFlow = ai.defineFlow(
     if (!userId || !amount || amount <= 0) {
         return { success: false, reason: 'Invalid contribution request.' };
     }
+     if (amount > MAX_CONTRIBUTION_PER_USER) {
+        return { success: false, reason: `You cannot contribute more than ${MAX_CONTRIBUTION_PER_USER} Stars at a time.` };
+    }
 
     const userRef = doc(db, 'users', userId);
 

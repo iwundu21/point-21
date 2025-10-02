@@ -105,8 +105,16 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
             if (error) { throw new Error(error); }
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openInvoice(invoiceUrl);
-                startPollingForConfirmation(contributionAmount);
+                window.Telegram.WebApp.openInvoice(invoiceUrl, (status: 'paid' | 'cancelled' | 'failed' | 'pending') => {
+                    if (status === 'paid') {
+                        // Immediately call the processing flow upon confirmation from Telegram
+                        handleSuccessfulPayment(contributionAmount);
+                    } else {
+                        showFeedbackDialog('Payment Not Completed', `The transaction was ${status}. Please try again.`);
+                        setIsContributing(false);
+                    }
+                });
+                setIsOpen(false); // Close the dialog after opening the invoice
             } else {
                 throw new Error('Telegram WebApp context not found.');
             }
@@ -117,39 +125,23 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
             setIsContributing(false);
         }
     };
-    
-    const startPollingForConfirmation = (paidAmount: number) => {
-        // Close the main dialog and keep the button disabled
-        setIsOpen(false); 
-        
-        const initialContribution = userData?.totalContributedStars || 0;
-        let attempts = 0;
-        const maxAttempts = 60; // Poll for 3 minutes (60 * 3s)
 
-        pollIntervalRef.current = setInterval(async () => {
-            attempts++;
-            if (attempts > maxAttempts) {
-                stopPolling();
-                showFeedbackDialog("Confirmation Delayed", "We are still confirming your payment. Your balance will be updated shortly if successful.");
-                setIsContributing(false);
-                return;
+    const handleSuccessfulPayment = async (paidAmount: number) => {
+        try {
+            const userId = getUserId(user);
+            const result = await processContribution({ userId, amount: paidAmount });
+
+            if (result.success && result.newBalance !== undefined && result.newTotalContributed !== undefined) {
+                onContribution(result.newBalance, result.newTotalContributed);
+                showFeedbackDialog('Contribution Successful!', `Your balance has been updated with ${paidAmount} EXN. Thank you!`);
+            } else {
+                showFeedbackDialog('Processing Error', result.reason || 'There was an issue crediting your account. Please contact support.');
             }
-
-            try {
-                const { userData: freshUserData } = await getUserData(user);
-                const newContribution = freshUserData.totalContributedStars || 0;
-
-                if (newContribution > initialContribution) {
-                    stopPolling();
-                    onContribution(freshUserData.balance, newContribution);
-                    showFeedbackDialog('Contribution Successful!', `Your balance has been updated with ${paidAmount} EXN. Thank you!`);
-                    setIsContributing(false);
-                }
-            } catch (error) {
-                console.error("Polling error:", error);
-                // Continue polling, maybe a temp network issue
-            }
-        }, 3000); // Check every 3 seconds
+        } catch (error: any) {
+            showFeedbackDialog('Processing Error', 'An unexpected error occurred while updating your balance.');
+        } finally {
+            setIsContributing(false);
+        }
     };
     
     const exnReward = Number(amount) > 0 ? Number(amount) : 0;
