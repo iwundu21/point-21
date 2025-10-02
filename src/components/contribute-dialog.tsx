@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Star, Sparkles } from 'lucide-react';
-import { UserData, getUserId, TelegramUser } from '@/lib/database';
+import { UserData, getUserId, TelegramUser, getUserData } from '@/lib/database';
 import { processContribution } from '@/ai/flows/process-contribution-flow';
 
 interface ContributeDialogProps {
@@ -35,6 +35,8 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
     
     const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
     const [feedbackDialogContent, setFeedbackDialogContent] = useState({ title: '', description: '' });
+    
+    const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const showFeedbackDialog = (title: string, description: string) => {
         setFeedbackDialogContent({ title, description });
@@ -43,43 +45,20 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
     const currentContribution = userData?.totalContributedStars || 0;
     const remainingContribution = MAX_CONTRIBUTION - currentContribution;
-    
-    const handleSuccessfulContribution = useCallback(async (payload: string) => {
-        const [, userId, amountStr] = payload.split('_');
-        const contributionAmount = parseInt(amountStr, 10);
-        
-        if (userId && !isNaN(contributionAmount)) {
-          const result = await processContribution({ userId, amount: contributionAmount });
-          if(result.success && result.newBalance !== undefined && result.newTotalContributed !== undefined){
-              onContribution(result.newBalance, result.newTotalContributed);
-              showFeedbackDialog('Contribution Successful!', `Your balance has been updated with ${contributionAmount} EXN. Thank you!`);
-          } else {
-             showFeedbackDialog('Processing Error', result.reason || "There was an issue crediting your contribution.");
-          }
+
+    const stopPolling = useCallback(() => {
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
         }
-    }, [onContribution]);
-    
+    }, []);
+
+    // Cleanup polling on unmount
     useEffect(() => {
-        const handleInvoiceClosed = (event: {slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending'}) => {
-            if(event.slug.startsWith('contribution_')) {
-                if (event.status === 'paid') {
-                    handleSuccessfulContribution(event.slug);
-                } else {
-                    showFeedbackDialog('Payment Not Completed', `The payment was ${event.status}. Please try again.`);
-                }
-            }
-             // Always close main dialog and re-enable button
-            setIsOpen(false);
-            setIsContributing(false);
-        }
-    
-        if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.onEvent('invoiceClosed', handleInvoiceClosed);
-            return () => {
-                 window.Telegram.WebApp.offEvent('invoiceClosed', handleInvoiceClosed);
-            }
-        }
-    }, [handleSuccessfulContribution]);
+        return () => {
+            stopPolling();
+        };
+    }, [stopPolling]);
 
 
     const handleAmountChange = (value: string) => {
@@ -126,7 +105,18 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
             if (error) { throw new Error(error); }
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openInvoice(invoiceUrl);
+                window.Telegram.WebApp.openInvoice(invoiceUrl, (status) => {
+                    // This callback is more reliable for knowing when the invoice window is closed.
+                    if (status === 'paid') {
+                        // Start polling immediately
+                        startPollingForConfirmation(contributionAmount);
+                    } else {
+                        // If status is cancelled, failed, or pending, we can give instant feedback.
+                        showFeedbackDialog('Payment Not Completed', `The payment was ${status}. Please try again.`);
+                        setIsContributing(false);
+                        setIsOpen(false);
+                    }
+                });
             } else {
                 throw new Error('Telegram WebApp context not found.');
             }
@@ -138,15 +128,50 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
         }
     };
     
+    const startPollingForConfirmation = (paidAmount: number) => {
+        // Close the main dialog and keep the button disabled
+        setIsOpen(false); 
+        
+        // Let the user know we're confirming
+        showFeedbackDialog("Processing...", "Confirming your contribution. This may take a moment.");
+
+        const initialContribution = userData?.totalContributedStars || 0;
+        let attempts = 0;
+        const maxAttempts = 20; // Poll for 60 seconds (20 * 3s)
+
+        pollIntervalRef.current = setInterval(async () => {
+            attempts++;
+            if (attempts > maxAttempts) {
+                stopPolling();
+                showFeedbackDialog("Confirmation Delayed", "We are still confirming your payment. Your balance will be updated shortly if successful.");
+                setIsContributing(false);
+                return;
+            }
+
+            try {
+                const { userData: freshUserData } = await getUserData(user);
+                const newContribution = freshUserData.totalContributedStars || 0;
+
+                if (newContribution > initialContribution) {
+                    stopPolling();
+                    onContribution(freshUserData.balance, newContribution);
+                    showFeedbackDialog('Contribution Successful!', `Your balance has been updated with ${paidAmount} EXN. Thank you!`);
+                    setIsContributing(false);
+                }
+            } catch (error) {
+                console.error("Polling error:", error);
+                // Continue polling, maybe a temp network issue
+            }
+        }, 3000); // Check every 3 seconds
+    };
+    
     const exnReward = Number(amount) > 0 ? Number(amount) : 0;
 
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => {
+                if(isContributing) return; // Don't allow closing while payment is in progress
                 setIsOpen(open);
-                if (!open) {
-                    setIsContributing(false);
-                }
             }}>
                 <DialogTrigger asChild>{children}</DialogTrigger>
                 <DialogContent className="sm:max-w-md">
