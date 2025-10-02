@@ -142,7 +142,12 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
     return (
         <>
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <Dialog open={isOpen} onOpenChange={(open) => {
+                setIsOpen(open);
+                if (!open) {
+                    setIsContributing(false);
+                }
+            }}>
                 <DialogTrigger asChild>{children}</DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader className="text-center">
