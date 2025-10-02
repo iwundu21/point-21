@@ -203,7 +203,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                             onClick={handleContribute}
                             disabled={isContributing || !amount || Number(amount) <= 0 || remainingContribution <= 0}
                         >
-                            {`Contribute ${Number(amount) > 0 ? Number(amount).toLocaleString() : ''} Stars`}
+                            {isContributing ? `Processing...` : `Contribute ${Number(amount) > 0 ? Number(amount).toLocaleString() : ''} Stars`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
