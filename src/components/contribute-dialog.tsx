@@ -105,18 +105,8 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
             if (error) { throw new Error(error); }
             if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openInvoice(invoiceUrl, (status) => {
-                    // This callback is more reliable for knowing when the invoice window is closed.
-                    if (status === 'paid') {
-                        // Start polling immediately
-                        startPollingForConfirmation(contributionAmount);
-                    } else {
-                        // If status is cancelled, failed, or pending, we can give instant feedback.
-                        showFeedbackDialog('Payment Not Completed', `The payment was ${status}. Please try again.`);
-                        setIsContributing(false);
-                        setIsOpen(false);
-                    }
-                });
+                window.Telegram.WebApp.openInvoice(invoiceUrl);
+                startPollingForConfirmation(contributionAmount);
             } else {
                 throw new Error('Telegram WebApp context not found.');
             }
@@ -132,12 +122,9 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
         // Close the main dialog and keep the button disabled
         setIsOpen(false); 
         
-        // Let the user know we're confirming
-        showFeedbackDialog("Processing...", "Confirming your contribution. This may take a moment.");
-
         const initialContribution = userData?.totalContributedStars || 0;
         let attempts = 0;
-        const maxAttempts = 20; // Poll for 60 seconds (20 * 3s)
+        const maxAttempts = 60; // Poll for 3 minutes (60 * 3s)
 
         pollIntervalRef.current = setInterval(async () => {
             attempts++;
@@ -179,9 +166,9 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                         <div className="flex justify-center mb-4">
                             <Sparkles className="w-16 h-16 text-primary" />
                         </div>
-                        <DialogTitle className="text-2xl">Build With Us</DialogTitle>
+                        <DialogTitle className="text-2xl">Boost Your Airdrop</DialogTitle>
                         <DialogDescription className="px-4">
-                            Your contribution fuels our ecosystem, helping us secure top-tier exchange listings and drive innovation. Together, we build the future.
+                            Amplify your airdrop potential. Your contribution directly increases your EXN balance, boosting your final airdrop allocation.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -228,7 +215,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                             onClick={handleContribute}
                             disabled={isContributing || !amount || Number(amount) <= 0 || remainingContribution <= 0}
                         >
-                            {isContributing ? `Processing...` : `Contribute ${Number(amount) > 0 ? Number(amount).toLocaleString() : ''} Stars`}
+                            {isContributing ? `Processing...` : `Boost Airdrop`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
