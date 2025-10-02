@@ -887,7 +887,15 @@ export default function AdminPage() {
             const CHUNK_SIZE = 60;
             for (let i = 0; i < airdropData.length; i += CHUNK_SIZE) {
                 const chunk = airdropData.slice(i, i + CHUNK_SIZE);
-                const csv = Papa.unparse(chunk);
+                const pageTotal = chunk.reduce((sum, user) => sum + user.balance, 0);
+
+                const dataWithTotal = [
+                    ...chunk,
+                    { balance: 'Total EXN', walletAddress: pageTotal }
+                ];
+                
+                const csv = Papa.unparse(dataWithTotal);
+
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
@@ -898,7 +906,6 @@ export default function AdminPage() {
                 link.click();
                 document.body.removeChild(link);
             }
-
 
             toast({ title: 'Export Complete!', description: `${airdropData.length} eligible users have been exported in chunks of ${CHUNK_SIZE}.` });
 
