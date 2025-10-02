@@ -58,7 +58,7 @@ export default function Home({}: {}) {
   const [progress, setProgress] = useState(0);
   const [minedAmount, setMinedAmount] = useState(0);
   
-  const AIRDROP_CAP = 300000;
+  const AIRDROP_CAP = 200000;
   const DAILY_REWARD = 500;
 
 
@@ -349,7 +349,7 @@ setBalance(newBalance);
                             <span>Target: {(AIRDROP_CAP).toLocaleString()}</span>
                         </div>
                          <p className="text-center text-xs text-muted-foreground mt-2">
-                            Progress towards our goal of 300,000 wallet submissions.
+                            Progress towards our goal of {AIRDROP_CAP.toLocaleString()} wallet submissions.
                         </p>
                     </CardContent>
                 </Card>
