@@ -8,7 +8,7 @@ import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info, CheckCircle, XCircle, UserCheck, Star, Zap } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info, CheckCircle, XCircle, UserCheck, Star, Zap, Gift, Handshake } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -308,11 +308,11 @@ export default function WalletPage() {
                        <div className="grid grid-cols-2 gap-3">
                             <EligibilitySquare title="Wallet Submitted" isMet={!!savedAddress} icon={<WalletIcon className="w-8 h-8" />} />
                             <EligibilitySquare title="Account Verified" isMet={isVerified} icon={<UserCheck className="w-8 h-8" />} />
-                            <EligibilitySquare title="Active User" isMet={userData?.status === 'active'} icon={<Bot className="w-8 h-8" />} />
-                            <EligibilitySquare title="Extra Airdrop" isMet={userData?.purchasedBoosts?.includes('boost_1') || false} icon={<Star className="w-8 h-8" />} />
+                            <EligibilitySquare title="Welcome Tasks" isMet={Object.values(userData?.welcomeTasks || {}).every(Boolean)} icon={<Gift className="w-8 h-8" />} />
+                            <EligibilitySquare title="Referral Applied" isMet={userData?.referralBonusApplied || false} icon={<Handshake className="w-8 h-8" />} />
                        </div>
                        <p className="text-xs text-muted-foreground mt-3 text-center">
-                         Securing the "Extra Airdrop" with a license is optional but recommended for a larger reward.
+                         Completing these tasks makes you eligible for the airdrop and unlocks daily tapping rewards.
                        </p>
                     </CardContent>
                 </Card>
