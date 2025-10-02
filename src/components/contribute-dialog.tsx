@@ -3,10 +3,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Star, Gift, Sparkles } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Star, Sparkles } from 'lucide-react';
 import { UserData, getUserId, TelegramUser } from '@/lib/database';
 import { processContribution } from '@/ai/flows/process-contribution-flow';
 import LoadingDots from './loading-dots';
@@ -25,7 +33,14 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
     const [isOpen, setIsOpen] = useState(false);
     const [amount, setAmount] = useState<number | string>('');
     const [isContributing, setIsContributing] = useState(false);
-    const { toast } = useToast();
+    
+    const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+    const [feedbackDialogContent, setFeedbackDialogContent] = useState({ title: '', description: '' });
+
+    const showFeedbackDialog = (title: string, description: string) => {
+        setFeedbackDialogContent({ title, description });
+        setFeedbackDialogOpen(true);
+    };
 
     const currentContribution = userData?.totalContributedStars || 0;
     const remainingContribution = MAX_CONTRIBUTION - currentContribution;
@@ -38,19 +53,12 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
           const result = await processContribution({ userId, amount: contributionAmount });
           if(result.success && result.newBalance !== undefined && result.newTotalContributed !== undefined){
               onContribution(result.newBalance, result.newTotalContributed);
-              toast({
-                title: 'Contribution Successful!',
-                description: `Your balance has been updated with ${contributionAmount} EXN. Thank you!`,
-              });
+              showFeedbackDialog('Contribution Successful!', `Your balance has been updated with ${contributionAmount} EXN. Thank you!`);
           } else {
-             toast({
-                variant: 'destructive',
-                title: 'Processing Error',
-                description: result.reason || "There was an issue crediting your contribution.",
-             });
+             showFeedbackDialog('Processing Error', result.reason || "There was an issue crediting your contribution.");
           }
         }
-    }, [onContribution, toast]);
+    }, [onContribution]);
     
     useEffect(() => {
         const handleInvoiceClosed = (event: {slug: string; status: 'paid' | 'cancelled' | 'failed' | 'pending'}) => {
@@ -58,14 +66,10 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                 if (event.status === 'paid') {
                     handleSuccessfulContribution(event.slug);
                 } else {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Payment Not Completed',
-                        description: `The payment was ${event.status}. Please try again.`,
-                    });
+                    showFeedbackDialog('Payment Not Completed', `The payment was ${event.status}. Please try again.`);
                 }
             }
-             // Always close dialog and re-enable button
+             // Always close main dialog and re-enable button
             setIsOpen(false);
             setIsContributing(false);
         }
@@ -76,7 +80,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
                  window.Telegram.WebApp.offEvent('invoiceClosed', handleInvoiceClosed);
             }
         }
-    }, [handleSuccessfulContribution, toast]);
+    }, [handleSuccessfulContribution]);
 
 
     const handleAmountChange = (value: string) => {
@@ -100,7 +104,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
         const contributionAmount = Number(amount);
         
         if (contributionAmount > remainingContribution) {
-            toast({ variant: 'destructive', title: "Limit Exceeded", description: `You can only contribute up to ${remainingContribution} more Stars.` });
+            showFeedbackDialog("Limit Exceeded", `You can only contribute up to ${remainingContribution} more Stars.`);
             return;
         }
 
@@ -130,7 +134,7 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
 
         } catch (e: any) {
             console.error("Error creating contribution invoice:", e);
-            toast({ variant: 'destructive', title: "Error", description: `Could not initiate payment: ${e.message}` });
+            showFeedbackDialog("Error", `Could not initiate payment: ${e.message}`);
             setIsContributing(false);
         }
     };
@@ -138,66 +142,82 @@ export function ContributeDialog({ user, userData, onContribution, children }: C
     const exnReward = Number(amount) > 0 ? Number(amount) : 0;
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader className="text-center">
-                     <div className="flex justify-center mb-4">
-                        <Sparkles className="w-16 h-16 text-primary" />
-                    </div>
-                    <DialogTitle className="text-2xl">Build With Us</DialogTitle>
-                    <DialogDescription className="px-4">
-                        Your contribution fuels our ecosystem, helping us secure top-tier exchange listings and drive innovation. Together, we build the future.
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogTrigger asChild>{children}</DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader className="text-center">
+                        <div className="flex justify-center mb-4">
+                            <Sparkles className="w-16 h-16 text-primary" />
+                        </div>
+                        <DialogTitle className="text-2xl">Build With Us</DialogTitle>
+                        <DialogDescription className="px-4">
+                            Your contribution fuels our ecosystem, helping us secure top-tier exchange listings and drive innovation. Together, we build the future.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <div className="p-4 space-y-4">
-                     <div className="text-center p-4 bg-primary/10 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Your EXN Reward</p>
-                        <p className="text-4xl font-bold text-gold">{exnReward.toLocaleString()} EXN</p>
-                        <p className="text-xs text-muted-foreground mt-1">1 Star = 1 EXN</p>
-                    </div>
+                    <div className="p-4 space-y-4">
+                        <div className="text-center p-4 bg-primary/10 rounded-lg">
+                            <p className="text-sm text-muted-foreground">Your EXN Reward</p>
+                            <p className="text-4xl font-bold text-gold">{exnReward.toLocaleString()} EXN</p>
+                            <p className="text-xs text-muted-foreground mt-1">1 Star = 1 EXN</p>
+                        </div>
 
-                    <div className="flex flex-col space-y-2">
-                         <Input
-                            id="custom-amount"
-                            type="number"
-                            placeholder="Enter custom Star amount"
-                            value={amount}
-                            onChange={(e) => handleAmountChange(e.target.value)}
-                            className="text-center h-12 text-lg"
-                            disabled={isContributing || remainingContribution <= 0}
-                        />
-                         <div className="grid grid-cols-4 gap-2">
-                            {PRESET_AMOUNTS.map((preset) => (
-                                <Button
-                                    key={preset}
-                                    variant="outline"
-                                    onClick={() => selectPreset(preset)}
-                                    disabled={isContributing || remainingContribution < preset}
-                                >
-                                    {preset}
-                                </Button>
-                            ))}
+                        <div className="flex flex-col space-y-2">
+                            <Input
+                                id="custom-amount"
+                                type="number"
+                                placeholder="Enter custom Star amount"
+                                value={amount}
+                                onChange={(e) => handleAmountChange(e.target.value)}
+                                className="text-center h-12 text-lg"
+                                disabled={isContributing || remainingContribution <= 0}
+                            />
+                            <div className="grid grid-cols-4 gap-2">
+                                {PRESET_AMOUNTS.map((preset) => (
+                                    <Button
+                                        key={preset}
+                                        variant="outline"
+                                        onClick={() => selectPreset(preset)}
+                                        disabled={isContributing || remainingContribution < preset}
+                                    >
+                                        {preset}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="text-center text-xs text-muted-foreground">
+                            Your contribution limit: {currentContribution.toLocaleString()} / {MAX_CONTRIBUTION.toLocaleString()} Stars
                         </div>
                     </div>
-                    
-                    <div className="text-center text-xs text-muted-foreground">
-                        Your contribution limit: {currentContribution.toLocaleString()} / {MAX_CONTRIBUTION.toLocaleString()} Stars
-                    </div>
-                </div>
 
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        className="w-full h-12 text-lg"
-                        onClick={handleContribute}
-                        disabled={isContributing || !amount || Number(amount) <= 0 || remainingContribution <= 0}
-                    >
-                        {isContributing ? <LoadingDots /> : `Contribute ${Number(amount) > 0 ? Number(amount).toLocaleString() : ''} Stars`}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            className="w-full h-12 text-lg"
+                            onClick={handleContribute}
+                            disabled={isContributing || !amount || Number(amount) <= 0 || remainingContribution <= 0}
+                        >
+                            {isContributing ? <LoadingDots /> : `Contribute ${Number(amount) > 0 ? Number(amount).toLocaleString() : ''} Stars`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <AlertDialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{feedbackDialogContent.title}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {feedbackDialogContent.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setFeedbackDialogOpen(false)}>OK</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
