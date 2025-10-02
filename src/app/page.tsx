@@ -55,6 +55,7 @@ export default function Home({}: {}) {
   const [isClaimingTap, setIsClaimingTap] = useState(false);
   const [canTap, setCanTap] = useState(false);
   const [countdown, setCountdown] = useState('');
+  const [progress, setProgress] = useState(0);
   
   const AIRDROP_CAP = 300000;
 
@@ -140,17 +141,20 @@ export default function Home({}: {}) {
    useEffect(() => {
     if (canTap || !userData?.lastTapTimestamp) {
       setCountdown('');
+      setProgress(0);
       return;
     }
 
     const interval = setInterval(() => {
       const now = Date.now();
       const lastTap = userData.lastTapTimestamp || 0;
-      const nextClaimTime = lastTap + (24 * 60 * 60 * 1000);
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      const nextClaimTime = lastTap + twentyFourHours;
       const diff = nextClaimTime - now;
 
       if (diff <= 0) {
         setCountdown('');
+        setProgress(100);
         setCanTap(true);
         clearInterval(interval);
         return;
@@ -161,6 +165,10 @@ export default function Home({}: {}) {
       const seconds = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
       
       setCountdown(`${hours}:${minutes}:${seconds}`);
+      
+      const elapsedTime = twentyFourHours - diff;
+      setProgress((elapsedTime / twentyFourHours) * 100);
+
     }, 1000);
 
     return () => clearInterval(interval);
@@ -357,6 +365,39 @@ export default function Home({}: {}) {
 
   const prerequisitesMet = userData.verificationStatus === 'verified' && Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
 
+  const CircularProgress = ({ progress }: { progress: number }) => {
+    const radius = 56;
+    const stroke = 8;
+    const normalizedRadius = radius - stroke * 2;
+    const circumference = normalizedRadius * 2 * Math.PI;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+    return (
+        <svg height={radius * 2} width={radius * 2} className="-rotate-90">
+            <circle
+                stroke="hsla(var(--muted-foreground), 0.3)"
+                fill="transparent"
+                strokeWidth={stroke}
+                r={normalizedRadius}
+                cx={radius}
+                cy={radius}
+            />
+            <circle
+                stroke="hsl(var(--gold))"
+                fill="transparent"
+                strokeWidth={stroke}
+                strokeDasharray={`${circumference} ${circumference}`}
+                style={{ strokeDashoffset }}
+                r={normalizedRadius}
+                cx={radius}
+                cy={radius}
+                className="transition-all duration-300"
+                strokeLinecap="round"
+            />
+        </svg>
+    );
+};
+
   return (
     <div className="flex flex-col min-h-screen bg-transparent text-foreground font-body">
         <header className="sticky top-0 z-10 bg-transparent/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
@@ -369,7 +410,7 @@ export default function Home({}: {}) {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
                             <Wallet className="w-5 h-5 text-primary" />
-                            Airdrop Wallet Submissions
+                            Wallet Submissions
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -396,35 +437,37 @@ export default function Home({}: {}) {
                 <Card className="w-full p-6 text-center space-y-4 glass-card">
                     {prerequisitesMet ? (
                         <>
-                            <div 
+                            <div
                                 className={cn(
-                                    "w-40 h-40 rounded-full mx-auto flex flex-col items-center justify-center transition-all duration-300 bg-cover bg-center",
-                                    !canTap 
-                                        ? "border-4 border-muted-foreground/30" 
-                                        : "border-4 border-gold/50 cursor-pointer hover:scale-105 animate-heartbeat"
+                                    "relative w-40 h-40 mx-auto flex flex-col items-center justify-center transition-all duration-300",
+                                    canTap && "cursor-pointer hover:scale-105"
                                 )}
-                                style={{ backgroundImage: `url('/5.jpg')` }}
                                 onClick={handleDailyTap}
                             >
-                                {isClaimingTap ? (
-                                    <LoadingDots />
-                                ) : !canTap ? (
-                                    countdown ? (
-                                        <div className="text-center p-4 rounded-full">
-                                            <p className="text-2xl font-bold text-white tabular-nums">{countdown}</p>
-                                            <p className="text-xs text-white/80 mt-1">Next claim</p>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center p-4 rounded-full">
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <CircularProgress progress={progress} />
+                                </div>
+                                <div className="absolute inset-0 bg-cover bg-center rounded-full m-3" style={{ backgroundImage: `url('/5.jpg')` }}></div>
+
+                                <div className="z-10 text-center">
+                                    {isClaimingTap ? (
+                                        <LoadingDots />
+                                    ) : !canTap ? (
+                                        countdown ? (
+                                            <>
+                                                <p className="text-2xl font-bold text-white tabular-nums">{countdown}</p>
+                                                <p className="text-xs text-white/80 mt-1">Next claim</p>
+                                            </>
+                                        ) : (
                                             <CheckCircle className="w-12 h-12 text-white/80" />
-                                        </div>
-                                    )
-                                ) : (
-                                    <div className="text-center p-4 rounded-full">
-                                        <p className="text-4xl font-bold text-white">TAP</p>
-                                        <p className="text-sm font-semibold text-white">+100 EXN</p>
-                                    </div>
-                                )}
+                                        )
+                                    ) : (
+                                        <>
+                                            <p className="text-4xl font-bold text-white">TAP</p>
+                                            <p className="text-sm font-semibold text-white">+100 EXN</p>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                             <h2 className="text-xl font-bold">Daily Tap Reward</h2>
                             <p className="text-muted-foreground text-sm">
@@ -486,7 +529,3 @@ export default function Home({}: {}) {
     </div>
   );
 }
-
-    
-
-    
