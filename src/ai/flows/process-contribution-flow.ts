@@ -61,12 +61,12 @@ const processContributionFlow = ai.defineFlow(
             const currentContribution = userData.totalContributedStars || 0;
 
             if (currentContribution >= MAX_CONTRIBUTION_PER_USER) {
-                throw new Error("Contribution limit reached.");
+                throw new Error(`You have already reached your contribution limit of ${MAX_CONTRIBUTION_PER_USER} Stars.`);
             }
             
             const allowedAmount = Math.min(amount, MAX_CONTRIBUTION_PER_USER - currentContribution);
             if (allowedAmount <= 0) {
-                 throw new Error("Contribution amount exceeds limit.");
+                 throw new Error(`Your contribution exceeds the maximum limit. You can contribute up to ${MAX_CONTRIBUTION_PER_USER - currentContribution} more Stars.`);
             }
 
             // 1 Star = 1 EXN
@@ -100,3 +100,4 @@ const processContributionFlow = ai.defineFlow(
     }
   }
 );
+
