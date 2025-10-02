@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, claimDailyTapReward, getUsersWithWalletCount } from '@/lib/database';
+import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, claimDailyMiningReward, getUsersWithWalletCount } from '@/lib/database';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -56,8 +56,10 @@ export default function Home({}: {}) {
   const [canTap, setCanTap] = useState(false);
   const [countdown, setCountdown] = useState('');
   const [progress, setProgress] = useState(0);
+  const [minedAmount, setMinedAmount] = useState(0);
   
   const AIRDROP_CAP = 300000;
+  const DAILY_REWARD = 100;
 
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
@@ -81,7 +83,7 @@ export default function Home({}: {}) {
       // --- ONBOARDING & MERGE FLOW ---
       if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts || !freshUserData.hasConvertedToExn)) {
           setOnboardingInitialData(freshUserData);
-          setShowOnboarding(true);
+setShowOnboarding(true);
           setIsNewUserForOnboarding(isNewUser); 
           setIsLoading(false);
           setUser(currentUser);
@@ -142,6 +144,7 @@ export default function Home({}: {}) {
     if (canTap || !userData?.lastTapTimestamp) {
       setCountdown('');
       setProgress(0);
+      setMinedAmount(canTap ? DAILY_REWARD : 0);
       return;
     }
 
@@ -155,6 +158,7 @@ export default function Home({}: {}) {
       if (diff <= 0) {
         setCountdown('');
         setProgress(100);
+        setMinedAmount(DAILY_REWARD);
         setCanTap(true);
         clearInterval(interval);
         return;
@@ -167,7 +171,9 @@ export default function Home({}: {}) {
       setCountdown(`${hours}:${minutes}:${seconds}`);
       
       const elapsedTime = twentyFourHours - diff;
-      setProgress((elapsedTime / twentyFourHours) * 100);
+      const currentProgress = (elapsedTime / twentyFourHours);
+      setProgress(currentProgress * 100);
+      setMinedAmount(Math.floor(currentProgress * DAILY_REWARD));
 
     }, 1000);
 
@@ -183,14 +189,14 @@ export default function Home({}: {}) {
         if (result.success && result.newBalance !== undefined) {
           setUserData(prev => prev ? { ...prev, balance: result.newBalance!, purchasedBoosts: [...(prev.purchasedBoosts || []), 'boost_1'] } : null);
           setBalance(result.newBalance);
-          showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
+showDialog("Booster Activated!", "You have received 5,000 EXN and unlocked daily tapping!");
         } else if (result.reason) {
             showDialog("Already Activated", result.reason);
         }
 
       } catch (e) {
         console.error("Error processing boost after payment:", e);
-        showDialog("Payment Process Error", "There was an issue crediting your account. Please contact support.");
+showDialog("Payment Process Error", "There was an issue crediting your account. Please contact support.");
       }
   }, [user]);
 
@@ -201,7 +207,7 @@ export default function Home({}: {}) {
         } else if (event.status !== 'paid') {
            showDialog('Payment Not Completed', `The payment was ${event.status}. Please try again.`);
         }
-        setIsClaimingBooster(false);
+setIsClaimingBooster(false);
     }
     
     if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
@@ -217,7 +223,7 @@ export default function Home({}: {}) {
   const handleSecureAirdrop = async () => {
     if (!user || !userData || isClaimingBooster || userData.purchasedBoosts?.includes('boost_1')) return;
 
-    setIsClaimingBooster(true);
+setIsClaimingBooster(true);
     try {
         const userId = getUserId(user);
         const response = await fetch('/api/create-invoice', {
@@ -247,46 +253,46 @@ export default function Home({}: {}) {
     } catch (e: any) {
         console.error("Error creating invoice:", e);
         showDialog("Error", `Could not initiate payment: ${e.message}`);
-        setIsClaimingBooster(false); // Re-enable button on failure
+setIsClaimingBooster(false); // Re-enable button on failure
     }
   };
 
   const handleDailyTap = async () => {
     if (!user || !canTap || isClaimingTap) return;
 
-    setIsClaimingTap(true);
+setIsClaimingTap(true);
     try {
         const userId = getUserId(user);
-        const result = await claimDailyTapReward(userId);
+        const result = await claimDailyMiningReward(userId);
         if (result.success && result.newBalance) {
             setBalance(result.newBalance);
-            setCanTap(false);
+setCanTap(false);
             const now = Date.now();
             setUserData(prev => prev ? {...prev, lastTapTimestamp: now, balance: result.newBalance as number} : null);
-            showDialog("Reward Claimed!", "You've earned 100 EXN. Come back tomorrow!");
+showDialog("Reward Claimed!", `You've earned ${DAILY_REWARD} EXN. The next mining cycle has started!`);
         } else {
-            showDialog("Already Claimed", "You have already claimed your daily tap reward for today.");
-            setCanTap(false);
+showDialog("Already Claimed", "You have already claimed your daily reward for today.");
+setCanTap(false);
         }
     } catch (e) {
         console.error("Error claiming daily tap:", e);
-        showDialog("Error", "An unexpected error occurred.");
+showDialog("Error", "An unexpected error occurred.");
     } finally {
-        setIsClaimingTap(false);
+setIsClaimingTap(false);
     }
   };
 
   const handleOnboardingComplete = () => {
-      setShowOnboarding(false);
-      setOnboardingInitialData(null);
+setShowOnboarding(false);
+setOnboardingInitialData(null);
       if (user) {
-        setIsLoading(true);
-        initializeUser(user);
+setIsLoading(true);
+initializeUser(user);
       }
   }
 
   const handleContribution = (newBalance: number, newTotalContributed: number) => {
-      setBalance(newBalance);
+setBalance(newBalance);
       setUserData(prev => prev ? { ...prev, balance: newBalance, totalContributedStars: newTotalContributed } : null);
   };
 
@@ -453,32 +459,29 @@ export default function Home({}: {}) {
                                     {isClaimingTap ? (
                                         <LoadingDots />
                                     ) : !canTap ? (
-                                        countdown ? (
-                                            <>
-                                                <p className="text-2xl font-bold text-white tabular-nums">{countdown}</p>
-                                                <p className="text-xs text-white/80 mt-1">Next claim</p>
-                                            </>
-                                        ) : (
-                                            <CheckCircle className="w-12 h-12 text-white/80" />
-                                        )
+                                        <>
+                                            <p className="text-4xl font-bold text-white tabular-nums">{minedAmount}</p>
+                                            <p className="text-sm font-semibold text-white/80">EXN</p>
+                                            <p className="text-xs text-white/80 mt-1">{countdown}</p>
+                                        </>
                                     ) : (
                                         <>
-                                            <p className="text-4xl font-bold text-white">TAP</p>
-                                            <p className="text-sm font-semibold text-white">+100 EXN</p>
+                                            <p className="text-3xl font-bold text-white">CLAIM</p>
+                                            <p className="text-lg font-semibold text-white">{DAILY_REWARD} EXN</p>
                                         </>
                                     )}
                                 </div>
                             </div>
-                            <h2 className="text-xl font-bold">Daily Tap Reward</h2>
+                            <h2 className="text-xl font-bold">Daily Mining</h2>
                             <p className="text-muted-foreground text-sm">
-                                {canTap ? "Tap the button to claim your 100 EXN for today!" : "You have already claimed your daily reward. Come back tomorrow!"}
+                                {canTap ? `Your ${DAILY_REWARD} EXN reward is ready to be claimed!` : "Your EXN is mining. Check back when the countdown ends to claim."}
                             </p>
                         </>
                     ) : (
                          <div className="text-center p-4 rounded-full space-y-4">
-                            <h2 className="text-xl font-bold">Unlock Daily Tapping</h2>
+                            <h2 className="text-xl font-bold">Unlock Daily Mining</h2>
                             <p className="text-muted-foreground text-sm">
-                                To unlock your daily tap rewards, you must complete all Welcome Tasks, redeem a referral code, and verify your account.
+                                To unlock your daily mining rewards, you must complete all Welcome Tasks, redeem a referral code, and verify your account.
                             </p>
                             <div className='flex flex-wrap gap-2 justify-center'>
                                 <Button onClick={() => router.push('/welcome-tasks')} variant='outline' size="sm">

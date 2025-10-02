@@ -1,5 +1,4 @@
 
-
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { TelegramUser } from './user-utils';
@@ -639,9 +638,10 @@ export const unbanAllUsers = async (): Promise<number> => {
     return querySnapshot.size;
 }
 
-export const claimDailyTapReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
+export const claimDailyMiningReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
     const userRef = doc(db, 'users', userId);
     const twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+    const DAILY_REWARD = 100;
 
     try {
         let result: { success: boolean, newBalance?: number } = { success: false };
@@ -660,12 +660,12 @@ export const claimDailyTapReward = async (userId: string): Promise<{ success: bo
                 return;
             }
             
-            const REWARD = 100;
-            const newBalance = userData.balance + REWARD;
+            const newBalance = userData.balance + DAILY_REWARD;
 
             transaction.update(userRef, {
                 balance: newBalance,
-                lastTapTimestamp: now
+                lastTapTimestamp: now,
+                miningActivationCount: increment(1)
             });
             result = { success: true, newBalance };
         });
@@ -673,7 +673,7 @@ export const claimDailyTapReward = async (userId: string): Promise<{ success: bo
         return result;
 
     } catch (error) {
-        console.error("Failed to claim daily tap reward:", error);
+        console.error("Failed to claim daily mining reward:", error);
         return { success: false };
     }
 }
