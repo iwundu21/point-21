@@ -222,7 +222,7 @@ export default function TasksPage() {
                                 icon={renderIcon(task.icon, "w-6 h-6")}
                                 title={task.title}
                                 description={task.description}
-                                points={80}
+                                points={task.points}
                                 link={task.link}
                                 completed={false}
                                 isVerifying={verifyingTaskId === task.id}
@@ -266,7 +266,7 @@ export default function TasksPage() {
                               icon={renderIcon(task.icon, "w-6 h-6")}
                               title={task.title}
                               description={task.description}
-                              points={80}
+                              points={task.points}
                               link={task.link}
                               completed={true}
                               isVerifying={false}
@@ -322,5 +322,7 @@ export default function TasksPage() {
     </div>
   );
 }
+
+    
 
     
