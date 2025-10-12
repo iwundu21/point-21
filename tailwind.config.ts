@@ -116,6 +116,14 @@ export default {
             opacity: .2
           }
         },
+        'wave': {
+          '0%': { backgroundPositionX: '0' },
+          '100%': { backgroundPositionX: '-100%' },
+        },
+        'wave-reverse': {
+          '0%': { backgroundPositionX: '0' },
+          '100%': { backgroundPositionX: '100%' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -124,10 +132,10 @@ export default {
         'heartbeat': 'heartbeat 1.s infinite ease-in-out',
         'fade-in': 'fade-in 0.5s ease-in-out',
         'loading-dots': 'loading-dots 1.4s infinite ease-in-out',
+        'wave': 'wave 2s linear infinite',
+        'wave-reverse': 'wave-reverse 2s linear infinite',
       },
     },
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
-
-    

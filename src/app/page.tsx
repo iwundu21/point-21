@@ -284,38 +284,44 @@ initializeUser(user);
 
   const prerequisitesMet = userData.verificationStatus === 'verified' && Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
 
-  const CircularProgress = ({ progress }: { progress: number }) => {
-    const radius = 56;
-    const stroke = 8;
-    const normalizedRadius = radius - stroke * 2;
-    const circumference = normalizedRadius * 2 * Math.PI;
-    const strokeDashoffset = circumference - (progress / 100) * circumference;
-
+  const WaterWaveProgress = ({ progress }: { progress: number }) => {
+    const waveHeight = `${100 - progress}%`;
+  
     return (
-        <svg height={radius * 2} width={radius * 2} className="-rotate-90">
-            <circle
-                stroke="hsla(var(--muted-foreground), 0.3)"
-                fill="transparent"
-                strokeWidth={stroke}
-                r={normalizedRadius}
-                cx={radius}
-                cy={radius}
-            />
-            <circle
-                stroke="hsl(var(--gold))"
-                fill="transparent"
-                strokeWidth={stroke}
-                strokeDasharray={`${circumference} ${circumference}`}
-                style={{ strokeDashoffset }}
-                r={normalizedRadius}
-                cx={radius}
-                cy={radius}
-                className="transition-all duration-300"
-                strokeLinecap="round"
-            />
-        </svg>
+      <div className="relative w-full h-full rounded-full overflow-hidden bg-transparent border-4 border-primary/20">
+        <div 
+          className="absolute bottom-0 left-0 w-full bg-gold/80 transition-all duration-500 ease-in-out" 
+          style={{ height: `${progress}%` }}
+        >
+          <div className="absolute top-0 left-0 w-full h-4 -mt-2">
+            <div className="absolute w-[200%] h-full bg-no-repeat bg-center bg-contain"
+                 style={{ 
+                    backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 10 C 50 20, 150 -10, 200 10 L 200 20 L 0 20' fill='hsl(var(--gold))' opacity='0.5'%3e%3c/path%3e%3c/svg%3e")`,
+                    backgroundSize: '50% 100%',
+                 }}
+            >
+              <div className="wave-animation absolute top-0 left-0 w-full h-full bg-no-repeat bg-center"
+                   style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 10 C 50 0, 150 20, 200 10 L 200 20 L 0 20' fill='hsl(var(--gold))'%3e%3c/path%3e%3c/svg%3e")`,
+                      backgroundSize: '50% 100%',
+                      animation: 'wave 2s linear infinite'
+                   }}
+              ></div>
+              <div className="wave-animation absolute top-0 left-0 w-full h-full bg-no-repeat bg-center"
+                   style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 10 C 50 0, 150 20, 200 10 L 200 20 L 0 20' fill='hsl(var(--gold))'%3e%3c/path%3e%3c/svg%3e")`,
+                      backgroundSize: '50% 100%',
+                      animation: 'wave-reverse 2s linear infinite',
+                      opacity: 0.5
+                   }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
-};
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent text-foreground font-body">
@@ -336,9 +342,10 @@ initializeUser(user);
                                 onClick={handleDailyTap}
                             >
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <CircularProgress progress={progress} />
+                                     <div className="absolute inset-0 bg-cover bg-center rounded-full" style={{ backgroundImage: `url('/5.jpg')` }}></div>
+                                     <WaterWaveProgress progress={progress} />
                                 </div>
-                                <div className="absolute inset-0 bg-cover bg-center rounded-full m-3" style={{ backgroundImage: `url('/5.jpg')` }}></div>
+                               
 
                                 <div className="z-10 text-center">
                                     {isClaimingTap ? (
