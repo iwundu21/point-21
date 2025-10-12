@@ -1,7 +1,10 @@
 
+
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { TelegramUser } from './user-utils';
+import { format, isToday, isYesterday, differenceInCalendarDays } from 'date-fns';
+
 
 export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'welcomeTasks' | 'socialTasks' | 'ref10' | 'ref30' | 'ref50' | 'ref100' | 'ref250' | 'ref500';
 
@@ -223,6 +226,35 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         if (!fetchedData.referralCode) {
             dataToUpdate.referralCode = generateReferralCode();
         }
+
+        // --- Daily Streak Logic ---
+        const today = new Date();
+        const todayStr = format(today, 'yyyy-MM-dd');
+        const lastLoginStr = fetchedData.dailyStreak?.lastLogin;
+        
+        if (lastLoginStr !== todayStr) {
+            let newStreakCount = 1;
+            if (lastLoginStr) {
+                const lastLoginDate = new Date(lastLoginStr);
+                const diff = differenceInCalendarDays(today, lastLoginDate);
+                
+                if (diff === 1) { // Consecutive day
+                    const currentStreak = fetchedData.dailyStreak?.count || 0;
+                    if (currentStreak === 7) { // Completed a week, reset.
+                        newStreakCount = 1;
+                    } else {
+                        newStreakCount = currentStreak + 1;
+                    }
+                }
+                // If diff > 1, the streak is broken, so it resets to 1 (default).
+            }
+
+            dataToUpdate.dailyStreak = {
+                count: newStreakCount,
+                lastLogin: todayStr,
+            };
+        }
+
 
         // ONE-TIME BONUS LOGIC
         if (fetchedData.balance !== undefined && fetchedData.balance < 7000 && !fetchedData.hasReceivedLowBalanceBonus) {
@@ -807,3 +839,4 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
