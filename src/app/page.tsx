@@ -26,7 +26,6 @@ import { TelegramUser, getDisplayName } from '@/lib/user-utils';
 import TelegramGate from '@/components/telegram-gate';
 import Onboarding from '@/components/onboarding';
 import { cn } from '@/lib/utils';
-import { processBoost } from '@/ai/flows/process-boost-flow';
 import LoadingDots from '@/components/loading-dots';
 
 
@@ -58,7 +57,7 @@ export default function Home({}: {}) {
   const [minedAmount, setMinedAmount] = useState(0);
   
   const AIRDROP_CAP = 10000;
-  const DAILY_REWARD = 500;
+  const DAILY_REWARD = 1000;
 
 
   const showDialog = (title: string, description: string, action: React.ReactNode | null = null) => {
@@ -443,3 +442,5 @@ initializeUser(user);
     </div>
   );
 }
+
+    
