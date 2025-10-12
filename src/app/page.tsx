@@ -366,7 +366,7 @@ initializeUser(user);
                             </div>
                             <h2 className="text-xl font-bold">Daily Mining</h2>
                             <p className="text-muted-foreground text-sm">
-                                {canTap ? `Your ${DAILY_REWARD} EXN reward is ready to be claimed!` : "Your EXN is mining. Check back when the countdown ends to claim."}
+                                {canTap ? `Your ${DAILY_REWARD} EXN reward is ready to be claimed!` : `Your EXN is mining. You will earn ${DAILY_REWARD} EXN when the countdown ends.`}
                             </p>
                         </>
                     ) : (
@@ -424,8 +424,3 @@ initializeUser(user);
     </div>
   );
 }
-
-    
-
-    
-
