@@ -56,7 +56,6 @@ export default function Home({}: {}) {
   const [progress, setProgress] = useState(0);
   const [minedAmount, setMinedAmount] = useState(0);
   
-  const AIRDROP_CAP = 10000;
   const DAILY_REWARD = 1000;
 
 
@@ -331,20 +330,13 @@ initializeUser(user);
              <div className="w-full max-w-sm px-4 space-y-4">
                  <Card className="w-full glass-card">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                        <CardTitle className="text-base font-medium flex items-center justify-center gap-2">
                             <Wallet className="w-5 h-5 text-primary" />
-                            Wallet Submissions
+                            Total Wallets Submitted
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <Progress value={(walletSubmittedCount / AIRDROP_CAP) * 100} className="w-full h-3" />
-                        <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                            <span>Submitted: {walletSubmittedCount.toLocaleString()}</span>
-                            <span>Target: {(AIRDROP_CAP).toLocaleString()}</span>
-                        </div>
-                         <p className="text-center text-xs text-muted-foreground mt-2">
-                            Progress towards our goal of {AIRDROP_CAP.toLocaleString()} wallet submissions.
-                        </p>
+                    <CardContent className="text-center">
+                        <p className="text-3xl font-bold text-foreground">{walletSubmittedCount.toLocaleString()}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -442,5 +434,7 @@ initializeUser(user);
     </div>
   );
 }
+
+    
 
     

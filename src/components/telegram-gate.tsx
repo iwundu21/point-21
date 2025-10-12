@@ -9,49 +9,6 @@ import { Loader2 } from 'lucide-react';
 import LoadingDots from './loading-dots';
 
 export default function TelegramGate() {
-  const [isFull, setIsFull] = useState<boolean | null>(null);
-  const AIRDROP_CAP = 300000;
-
-  useEffect(() => {
-    const checkCapacity = async () => {
-        const totalUsers = await getBoosterPack1UserCount();
-        setIsFull(totalUsers >= AIRDROP_CAP);
-    };
-    checkCapacity();
-  }, []);
-
-
-  if (isFull === null) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-          <LoadingDots />
-      </div>
-    );
-  }
-
-  if (isFull) {
-    return (
-       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-          <Card className="max-w-md w-full text-center">
-              <CardHeader>
-                  <div className="flex justify-center mb-4">
-                      <Info className="w-16 h-16 text-primary" />
-                  </div>
-                  <CardTitle className="text-2xl">Airdrop Capacity Reached</CardTitle>
-                  <CardDescription>
-                      All 300,000 slots for the airdrop have been filled. Thank you for your interest!
-                  </CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                      Follow us on our social channels to stay updated on future opportunities.
-                  </p>
-              </CardContent>
-          </Card>
-      </div>
-    );
-  }
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -84,3 +41,5 @@ export default function TelegramGate() {
     </div>
   );
 }
+
+    
