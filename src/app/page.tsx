@@ -37,7 +37,6 @@ export default function Home({}: {}) {
   const [isTelegram, setIsTelegram] = useState(false);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
-  const [walletSubmittedCount, setWalletSubmittedCount] = useState(0);
 
 
   const router = useRouter();
@@ -67,15 +66,13 @@ export default function Home({}: {}) {
 
   const initializeUser = useCallback(async (currentUser: TelegramUser) => {
     try {
-      const [dataResponse, userRankInfo, walletCount] = await Promise.all([
+      const [dataResponse, userRankInfo] = await Promise.all([
         getUserData(currentUser),
         getUserRank(currentUser),
-        getUsersWithWalletCount(),
       ]);
       const { userData: freshUserData, isNewUser } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
-      setWalletSubmittedCount(walletCount);
 
       // --- ONBOARDING & MERGE FLOW ---
       if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts || !freshUserData.hasConvertedToExn)) {
@@ -327,20 +324,6 @@ initializeUser(user);
         </header>
 
         <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
-             <div className="w-full max-w-sm px-4 space-y-4">
-                 <Card className="w-full glass-card">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium flex items-center justify-center gap-2">
-                            <Wallet className="w-5 h-5 text-primary" />
-                            Total Wallets Submitted
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center">
-                        <p className="text-3xl font-bold text-foreground">{walletSubmittedCount.toLocaleString()}</p>
-                    </CardContent>
-                </Card>
-            </div>
-
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
                 <Card className="w-full p-6 text-center space-y-4 glass-card">
                     {prerequisitesMet ? (
@@ -438,3 +421,4 @@ initializeUser(user);
     
 
     
+
