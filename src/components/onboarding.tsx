@@ -22,7 +22,6 @@ enum OnboardingStage {
     AccountConversion,
     LegacyBoosterReward,
     Welcome,
-    LoyaltyBonus,
     HowItWorks,
     WelcomeTasks,
 }
@@ -38,14 +37,7 @@ const getGreeting = () => {
 const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProps) => {
     const [stage, setStage] = useState<OnboardingStage | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [bonusResult, setBonusResult] = useState<{
-        creationDate: string;
-        bonus: number;
-    } | null>(null);
-    const [conversionResult, setConversionResult] = useState<{
-        oldBalance: number;
-        newBalance: number;
-    } | null>(null);
+    const [initialBalance, setInitialBalance] = useState(0);
 
 
     // Data for legacy booster reward stage
@@ -78,8 +70,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
         try {
             switch (stage) {
                  case OnboardingStage.AccountConversion:
-                    const { oldBalance, newBalance } = await convertEPointsToExn(user);
-                    setConversionResult({ oldBalance, newBalance });
+                    await convertEPointsToExn(user);
                     setStage(OnboardingStage.LegacyBoosterReward);
                     break;
 
@@ -91,21 +82,13 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                 case OnboardingStage.Welcome:
                     const result = await completeOnboarding({ user });
                     if (result.success) {
-                        const { userData } = await getUserData(user);
-                        setBonusResult({
-                            creationDate: result.accountCreationDate,
-                            bonus: userData.balance,
-                        });
-                        setStage(OnboardingStage.LoyaltyBonus);
+                        setInitialBalance(result.initialBalance);
+                        setStage(OnboardingStage.HowItWorks);
                     } else {
                         showErrorAndExit();
                     }
                     break;
                 
-                case OnboardingStage.LoyaltyBonus:
-                    setStage(OnboardingStage.HowItWorks);
-                    break;
-
                 case OnboardingStage.HowItWorks:
                     if (isNewUser) {
                         setStage(OnboardingStage.WelcomeTasks);
@@ -210,24 +193,6 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                         <p className="text-muted-foreground max-w-md mx-auto">
                             We're thrilled to have you join our mission. Get ready to explore the ecosystem, earn tokens, and be a part of the future of decentralized engagement.
                         </p>
-                    </div>
-                );
-            case OnboardingStage.LoyaltyBonus:
-                return (
-                    <div className="text-center animate-fade-in space-y-6">
-                        <h1 className="text-4xl font-bold text-foreground">Your Loyalty Bonus</h1>
-                        <p className="text-xl text-muted-foreground">Based on your account age, here's your head start.</p>
-                        <div className="py-8 flex flex-col items-center justify-center gap-4">
-                           <div className="flex flex-col items-center justify-center gap-2 mb-4">
-                                <CalendarDays className="w-16 h-16 text-primary" />
-                                <p className="text-base text-muted-foreground">Account Created:</p>
-                                <p className="text-2xl font-bold text-foreground animate-heartbeat">{bonusResult?.creationDate}</p>
-                           </div>
-                            <Award className="w-16 h-16 text-gold" />
-                            <p className="text-base text-muted-foreground">Your Starting Balance:</p>
-                            <p className="text-6xl font-bold text-gold my-2 animate-fast-pulse">{bonusResult?.bonus.toLocaleString()} EXN</p>
-                        </div>
-                        <p className="text-sm text-muted-foreground">This bonus reflects your time in the Telegram ecosystem. The older your account, the bigger the reward.</p>
                     </div>
                 );
             case OnboardingStage.HowItWorks:

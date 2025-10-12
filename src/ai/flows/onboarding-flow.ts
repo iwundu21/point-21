@@ -23,7 +23,6 @@ export type OnboardingInput = z.infer<typeof OnboardingInputSchema>;
 const OnboardingOutputSchema = z.object({
   success: z.boolean().describe('Whether the onboarding process was successful.'),
   initialBalance: z.number().describe('The initial balance awarded to the user.'),
-  accountCreationDate: z.string().describe('The date the user\'s Telegram account was created.'),
   reason: z.string().optional().describe('The reason for failure, if any.'),
 });
 export type OnboardingOutput = z.infer<typeof OnboardingOutputSchema>;
@@ -31,15 +30,6 @@ export type OnboardingOutput = z.infer<typeof OnboardingOutputSchema>;
 export async function completeOnboarding(input: OnboardingInput): Promise<OnboardingOutput> {
   return completeOnboardingFlow(input);
 }
-
-// Function to decode Telegram User ID into an approximate creation date
-const getTelegramCreationDate = (userId: number): Date => {
-    // This formula provides an approximation of the account creation date.
-    // The constant 1420070400 is the Unix timestamp for 2015-01-01 00:00:00 UTC.
-    // User IDs are roughly sequential, so this gives us a usable estimate.
-    const timestamp = (userId / 4194304) + 1420070400;
-    return new Date(timestamp * 1000);
-};
 
 
 const completeOnboardingFlow = ai.defineFlow(
@@ -51,42 +41,26 @@ const completeOnboardingFlow = ai.defineFlow(
   async ({ user }) => {
     const telegramUser = user as TelegramUser;
     if (!telegramUser || typeof telegramUser.id !== 'number') {
-        return { success: false, initialBalance: 0, accountCreationDate: '', reason: 'Invalid user object. Onboarding is for Telegram users only.' };
+        return { success: false, initialBalance: 0, reason: 'Invalid user object. Onboarding is for Telegram users only.' };
     }
 
     try {
         const { userData } = await getUserData(telegramUser);
-        
-        const creationDate = getTelegramCreationDate(telegramUser.id);
         
         // If user has already onboarded, just return their current state without awarding more points.
         if (userData.hasOnboarded) {
              return { 
                 success: true, 
                 initialBalance: userData.balance, 
-                accountCreationDate: creationDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
                 reason: 'User has already completed onboarding.' 
             };
         }
         
-        // Calculate bonus based on account age
-        const now = new Date();
-        const ageInMs = now.getTime() - creationDate.getTime();
-        const ageInMonths = Math.floor(ageInMs / (1000 * 60 * 60 * 24 * 30.44)); // Average days in a month
-
         let initialBalance = userData.balance;
-        let pointsToAdd = 0;
-
-        if (ageInMonths >= 1) {
-            const ageBonus = ageInMonths * 10;
-            pointsToAdd += ageBonus;
-        }
 
         // Add base bonus for all users completing onboarding for the first time
-        pointsToAdd += 500;
+        initialBalance += 500;
         
-        initialBalance += pointsToAdd;
-
         const dataToSave: Partial<UserData> = {
             balance: initialBalance,
             hasOnboarded: true,
@@ -98,7 +72,6 @@ const completeOnboardingFlow = ai.defineFlow(
         return {
             success: true,
             initialBalance: initialBalance,
-            accountCreationDate: creationDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         };
 
     } catch (error) {
@@ -106,7 +79,6 @@ const completeOnboardingFlow = ai.defineFlow(
         return {
             success: false,
             initialBalance: 0,
-            accountCreationDate: '',
             reason: 'An unexpected error occurred during the onboarding process.'
         }
     }
