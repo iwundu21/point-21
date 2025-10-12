@@ -325,11 +325,11 @@ export const applyReferralBonus = async (newUser: { id: number | string }, refer
                     throw "Documents do not exist!";
                 }
                 
-                const newReferrerBalance = (referrerDoc.data().balance || 0) + 80;
+                const newReferrerBalance = (referrerDoc.data().balance || 0) + 200;
                 const newReferralsCount = (referrerDoc.data().referrals || 0) + 1;
                 transaction.update(referrerRef, { balance: newReferrerBalance, referrals: newReferralsCount });
 
-                const newUserBalance = (newUserDoc.data().balance || 0) + 10;
+                const newUserBalance = (newUserDoc.data().balance || 0) + 70;
                 transaction.update(newUserRef, { 
                     balance: newUserBalance,
                     referralBonusApplied: true,
