@@ -65,7 +65,7 @@ export const getUserId = (user: { id: number | string } | null): string => {
 
 const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     balance: 0,
-    miningEndTime: null,
+    miningEndTime: 0,
     miningRate: 0, // Obsolete
     dailyStreak: { count: 0, lastLogin: '' },
     lastTapTimestamp: 0,
@@ -839,4 +839,5 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 

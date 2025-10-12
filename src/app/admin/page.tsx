@@ -358,7 +358,7 @@ const UserTable = ({
                     </TableHeader>
                     <TableBody>
                         {users.map((user) => {
-                          const isMiningActive = user.miningEndTime && user.miningEndTime > Date.now();
+                          const isMiningActive = user.lastTapTimestamp > 0 && (Date.now() - user.lastTapTimestamp) < (24 * 60 * 60 * 1000);
                           const isBrowserUser = !user.telegramUser;
                           const hasAirdropSlot = user.purchasedBoosts?.includes('boost_1');
 
