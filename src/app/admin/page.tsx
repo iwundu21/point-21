@@ -3,8 +3,9 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats, getAirdropStatus } from '@/lib/database';
+import { endAirdrop } from '@/ai/flows/end-airdrop-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -574,6 +575,8 @@ export default function AdminPage() {
     const [isExportingAirdrop, setIsExportingAirdrop] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
     const [isDeletingAllTasks, setIsDeletingAllTasks] = useState(false);
+    const [isAirdropEnded, setIsAirdropEnded] = useState(false);
+    const [isEndingAirdrop, setIsEndingAirdrop] = useState(false);
     
     const { toast } = useToast();
 
@@ -581,13 +584,14 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStatus] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
                 getTotalTelegramUsersCount(),
                 getTotalBrowserUsersCount(),
                 getTotalActivePoints(),
+                getAirdropStatus(),
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -605,6 +609,7 @@ export default function AdminPage() {
             setTotalBrowserCount(totalBrowser);
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
+            setIsAirdropEnded(airdropStatus.isAirdropEnded);
 
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -978,6 +983,23 @@ export default function AdminPage() {
         }
     }
     
+    const handleEndAirdrop = async () => {
+        setIsEndingAirdrop(true);
+        try {
+            const result = await endAirdrop();
+            if (result.success) {
+                toast({ title: 'Airdrop Ended', description: 'All reward-earning activities have been stopped.' });
+                setIsAirdropEnded(true);
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not end the airdrop.' });
+            }
+        } catch (error) {
+            console.error("Failed to end airdrop:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsEndingAirdrop(false);
+        }
+    };
 
     if (!isAdmin && !codeAuthenticated) {
         return (
@@ -1148,13 +1170,47 @@ export default function AdminPage() {
                                 <div className="text-2xl font-bold">{totalBrowserCount.toLocaleString()}</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-primary/5 col-span-1 lg:col-span-3">
+                        <Card className="bg-primary/5 col-span-1 md:col-span-2 lg:col-span-3">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total EXN (Active)</CardTitle>
                                 <Star className="h-4 w-4 text-primary" />
                             </CardHeader>
                             <CardContent>
                                     <div className="text-2xl font-bold text-gold">{totalPoints.toLocaleString()}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-destructive/10 border-destructive/20 col-span-1 md:col-span-2 lg:col-span-3">
+                            <CardHeader>
+                                <CardTitle>System Controls</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" disabled={isAirdropEnded || isEndingAirdrop}>
+                                                {isEndingAirdrop ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <PowerOff className="mr-2 h-4 w-4"/>}
+                                                {isAirdropEnded ? 'Airdrop Already Ended' : 'End Airdrop Now'}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently stop all reward-earning activities for all users (daily mining, referrals, tasks, etc.). This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleEndAirdrop} className={cn(buttonVariants({variant: 'destructive'}))}>
+                                                    Confirm & End Airdrop
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                    <p className="text-sm text-destructive/80">
+                                        {isAirdropEnded ? "The airdrop has ended. No more points can be earned by users." : "Ending the airdrop will stop all points from being distributed."}
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
                     </CardContent>

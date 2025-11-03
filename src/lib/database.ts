@@ -198,6 +198,21 @@ export const getTotalActivePoints = async (): Promise<number> => {
 
 // --- Airdrop Stats Management ---
 const airdropStatsRef = doc(db, 'app-stats', 'airdrop-stats');
+const airdropStatusRef = doc(db, 'app-stats', 'airdrop-status');
+
+export const getAirdropStatus = async (): Promise<{ isAirdropEnded: boolean }> => {
+    const docSnap = await getDoc(airdropStatusRef);
+    if (docSnap.exists()) {
+        return { isAirdropEnded: docSnap.data().isAirdropEnded || false };
+    }
+    return { isAirdropEnded: false };
+}
+
+export const setAirdropEnded = async (): Promise<{ success: boolean }> => {
+    await setDoc(airdropStatusRef, { isAirdropEnded: true, endedAt: serverTimestamp() });
+    return { success: true };
+}
+
 
 export const getAirdropStats = async (): Promise<{ totalAirdrop: number }> => {
     const docSnap = await getDoc(airdropStatsRef);
@@ -213,8 +228,10 @@ export const updateAirdropStats = async (newTotal: number) => {
 };
 
 
-export const getUserData = async (user: TelegramUser | null): Promise<{ userData: UserData, isNewUser: boolean }> => {
-    if (!user) return { userData: { ...defaultUserData(null), id: 'guest' }, isNewUser: false };
+export const getUserData = async (user: TelegramUser | null): Promise<{ userData: UserData, isNewUser: boolean, isAirdropEnded: boolean }> => {
+    const { isAirdropEnded } = await getAirdropStatus();
+
+    if (!user) return { userData: { ...defaultUserData(null), id: 'guest' }, isNewUser: false, isAirdropEnded };
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
@@ -278,7 +295,7 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
             await setDoc(userRef, dataToUpdate, { merge: true });
         }
         
-        return { userData: finalUserData, isNewUser: false };
+        return { userData: finalUserData, isNewUser: false, isAirdropEnded };
     } else {
         const currentTotalUsers = await getBoosterPack1UserCount(); // Check against booster purchasers
         if (currentTotalUsers >= MAX_USERS) {
@@ -295,11 +312,17 @@ export const getUserData = async (user: TelegramUser | null): Promise<{ userData
         const userType = typeof user.id === 'number' ? 'telegram' : 'browser';
         if (userType === 'telegram') await incrementTelegramUserCount(); else await incrementBrowserUserCount();
         
-        return { userData: newUserData, isNewUser: true };
+        return { userData: newUserData, isNewUser: true, isAirdropEnded };
     }
 };
 
 export const saveUserData = async (user: { id: number | string } | null, data: Partial<Omit<UserData, 'id'>>) => {
+    const { isAirdropEnded } = await getAirdropStatus();
+    // Prevent balance updates if airdrop has ended
+    if (isAirdropEnded && data.balance) {
+        delete data.balance;
+    }
+
     if (!user) return;
     const userId = getUserId(user);
     const userRef = doc(db, 'users', userId);
@@ -343,6 +366,9 @@ export const findUserByFaceFingerprint = async (fingerprint: string): Promise<Us
 };
 
 export const applyReferralBonus = async (newUser: { id: number | string }, referrerCode: string): Promise<UserData | null> => {
+    const { isAirdropEnded } = await getAirdropStatus();
+    if (isAirdropEnded) return null; // No rewards if airdrop is over
+
     const referrerData = await findUserByReferralCode(referrerCode);
     if (referrerData) {
         try {
@@ -617,6 +643,9 @@ export const deleteAllSocialTasks = async (): Promise<number> => {
 }
 
 export const incrementTaskCompletionCount = async (taskId: string) => {
+    const { isAirdropEnded } = await getAirdropStatus();
+    if (isAirdropEnded) return; // No rewards if airdrop is over
+
     if (!taskId) return;
     const taskRef = doc(db, 'socialTasks', taskId);
     await setDoc(taskRef, { completionCount: increment(1) }, { merge: true });
@@ -678,6 +707,9 @@ export const unbanAllUsers = async (): Promise<number> => {
 }
 
 export const claimDailyMiningReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
+    const { isAirdropEnded } = await getAirdropStatus();
+    if (isAirdropEnded) return { success: false }; // No rewards if airdrop is over
+
     const userRef = doc(db, 'users', userId);
     const twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
     const DAILY_REWARD = 1000;
@@ -839,5 +871,6 @@ export const saveUserPhotoUrl = async (user: { id: number | string } | null, pho
 
 
     
+
 
 

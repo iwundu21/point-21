@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
-import { Gift, CheckCircle } from 'lucide-react';
-import { getUserData, saveUserData } from '@/lib/database';
+import { Gift, CheckCircle, Info } from 'lucide-react';
+import { getUserData, saveUserData, getAirdropStatus } from '@/lib/database';
 import TaskItem from '@/components/task-item';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import { v4 as uuidv4 } from 'uuid';
@@ -41,6 +42,7 @@ export default function WelcomeTasksPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState('');
     const [dialogDescription, setDialogDescription] = useState('');
+    const [isAirdropEnded, setIsAirdropEnded] = useState(false);
 
     const showDialog = (title: string, description: string) => {
         setDialogTitle(title);
@@ -78,10 +80,11 @@ export default function WelcomeTasksPage() {
             if (user) {
                 setIsLoading(true);
                 try {
-                    const { userData } = await getUserData(user);
+                    const { userData, isAirdropEnded: airdropStatus } = await getUserData(user);
                     if(userData.welcomeTasks) {
                         setTasks(userData.welcomeTasks);
                     }
+                    setIsAirdropEnded(airdropStatus);
                 } catch(error) {
                     console.error("Failed to load task data:", error);
                 } finally {
@@ -95,7 +98,7 @@ export default function WelcomeTasksPage() {
     const isBrowserUser = user?.first_name === 'Browser User';
 
     const handleTaskComplete = async (taskName: keyof WelcomeTasks, link: string, chatId?: string) => {
-        if (!user || tasks[taskName] || verifyingTaskId) return;
+        if (!user || tasks[taskName] || verifyingTaskId || isAirdropEnded) return;
 
         window.open(link, '_blank');
         
@@ -181,7 +184,14 @@ export default function WelcomeTasksPage() {
                                 Complete these one-time tasks to get a head start!
                             </p>
                         </div>
-
+                        {isAirdropEnded && (
+                            <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                                <Info className="w-5 h-5 flex-shrink-0" />
+                                <div>
+                                The airdrop has ended. New task completions will no longer be rewarded.
+                                </div>
+                            </div>
+                        )}
                         <div className="space-y-4">
                            <TaskItem
                                 icon={<Image src="/x.jpg" alt="X/Twitter" width={24} height={24} />}

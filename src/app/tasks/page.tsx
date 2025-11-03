@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Footer from '@/components/footer';
 import { Users, ThumbsUp, Repeat, MessageCircle, CheckCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Info, Star } from 'lucide-react';
-import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData, incrementTaskCompletionCount } from '@/lib/database';
+import { getUserData, saveUserData, getSocialTasks, SocialTask, UserData, incrementTaskCompletionCount, getAirdropStatus } from '@/lib/database';
 import { verifyTelegramTask } from '@/ai/flows/verify-telegram-task-flow';
 import TaskItem from '@/components/task-item';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +51,7 @@ export default function TasksPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState('');
     const [dialogDescription, setDialogDescription] = useState('');
+    const [isAirdropEnded, setIsAirdropEnded] = useState(false);
 
     const showDialog = (title: string, description: string) => {
         setDialogTitle(title);
@@ -87,12 +89,14 @@ export default function TasksPage() {
             if (user) {
                 setIsLoading(true);
                 try {
-                    const [userDataResponse, socialTasks] = await Promise.all([
+                    const [userDataResponse, socialTasks, airdropStatus] = await Promise.all([
                         getUserData(user),
-                        getSocialTasks()
+                        getSocialTasks(),
+                        getAirdropStatus()
                     ]);
                     setUserData(userDataResponse.userData);
                     setAllTasks(socialTasks);
+                    setIsAirdropEnded(airdropStatus.isAirdropEnded);
                 } catch(error) {
                     console.error("Failed to load task data:", error);
                 } finally {
@@ -106,7 +110,7 @@ export default function TasksPage() {
     const isBrowserUser = user?.first_name === 'Browser User';
 
     const handleTaskComplete = async (task: SocialTask) => {
-        if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id)) return;
+        if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id) || isAirdropEnded) return;
 
         setVerifyingTaskId(task.id);
         window.open(task.link, '_blank');
@@ -205,6 +209,14 @@ export default function TasksPage() {
                         <Info className="w-5 h-5 flex-shrink-0" />
                         <div>
                          Telegram tasks must be completed in the Telegram app to be verified and receive rewards.
+                        </div>
+                    </div>
+                )}
+                 {isAirdropEnded && (
+                    <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <Info className="w-5 h-5 flex-shrink-0" />
+                        <div>
+                         The airdrop has ended. New task completions will no longer be rewarded.
                         </div>
                     </div>
                 )}

@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getUserData, saveUserData, UserData, getUserRank, getUserId, getTotalUsersCount, getBoosterPack1UserCount, getTotalActivePoints, claimDailyMiningReward, getUsersWithWalletCount } from '@/lib/database';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake, Sparkles } from 'lucide-react';
+import { ShieldBan, Loader2, Bot, Wallet, Zap, Star, Users, CheckCircle, Gift, UserCheck, Handshake, Sparkles, Annoyed } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
@@ -35,6 +36,7 @@ export default function Home({}: {}) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isTelegram, setIsTelegram] = useState(false);
+  const [isAirdropEnded, setIsAirdropEnded] = useState(false);
   
   const [rankInfo, setRankInfo] = useState<{ rank: number; league: string }>({ rank: 0, league: 'Unranked' });
 
@@ -70,9 +72,10 @@ export default function Home({}: {}) {
         getUserData(currentUser),
         getUserRank(currentUser),
       ]);
-      const { userData: freshUserData, isNewUser } = dataResponse;
+      const { userData: freshUserData, isNewUser, isAirdropEnded: airdropStatus } = dataResponse;
       const isTelegramUser = typeof currentUser.id === 'number';
 
+      setIsAirdropEnded(airdropStatus);
 
       // --- ONBOARDING & MERGE FLOW ---
       if (!isNewUser && (!freshUserData.hasOnboarded || !freshUserData.claimedLegacyBoosts || !freshUserData.hasConvertedToExn)) {
@@ -175,7 +178,7 @@ setShowOnboarding(true);
   }, [canTap, userData?.lastTapTimestamp]);
   
   const handleDailyTap = async () => {
-    if (!user || !canTap || isClaimingTap) return;
+    if (!user || !canTap || isClaimingTap || isAirdropEnded) return;
 
 setIsClaimingTap(true);
     try {
@@ -255,6 +258,45 @@ initializeUser(user);
             </div>
         </div>
       </div>
+    );
+  }
+
+    if (isAirdropEnded) {
+    return (
+        <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+            <header className="sticky top-0 z-10 bg-transparent/80 backdrop-blur-sm w-full max-w-sm mx-auto p-4 space-y-4">
+                <BalanceCard balance={balance} user={user} />
+            </header>
+            <main className="flex flex-col items-center justify-center flex-grow p-4">
+                <Card className="max-w-md w-full text-center glass-card">
+                    <CardHeader>
+                        <div className="flex justify-center mb-4">
+                            <Annoyed className="w-16 h-16 text-primary" />
+                        </div>
+                        <CardTitle className="text-2xl">The Airdrop Has Concluded</CardTitle>
+                        <CardDescription>
+                           Thank you for your participation! The EXN earning period has now ended.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Your final balance is shown above. Please stay tuned for announcements regarding token distribution. Follow our social channels for the latest updates.
+                        </p>
+                        <div className="flex justify-around space-x-4 pt-4">
+                            <a href="https://x.com/exnusprotocol" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+                                <Image src="/x.jpg" alt="X/Twitter" width={24} height={24} />
+                                <span className="text-xs">X / Twitter</span>
+                            </a>
+                            <a href="https://t.me/exnusprotocol" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+                                <Image src="/tg.jpg" alt="Telegram" width={24} height={24} />
+                                <span className="text-xs">Telegram</span>
+                            </a>
+                        </div>
+                    </CardContent>
+                </Card>
+            </main>
+            <Footer />
+        </div>
     );
   }
 
