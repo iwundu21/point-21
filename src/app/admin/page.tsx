@@ -3,9 +3,9 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats, getAirdropStatus } from '@/lib/database';
-import { endAirdrop } from '@/ai/flows/end-airdrop-flow';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff, PlayCircle } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus } from '@/lib/database';
+import { toggleAirdrop } from '@/ai/flows/toggle-airdrop-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -359,7 +359,7 @@ const UserTable = ({
                     </TableHeader>
                     <TableBody>
                         {users.map((user) => {
-                          const isMiningActive = user.lastTapTimestamp > 0 && (Date.now() - user.lastTapTimestamp) < (24 * 60 * 60 * 1000);
+                          const isMiningActive = user.miningEndTime && user.miningEndTime > Date.now();
                           const isBrowserUser = !user.telegramUser;
                           const hasAirdropSlot = user.purchasedBoosts?.includes('boost_1');
 
@@ -502,7 +502,7 @@ const EditAirdropDialog = ({ currentTotal, onAirdropUpdated }: { currentTotal: n
 
         setIsSaving(true);
         try {
-            await updateAirdropStats(totalValue);
+            await saveAirdropTotal(totalValue);
             onAirdropUpdated(totalValue);
             toast({ title: 'Airdrop Total Updated', description: 'The total airdrop amount has been updated.' });
             setIsOpen(false);
@@ -576,7 +576,7 @@ export default function AdminPage() {
     const [isUnbanning, setIsUnbanning] = useState(false);
     const [isDeletingAllTasks, setIsDeletingAllTasks] = useState(false);
     const [isAirdropEnded, setIsAirdropEnded] = useState(false);
-    const [isEndingAirdrop, setIsEndingAirdrop] = useState(false);
+    const [isTogglingAirdrop, setIsTogglingAirdrop] = useState(false);
     
     const { toast } = useToast();
 
@@ -983,21 +983,23 @@ export default function AdminPage() {
         }
     }
     
-    const handleEndAirdrop = async () => {
-        setIsEndingAirdrop(true);
+    const handleToggleAirdrop = async () => {
+        setIsTogglingAirdrop(true);
+        const newState = !isAirdropEnded; // The state we want to move to
+
         try {
-            const result = await endAirdrop();
+            const result = await toggleAirdrop({ ended: newState });
             if (result.success) {
-                toast({ title: 'Airdrop Ended', description: 'All reward-earning activities have been stopped.' });
-                setIsAirdropEnded(true);
+                toast({ title: `Airdrop ${newState ? 'Ended' : 'Started'}`, description: `All reward-earning activities have been ${newState ? 'stopped' : 'enabled'}.` });
+                setIsAirdropEnded(newState);
             } else {
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not end the airdrop.' });
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not toggle the airdrop status.' });
             }
         } catch (error) {
-            console.error("Failed to end airdrop:", error);
+            console.error("Failed to toggle airdrop:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
         } finally {
-            setIsEndingAirdrop(false);
+            setIsTogglingAirdrop(false);
         }
     };
 
@@ -1184,31 +1186,31 @@ export default function AdminPage() {
                                 <CardTitle>System Controls</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex flex-col sm:flex-row gap-4">
+                                <div className="flex flex-col sm:flex-row gap-4 items-center">
                                      <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" disabled={isAirdropEnded || isEndingAirdrop}>
-                                                {isEndingAirdrop ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <PowerOff className="mr-2 h-4 w-4"/>}
-                                                {isAirdropEnded ? 'Airdrop Already Ended' : 'End Airdrop Now'}
+                                            <Button variant={isAirdropEnded ? 'default' : 'destructive'} disabled={isTogglingAirdrop}>
+                                                {isTogglingAirdrop ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : (isAirdropEnded ? <PlayCircle className="mr-2 h-4 w-4"/> : <PowerOff className="mr-2 h-4 w-4"/>)}
+                                                {isAirdropEnded ? 'Start Rewards' : 'End Rewards'}
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This will permanently stop all reward-earning activities for all users (daily mining, referrals, tasks, etc.). This action cannot be undone.
+                                                    This will {isAirdropEnded ? 're-enable' : 'permanently stop'} all reward-earning activities for all users (daily mining, referrals, tasks, etc.).
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleEndAirdrop} className={cn(buttonVariants({variant: 'destructive'}))}>
-                                                    Confirm & End Airdrop
+                                                <AlertDialogAction onClick={handleToggleAirdrop} className={cn(buttonVariants({variant: isAirdropEnded ? 'default' : 'destructive'}))}>
+                                                    Confirm
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
-                                    <p className="text-sm text-destructive/80">
-                                        {isAirdropEnded ? "The airdrop has ended. No more points can be earned by users." : "Ending the airdrop will stop all points from being distributed."}
+                                    <p className="text-sm text-muted-foreground">
+                                        {isAirdropEnded ? "Reward earning is currently disabled." : "Reward earning is currently active."}
                                     </p>
                                 </div>
                             </CardContent>
@@ -1340,5 +1342,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

@@ -7,4 +7,4 @@ import './flows/merge-accounts-flow';
 import './flows/process-boost-flow';
 import './flows/onboarding-flow';
 import './flows/award-achievements-flow';
-import './flows/end-airdrop-flow';
+import './flows/toggle-airdrop-flow';

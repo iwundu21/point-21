@@ -208,8 +208,8 @@ export const getAirdropStatus = async (): Promise<{ isAirdropEnded: boolean }> =
     return { isAirdropEnded: false };
 }
 
-export const setAirdropEnded = async (): Promise<{ success: boolean }> => {
-    await setDoc(airdropStatusRef, { isAirdropEnded: true, endedAt: serverTimestamp() });
+export const updateAirdropStatus = async (ended: boolean): Promise<{ success: boolean }> => {
+    await setDoc(airdropStatusRef, { isAirdropEnded: ended, updatedAt: serverTimestamp() }, { merge: true });
     return { success: true };
 }
 
@@ -860,17 +860,3 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
-
-
-
-
-
-    
-
-    
-
-
-    
-
-
-
