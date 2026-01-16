@@ -10,6 +10,7 @@ import { UserData, saveUserData, getUserData, LEGACY_BOOST_REWARDS, claimLegacyB
 import { cn } from '@/lib/utils';
 import LoadingDots from './loading-dots';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import AnimatedLogo from './AnimatedLogo';
 
 interface OnboardingProps {
     user: TelegramUser;
@@ -120,106 +121,95 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                  const newExnBalance = Math.floor((oldBalance / 1000) * 150);
                 return (
                     <div className="text-center animate-fade-in space-y-6">
-                        <h1 className="text-4xl font-bold text-foreground">Early Supporter Snapshot</h1>
-                        <p className="text-xl text-muted-foreground">Thank you for being with us from the start!</p>
-                         <div className="py-8 flex flex-col items-center justify-center gap-4 w-full max-w-sm">
-                            <RefreshCw className="w-16 h-16 text-primary" />
-                            <p className="text-base text-muted-foreground">As part of our system upgrade, we are converting your legacy E-Points to our new official currency, EXN, based on a snapshot of your account.</p>
-                            
-                            <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg">
-                                <div className="flex justify-between items-center text-lg">
-                                    <span>Old E-Points Balance:</span>
-                                    <span className="font-bold text-muted-foreground">
-                                        {oldBalance.toLocaleString()}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center text-lg">
-                                    <span>Conversion Ratio:</span>
-                                    <span className="font-bold text-muted-foreground">
-                                        1000 : 150
-                                    </span>
-                                </div>
-                                <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-2xl font-bold">
-                                    <span>New EXN Balance:</span>
-                                    <span className="text-gold">{newExnBalance.toLocaleString()} EXN</span>
-                                </div>
+                        <div className="flex justify-center mb-8">
+                            <AnimatedLogo />
+                        </div>
+                        <h1 className="text-3xl font-bold text-foreground">System Upgrade Complete</h1>
+                        <p className="text-lg text-muted-foreground">Thank you for being an early supporter. Your legacy points have been converted to the new EXN currency.</p>
+                         
+                        <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg bg-card/80">
+                            <div className="flex justify-between items-center text-md">
+                                <span>Legacy E-Points:</span>
+                                <span className="font-bold text-muted-foreground">
+                                    {oldBalance.toLocaleString()}
+                                </span>
+                            </div>
+                            <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-xl font-bold">
+                                <span>New EXN Balance:</span>
+                                <span className="text-gold">{newExnBalance.toLocaleString()} EXN</span>
                             </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">This is a one-time conversion. Click below to confirm.</p>
+                        <p className="text-sm text-muted-foreground">This is a one-time conversion based on an account snapshot.</p>
                     </div>
                 );
             case OnboardingStage.LegacyBoosterReward:
                  return (
                     <div className="text-center animate-fade-in space-y-6">
-                        <h1 className="text-4xl font-bold text-foreground">A Gift For Your Support!</h1>
-                        <p className="text-xl text-muted-foreground">Thank you for being an early supporter.</p>
-                         <div className="py-8 flex flex-col items-center justify-center gap-4 w-full max-w-sm">
-                            <Star className="w-16 h-16 text-gold" />
-                            <p className="text-base text-muted-foreground">For your previous Booster Pack purchases, we're giving you a special EXN reward.</p>
-                            
-                            <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg">
-                                {Object.keys(LEGACY_BOOST_REWARDS).map((boostId) => {
-                                    const hasBoost = legacyBoosts.includes(boostId);
-                                    const reward = LEGACY_BOOST_REWARDS[boostId];
-                                    const packNumber = boostId.split('_')[1];
-                                    return (
-                                        <div key={boostId} className={cn("flex justify-between items-center text-sm", hasBoost ? "text-foreground" : "text-muted-foreground/50")}>
-                                            <span>Booster Pack {packNumber}</span>
-                                            <span className={cn(hasBoost ? "font-bold text-gold" : "line-through")}>
-                                                {reward.toLocaleString()} EXN
-                                            </span>
-                                        </div>
-                                    )
-                                })}
-                                <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-lg font-bold">
-                                    <span>Total Reward:</span>
-                                    <span className="text-gold">{totalLegacyReward.toLocaleString()} EXN</span>
-                                </div>
-                            </div>
-                            
+                         <div className="flex justify-center mb-8">
+                            <AnimatedLogo />
                         </div>
-                        <p className="text-sm text-muted-foreground">Click below to claim your bonus.</p>
+                        <h1 className="text-3xl font-bold text-foreground">A Gift For Your Support</h1>
+                        <p className="text-lg text-muted-foreground">As a thank you for your early booster pack purchases, we're giving you a special EXN reward.</p>
+                        
+                        <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg bg-card/80">
+                            {Object.keys(LEGACY_BOOST_REWARDS).map((boostId) => {
+                                const hasBoost = legacyBoosts.includes(boostId);
+                                const reward = LEGACY_BOOST_REWARDS[boostId];
+                                const packNumber = boostId.split('_')[1];
+                                return (
+                                    <div key={boostId} className={cn("flex justify-between items-center text-sm", hasBoost ? "text-foreground" : "text-muted-foreground/50")}>
+                                        <span>Booster Pack {packNumber}</span>
+                                        <span className={cn(hasBoost ? "font-bold text-gold" : "line-through")}>
+                                            {reward.toLocaleString()} EXN
+                                        </span>
+                                    </div>
+                                )
+                            })}
+                            <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-lg font-bold">
+                                <span>Total Bonus:</span>
+                                <span className="text-gold">{totalLegacyReward.toLocaleString()} EXN</span>
+                            </div>
+                        </div>
                     </div>
                 );
             case OnboardingStage.Welcome:
                 return (
                     <div className="text-center animate-fade-in space-y-6">
-                        <Avatar className="w-24 h-24 border-4 border-primary mx-auto">
-                            <AvatarImage src={user.photo_url} alt={user.first_name} />
-                            <AvatarFallback className="text-3xl">{getInitials(user)}</AvatarFallback>
-                        </Avatar>
-                        <h1 className="text-4xl font-bold text-foreground">Welcome to the Exnus Family!</h1>
+                        <div className="flex justify-center mb-8">
+                            <AnimatedLogo />
+                        </div>
+                        <h1 className="text-3xl font-bold text-foreground">Welcome to the Exnus Ecosystem</h1>
                         <p className="text-xl text-primary">{getGreeting()}, {user.first_name}!</p>
                         <p className="text-muted-foreground max-w-md mx-auto">
-                            We're thrilled to have you join our mission. Get ready to explore the ecosystem, earn tokens, and be a part of the future of decentralized engagement.
+                           You are now part of the future of decentralized engagement. Let's get you started.
                         </p>
                     </div>
                 );
             case OnboardingStage.HowItWorks:
                  return (
-                    <div className="text-center animate-fade-in space-y-6">
-                        <h1 className="text-4xl font-bold text-foreground">How It Works</h1>
-                        <p className="text-xl text-muted-foreground">Earning more is simple and rewarding.</p>
-                        <div className="text-left max-w-md mx-auto space-y-6 text-lg">
-                            <div className="flex items-start gap-4">
+                    <div className="text-center animate-fade-in space-y-8">
+                        <h1 className="text-3xl font-bold text-foreground">How to Earn EXN</h1>
+                        <p className="text-lg text-muted-foreground">Earning rewards is simple and engaging.</p>
+                        <div className="text-left max-w-md mx-auto space-y-6">
+                            <div className="flex items-start gap-4 p-4 rounded-lg bg-card/80">
                                 <Zap className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
-                                    <h3 className="font-bold text-foreground">Daily Tapping</h3>
-                                    <p className="text-muted-foreground text-base">Tap the button every day to earn tokens automatically.</p>
+                                    <h3 className="font-bold text-foreground">Daily Mining</h3>
+                                    <p className="text-muted-foreground text-base">Log in daily to mine EXN tokens automatically.</p>
                                 </div>
                             </div>
-                             <div className="flex items-start gap-4">
+                             <div className="flex items-start gap-4 p-4 rounded-lg bg-card/80">
                                 <Users className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-bold text-foreground">Social Tasks</h3>
-                                    <p className="text-muted-foreground text-base">Engage with our social media and complete tasks to earn bonus EXN.</p>
+                                    <p className="text-muted-foreground text-base">Complete simple tasks on our social platforms for bonus EXN.</p>
                                 </div>
                             </div>
-                             <div className="flex items-start gap-4">
+                             <div className="flex items-start gap-4 p-4 rounded-lg bg-card/80">
                                 <Gift className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
-                                    <h3 className="font-bold text-foreground">Refer Friends</h3>
-                                    <p className="text-muted-foreground text-base">Invite friends to join. You'll both earn extra when they sign up with your code.</p>
+                                    <h3 className="font-bold text-foreground">Referral Program</h3>
+                                    <p className="text-muted-foreground text-base">Invite friends to join. You'll both earn rewards when they sign up.</p>
                                 </div>
                             </div>
                         </div>
@@ -227,22 +217,18 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                 );
             case OnboardingStage.WelcomeTasks:
                  return (
-                    <div className="text-center animate-fade-in space-y-6">
-                        <h1 className="text-4xl font-bold text-foreground">One Last Thing...</h1>
-                        <p className="text-xl text-muted-foreground">Complete your Welcome Tasks to unlock your full potential!</p>
-                        <div className="text-left max-w-md mx-auto space-y-6 text-lg">
-                            <div className="flex items-start gap-4">
+                    <div className="text-center animate-fade-in space-y-8">
+                         <div className="flex justify-center mb-8">
+                            <AnimatedLogo />
+                        </div>
+                        <h1 className="text-3xl font-bold text-foreground">Your Final Step</h1>
+                        <p className="text-lg text-muted-foreground">Complete your Welcome Tasks to unlock daily mining and more rewards!</p>
+                        <div className="text-left max-w-md mx-auto space-y-6">
+                            <div className="flex items-start gap-4 p-4 rounded-lg bg-card/80">
                                 <UserCheck className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
-                                    <h3 className="font-bold text-foreground">Welcome Tasks</h3>
-                                    <p className="text-muted-foreground text-base">Complete a few simple social tasks to get another bonus and explore the app features.</p>
-                                </div>
-                            </div>
-                             <div className="flex items-start gap-4">
-                                <Award className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
-                                <div>
-                                    <h3 className="font-bold text-foreground">Achievements</h3>
-                                    <p className="text-muted-foreground text-base">Unlock achievements by using the app to earn even more rewards.</p>
+                                    <h3 className="font-bold text-foreground">Get Started</h3>
+                                    <p className="text-muted-foreground text-base">Finish a few simple social tasks to receive another bonus and start your journey.</p>
                                 </div>
                             </div>
                         </div>
@@ -255,16 +241,16 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
 
     const getButtonText = () => {
         switch (stage) {
-            case OnboardingStage.AccountConversion: return 'Confirm Conversion';
+            case OnboardingStage.AccountConversion: return 'Confirm & Continue';
             case OnboardingStage.LegacyBoosterReward: return totalLegacyReward > 0 ? 'Claim Reward' : 'Continue';
-            case OnboardingStage.HowItWorks: return isNewUser ? 'Continue' : 'Enter App';
-            case OnboardingStage.WelcomeTasks: return 'Enter App';
+            case OnboardingStage.HowItWorks: return isNewUser ? 'Next' : 'Enter App';
+            case OnboardingStage.WelcomeTasks: return 'Begin';
             default: return 'Continue';
         }
     }
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 animate-fade-in">
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-fade-in">
             <div className="flex-grow flex flex-col items-center justify-center w-full">
                 {renderStageContent()}
             </div>
