@@ -56,6 +56,13 @@ const faceDetectionFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      return {
+        isHuman: false,
+        reason: 'The AI model failed to analyze the image. This may be a temporary issue. Please try again.',
+        faceFingerprint: undefined,
+      };
+    }
+    return output;
   }
 );

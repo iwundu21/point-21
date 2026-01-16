@@ -73,7 +73,7 @@ const faceVerificationFlow = ai.defineFlow(
     
     // Step 3: Check if the current user is already verified to prevent re-verification.
     // Note: We check this after the duplicate check to catch users trying to verify with a face already used by another account.
-    const currentUserData = await getUserData(input.user);
+    const { userData: currentUserData } = await getUserData(input.user);
     if (currentUserData.verificationStatus === 'verified') {
         return {
             isHuman: true,
