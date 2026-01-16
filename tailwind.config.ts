@@ -10,9 +10,6 @@ export default {
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        'profile-bg': "url('/1.jpg')",
-      },
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],

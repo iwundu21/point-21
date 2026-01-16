@@ -384,7 +384,6 @@ initializeUser(user);
                                 onClick={handleDailyTap}
                             >
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                     <div className="absolute inset-0 bg-cover bg-center rounded-full" style={{ backgroundImage: `url('/5.jpg')` }}></div>
                                      <WaterWaveProgress progress={progress} />
                                 </div>
                                
