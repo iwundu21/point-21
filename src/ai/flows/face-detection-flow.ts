@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A face detection AI agent.
@@ -32,6 +33,7 @@ export async function detectHumanFace(input: DetectHumanFaceInput): Promise<Dete
 
 const prompt = ai.definePrompt({
   name: 'faceDetectionPrompt',
+  model: 'googleai/gemini-pro-vision',
   input: {schema: DetectHumanFaceInputSchema},
   output: {schema: DetectHumanFaceOutputSchema},
   prompt: `You are a system that determines if an image contains a real, live human face and creates a unique fingerprint for it. Your response must be in JSON format.
