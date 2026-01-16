@@ -324,7 +324,7 @@ initializeUser(user);
       );
   }
 
-  const prerequisitesMet = userData.verificationStatus === 'verified' && Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
+  const prerequisitesMet = Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
 
   const WaterWaveProgress = ({ progress }: { progress: number }) => {
     const waveHeight = `${100 - progress}%`;
@@ -414,7 +414,7 @@ initializeUser(user);
                          <div className="text-center p-4 rounded-full space-y-4">
                             <h2 className="text-xl font-bold">Unlock Daily Mining</h2>
                             <p className="text-muted-foreground text-sm">
-                                To unlock your daily mining rewards, you must complete all Welcome Tasks, redeem a referral code, and verify your account.
+                                To unlock your daily mining rewards, you must complete all Welcome Tasks and redeem a referral code.
                             </p>
                             <div className='flex flex-wrap gap-2 justify-center'>
                                 <Button onClick={() => router.push('/welcome-tasks')} variant='outline' size="sm">
@@ -424,10 +424,6 @@ initializeUser(user);
                                 <Button onClick={() => router.push('/referral')} variant='outline' size="sm">
                                     <Handshake className="w-4 h-4 mr-2" />
                                     Referral Code
-                                </Button>
-                                <Button onClick={() => router.push('/profile')} variant='outline' size="sm">
-                                    <UserCheck className="w-4 h-4 mr-2" />
-                                    Verify Account
                                 </Button>
                             </div>
                         </div>

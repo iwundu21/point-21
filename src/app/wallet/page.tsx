@@ -53,7 +53,6 @@ const EligibilitySquare = ({ title, isMet, icon }: { title: string; isMet: boole
 export default function WalletPage() {
   const [savedAddress, setSavedAddress] = useState('');
   const [manualAddress, setManualAddress] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [balance, setBalance] = useState(0);
@@ -109,7 +108,6 @@ export default function WalletPage() {
                 setSavedAddress(freshUserData.walletAddress);
                 setManualAddress(freshUserData.walletAddress);
             }
-            setIsVerified(freshUserData.verificationStatus === 'verified');
             setBalance(freshUserData.balance);
 
         } catch (error) {
@@ -312,9 +310,8 @@ export default function WalletPage() {
                         <CardDescription className="text-xs">Complete the following to secure your airdrop.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                       <div className="grid grid-cols-2 gap-3">
+                       <div className="grid grid-cols-3 gap-3">
                             <EligibilitySquare title="Wallet Submitted" isMet={!!savedAddress} icon={<WalletIcon className="w-8 h-8" />} />
-                            <EligibilitySquare title="Account Verified" isMet={isVerified} icon={<UserCheck className="w-8 h-8" />} />
                             <EligibilitySquare title="Welcome Tasks" isMet={Object.values(userData?.welcomeTasks || {}).every(Boolean)} icon={<Gift className="w-8 h-8" />} />
                             <EligibilitySquare title="Referral Applied" isMet={userData?.referralBonusApplied || false} icon={<Handshake className="w-8 h-8" />} />
                        </div>

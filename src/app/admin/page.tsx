@@ -347,7 +347,6 @@ const UserTable = ({
                     <TableHeader>
                         <TableRow>
                             <TableHead>User</TableHead>
-                            <TableHead>Photo</TableHead>
                             <TableHead>Wallet</TableHead>
                             <TableHead>Balance</TableHead>
                             <TableHead>Referrals</TableHead>
@@ -377,18 +376,6 @@ const UserTable = ({
                                             <p className="text-xs text-muted-foreground font-mono truncate max-w-[150px]">ID: {isBrowserUser ? user.id : user.telegramUser?.id}</p>
                                         </div>
                                     </div>
-                                </TableCell>
-                                <TableCell>
-                                    {user.faceVerificationUri ? (
-                                        <Avatar className="w-10 h-10 border">
-                                            <AvatarImage src={user.faceVerificationUri} />
-                                            <AvatarFallback><CameraOff className="w-4 h-4 text-muted-foreground" /></AvatarFallback>
-                                        </Avatar>
-                                    ) : (
-                                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-full">
-                                          <CameraOff className="w-5 h-5 text-muted-foreground" />
-                                        </div>
-                                    )}
                                 </TableCell>
                                 <TableCell>
                                     {user.walletAddress ? (
@@ -943,7 +930,6 @@ export default function AdminPage() {
                 walletAddress: user.walletAddress,
                 referrals: user.referrals,
                 referredBy: user.referredBy,
-                verificationStatus: user.verificationStatus,
                 status: user.status,
                 banReason: user.banReason || '',
                 referralCode: user.referralCode,

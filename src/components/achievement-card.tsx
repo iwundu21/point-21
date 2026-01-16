@@ -36,7 +36,6 @@ const AchievementCard: FC<AchievementCardProps> = ({ userData }) => {
   if (!userData) return null;
 
   const achievements = {
-    verified: userData.verificationStatus === 'verified',
     firstMining: (userData.miningActivationCount || 0) > 0,
     referredFriend: userData.referrals > 0,
     welcomeTasks: Object.values(userData.welcomeTasks || {}).every(Boolean),
@@ -52,8 +51,7 @@ const AchievementCard: FC<AchievementCardProps> = ({ userData }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="grid grid-cols-3 gap-3">
-          <AchievementSquare title="Verified" isAchieved={achievements.verified} icon={<ShieldCheck className="w-8 h-8"/>} />
+        <div className="grid grid-cols-2 gap-3">
           <AchievementSquare title="First Mining" isAchieved={achievements.firstMining} icon={<Zap className="w-8 h-8"/>} />
           <AchievementSquare title="Referred Friend" isAchieved={achievements.referredFriend} icon={<Handshake className="w-8 h-8"/>} />
           <AchievementSquare title="Community" isAchieved={achievements.welcomeTasks} icon={<UserCheck className="w-8 h-8"/>} />

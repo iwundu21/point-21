@@ -6,7 +6,7 @@ import type { TelegramUser } from './user-utils';
 import { format, isToday, isYesterday, differenceInCalendarDays } from 'date-fns';
 
 
-export type AchievementKey = 'verified' | 'firstMining' | 'referredFriend' | 'welcomeTasks' | 'socialTasks' | 'ref10' | 'ref30' | 'ref50' | 'ref100' | 'ref250' | 'ref500';
+export type AchievementKey = 'firstMining' | 'referredFriend' | 'welcomeTasks' | 'socialTasks' | 'ref10' | 'ref30' | 'ref50' | 'ref100' | 'ref250' | 'ref500';
 
 export interface UserData {
     id: string; // Document ID
@@ -16,9 +16,6 @@ export interface UserData {
     miningRate: number;
     dailyStreak: { count: number; lastLogin: string };
     lastTapTimestamp: number; // Unix timestamp in ms
-    verificationStatus: 'verified' | 'unverified' | 'failed' | 'detecting';
-    faceVerificationUri: string | null;
-    faceFingerprint: string | null; // Unique identifier for the face
     walletAddress: string | null;
     telegramUser: TelegramUser | null;
     customPhotoUrl: string | null; // For browser users' custom avatars
@@ -69,9 +66,6 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     miningRate: 0, // Obsolete
     dailyStreak: { count: 0, lastLogin: '' },
     lastTapTimestamp: 0,
-    verificationStatus: 'unverified',
-    faceVerificationUri: null,
-    faceFingerprint: null,
     walletAddress: null,
     telegramUser: user && typeof user.id === 'number' ? user as TelegramUser : null,
     customPhotoUrl: null,
@@ -346,17 +340,6 @@ export const findUserByReferralCode = async (code: string): Promise<UserData | n
 export const findUserByWalletAddress = async (address: string): Promise<UserData | null> => {
     if (!address) return null;
     const q = query(collection(db, 'users'), where('walletAddress', '==', address.trim()), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        return { ...defaultUserData(null), ...(userDoc.data() as UserData), id: userDoc.id };
-    }
-    return null;
-};
-
-export const findUserByFaceFingerprint = async (fingerprint: string): Promise<UserData | null> => {
-    if (!fingerprint) return null;
-    const q = query(collection(db, 'users'), where('faceFingerprint', '==', fingerprint), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
@@ -821,17 +804,6 @@ export const convertEPointsToExn = async (user: { id: number | string }): Promis
 export const getBalance = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.balance;
 export const getMiningEndTime = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.miningEndTime;
 export const getDailyStreak = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.dailyStreak;
-export const getVerificationStatus = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.verificationStatus;
-export const saveVerificationStatus = async (user: { id: number | string } | null, status: UserData['verificationStatus'], imageUri?: string | null, faceFingerprint?: string | null) => {
-    const data: Partial<UserData> = { verificationStatus: status };
-    if (status === 'verified') {
-        if (imageUri) data.faceVerificationUri = imageUri;
-        if (faceFingerprint) data.faceFingerprint = faceFingerprint;
-    }
-    if (user) {
-      await saveUserData(user, data);
-    }
-}
 export const getWalletAddress = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.walletAddress;
 export const saveWalletAddress = async (user: { id: number | string } | null, address: string) => {
     if (!user) return;

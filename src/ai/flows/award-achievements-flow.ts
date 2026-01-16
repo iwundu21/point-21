@@ -27,7 +27,6 @@ const AwardAchievementsOutputSchema = z.object({
 export type AwardAchievementsOutput = z.infer<typeof AwardAchievementsOutputSchema>;
 
 const ACHIEVEMENT_REWARDS: Record<AchievementKey, number> = {
-    verified: 100,
     firstMining: 100,
     referredFriend: 100,
     welcomeTasks: 100,
@@ -72,7 +71,6 @@ const awardAchievementsFlow = ai.defineFlow(
             const referrals = userData.referrals || 0;
             
             const achievements: Record<AchievementKey, boolean> = {
-                verified: userData.verificationStatus === 'verified',
                 firstMining: (userData.miningActivationCount || 0) > 0,
                 referredFriend: referrals > 0,
                 welcomeTasks: Object.values(userData.welcomeTasks || {}).every(Boolean),
