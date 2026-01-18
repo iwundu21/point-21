@@ -346,12 +346,13 @@ export default function WalletPage() {
       case 'show_allocation':
         const tgeAmount = allocationAmount * 0.5;
         const vestingAmount = allocationAmount * 0.5;
+        const monthlyVestAmount = vestingAmount / 8;
         return (
           <>
             <DialogHeader>
               <DialogTitle>Your Airdrop Allocation</DialogTitle>
               <DialogDescription>
-                Based on your current points, your total estimated airdrop allocation is <span className="font-bold text-primary">{allocationAmount.toFixed(8)} EXN</span>.
+                Based on your current points, your total estimated airdrop allocation is <span className="font-bold text-green-500">{allocationAmount.toFixed(8)} EXN</span>.
               </DialogDescription>
             </DialogHeader>
             <div className="my-4 space-y-4 text-sm">
@@ -368,6 +369,10 @@ export default function WalletPage() {
                         <span className="font-bold text-muted-foreground">{vestingAmount.toFixed(8)} EXN</span>
                     </div>
                      <p className="text-xs text-muted-foreground mt-1">This amount will be released linearly over a period of 8 months after TGE.</p>
+                    <div className="mt-2 pt-2 border-t border-primary/10 flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Monthly Claimable:</span>
+                        <span className="text-xs font-bold text-muted-foreground">{monthlyVestAmount.toFixed(8)} EXN</span>
+                    </div>
                 </div>
             </div>
             <DialogFooter>
