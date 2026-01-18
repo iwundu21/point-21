@@ -355,7 +355,11 @@ export default function WalletPage() {
                 <Card className="w-full bg-primary/5 border-primary/10">
                     <CardHeader className="p-4">
                         <CardTitle>Allocation Check</CardTitle>
-                        <CardDescription>Check your estimated EXN token allocation based on your current points.</CardDescription>
+                        <CardDescription>
+                            {isAllocationCheckEnabled
+                                ? "Checker is live! Please check your allocation."
+                                : "Check your estimated EXN token allocation based on your current points."}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                         {isAllocationCheckEnabled ? (
@@ -365,7 +369,7 @@ export default function WalletPage() {
                             </Button>
                         ) : (
                             <div className="text-center text-sm text-muted-foreground p-4 bg-muted/50 rounded-md">
-                                The allocation check is currently disabled. Please check back later.
+                                Coming soon
                             </div>
                         )}
                     </CardContent>
