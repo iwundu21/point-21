@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Copy, Upload } from 'lucide-react';
+import { Copy, Upload, ShieldCheck } from 'lucide-react';
 import { getUserData, UserData, saveUserPhotoUrl } from '@/lib/database';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
@@ -201,6 +201,18 @@ export default function ProfilePage({}: ProfilePageProps) {
                     </Card>
 
                     <Separator className="w-full max-w-sm" />
+
+                    <Card className="w-full max-w-sm glass-card">
+                        <CardContent className="flex items-center gap-4 p-4">
+                            <ShieldCheck className="w-10 h-10 text-primary flex-shrink-0" />
+                            <div className="space-y-1">
+                                <h3 className="font-semibold text-foreground">KYC Verification</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Coming soon. KYC (Know Your Customer) will be required for the TGE (Token Generation Event).
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
                     
                 </main>
                 )}
