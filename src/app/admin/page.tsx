@@ -865,12 +865,27 @@ export default function AdminPage() {
             let allUsersToExport: UserData[] = [];
             let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
 
+            // Fetch all users
             do {
                 const response = await getAllUsers(lastDoc, 1000);
                 allUsersToExport = allUsersToExport.concat(response.users);
                 lastDoc = response.lastVisible as QueryDocumentSnapshot<DocumentData> | undefined;
             } while (lastDoc);
 
+            // Fetch airdrop stats
+            const [totalPoints, airdropStats] = await Promise.all([
+                getTotalActivePoints(),
+                getAirdropStats(),
+            ]);
+            const totalAirdropPool = airdropStats.totalAirdrop;
+
+            if (totalPoints === 0) {
+                toast({ variant: 'destructive', title: 'Export Failed', description: 'Total points in the system is zero, cannot calculate allocation.' });
+                setIsExportingAirdrop(false);
+                return;
+            }
+
+            // Calculate allocation for each eligible user
             const airdropData = allUsersToExport
                 .filter(user => 
                     user.walletAddress && 
@@ -878,8 +893,9 @@ export default function AdminPage() {
                     user.status === 'active'
                 )
                 .map(user => {
+                    const allocation = (user.balance / totalPoints) * totalAirdropPool;
                     return {
-                        balance: user.balance,
+                        exn_allocation: allocation.toFixed(8), // Using a fixed number of decimals for precision
                         walletAddress: user.walletAddress
                     };
                 });
@@ -890,20 +906,21 @@ export default function AdminPage() {
                  return;
             }
             
+            // Export in chunks
             const CHUNK_SIZE = 60;
             for (let i = 0; i < airdropData.length; i += CHUNK_SIZE) {
                 const chunk = airdropData.slice(i, i + CHUNK_SIZE);
                 let csv = Papa.unparse(chunk);
-                const pageTotal = chunk.reduce((sum, user) => sum + user.balance, 0);
+                const pageTotal = chunk.reduce((sum, user) => sum + parseFloat(user.exn_allocation), 0);
 
                 // Append total in a new line
-                csv += `\n\nTotal Points for this page: ${pageTotal}`;
+                csv += `\n\nTotal EXN for this page: ${pageTotal.toFixed(8)}`;
 
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
                 link.setAttribute('href', url);
-                link.setAttribute('download', `airdrop_export_${Math.floor(i / CHUNK_SIZE) + 1}.csv`);
+                link.setAttribute('download', `exn_airdrop_export_${Math.floor(i / CHUNK_SIZE) + 1}.csv`);
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
