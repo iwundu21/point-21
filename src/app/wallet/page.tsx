@@ -206,14 +206,8 @@ export default function WalletPage() {
   const handleCheckAllocation = async () => {
     if (!user || !userData) return;
 
-    if (!savedAddress) {
-        setCommitMessage('You must submit a wallet address to be eligible.');
-        setAllocationDialogContent('error');
-        setIsAllocationDialogOpen(true);
-        return;
-    }
-    if ((userData.referrals || 0) < 2) {
-        setCommitMessage('You must refer at least 2 friends to be eligible.');
+    if (!savedAddress || (userData.referrals || 0) < 2) {
+        setCommitMessage('Sorry, you are not eligible for Exnus airdrop.');
         setAllocationDialogContent('error');
         setIsAllocationDialogOpen(true);
         return;
@@ -358,14 +352,14 @@ export default function WalletPage() {
             <DialogHeader>
               <DialogTitle>Your Airdrop Allocation</DialogTitle>
               <DialogDescription>
-                Based on your current points, your total airdrop allocation is <span className="font-bold text-green-500">{allocationAmount.toFixed(8)} EXN</span>.
+                Based on your current points, your total airdrop allocation is <span className="font-bold text-green-700 dark:text-green-400">{allocationAmount.toFixed(8)} EXN</span>.
               </DialogDescription>
             </DialogHeader>
             <div className="my-4 space-y-4 text-sm">
                 <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
                     <div className="flex justify-between items-center">
                         <span className="font-semibold text-foreground">Initial Claim at TGE (50%)</span>
-                        <span className="font-bold text-green-500">{tgeAmount.toFixed(8)} EXN</span>
+                        <span className="font-bold text-green-700 dark:text-green-400">{tgeAmount.toFixed(8)} EXN</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">This amount will be available to claim immediately at the Token Generation Event.</p>
                 </div>
