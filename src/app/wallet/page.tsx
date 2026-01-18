@@ -192,7 +192,7 @@ export default function WalletPage() {
     if (!savedAddress) {
         showDialog(
             'Not Eligible',
-            'Sorry, you are not eligible for the EXN airdrop allocation because a wallet address has not been submitted. Please save your wallet address to become eligible.'
+            'Sorry, you are not eligible for the EXN airdrop allocation because a wallet address has not been submitted.'
         );
         return;
     }
@@ -381,7 +381,7 @@ export default function WalletPage() {
                     <AlertBoxTitle className="text-destructive text-base">Important Notice</AlertBoxTitle>
                     <AlertBoxDescription>
                     Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
-                    </AlertBoxDescription>
+                    </AirdropDescription>
                 </Alert>
             </div>
           )}
