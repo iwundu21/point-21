@@ -113,10 +113,6 @@ export default function TasksPage() {
         if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id) || isAirdropEnded) return;
 
         setVerifyingTaskId(task.id);
-        
-        if (task.icon !== 'MessageCircle') {
-            window.open(task.link, '_blank');
-        }
 
         const completeTask = async () => {
              try {
@@ -170,7 +166,7 @@ export default function TasksPage() {
                  setVerifyingTaskId(null);
             }
         } else {
-             // For non-Telegram tasks or for browser users, use a simple timeout
+             // For non-Telegram tasks, comment tasks, or for browser users, use a simple timeout
             setTimeout(completeTask, 6000);
         }
     };
@@ -343,4 +339,5 @@ export default function TasksPage() {
     
 
     
+
 

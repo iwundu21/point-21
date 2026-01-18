@@ -23,6 +23,7 @@ interface TaskItemProps {
 
 const TaskItem = ({ icon, iconName, title, description, points, link, completed, isVerifying, onComplete }: TaskItemProps) => {
     const [commentLink, setCommentLink] = useState('');
+    const [isStarted, setIsStarted] = useState(false); // State to manage comment task flow
 
     const isCommentTask = iconName === 'MessageCircle';
 
@@ -30,8 +31,43 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
         if (!commentLink) return;
         onComplete();
     };
+    
+    const handleStartTask = () => {
+        window.open(link, '_blank');
+        if (isCommentTask) {
+            setIsStarted(true);
+        } else {
+            onComplete();
+        }
+    }
 
     if (isCommentTask && !completed) {
+        if (!isStarted) {
+            // Initial state: show "Go" button to redirect user
+            return (
+                <div className={cn("p-4 rounded-lg flex items-center space-x-4 transition-all", "bg-primary/5 border-primary/10")}>
+                    <div className={cn("w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center", "bg-primary/10 text-primary")}>
+                        <div className="w-6 h-6 flex items-center justify-center">{icon}</div>
+                    </div>
+                    <div className="flex-grow space-y-1">
+                        <h3 className="font-semibold">{title}</h3>
+                        <p className="text-xs text-muted-foreground">{description}</p>
+                        <p className="text-xs font-bold text-gold">+{points} Points</p>
+                    </div>
+                    <Button
+                        size="sm"
+                        variant={"default"}
+                        onClick={handleStartTask}
+                        disabled={completed || isVerifying}
+                        className="w-24"
+                    >
+                        Go
+                    </Button>
+                </div>
+            )
+        }
+        
+        // After starting: show input field for verification
         return (
             <div className={cn("p-4 rounded-lg flex flex-col sm:flex-row items-center sm:space-x-4 gap-4 transition-all", "bg-primary/5 border-primary/10")}>
                 <div className={cn("w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center", "bg-primary/10 text-primary")}>
@@ -42,7 +78,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
                         <div>
                             <h3 className="font-semibold">{title}</h3>
                             <p className="text-xs text-muted-foreground">
-                                {description} Visit the post <a href={link} target="_blank" rel="noopener noreferrer" className="text-primary underline font-semibold">here</a>.
+                                Paste the link to your comment below to verify.
                             </p>
                         </div>
                          <p className="text-xs font-bold text-gold whitespace-nowrap pl-2">+{points} Points</p>
@@ -87,7 +123,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
             <Button
                 size="sm"
                 variant={completed ? "ghost" : "default"}
-                onClick={onComplete}
+                onClick={handleStartTask}
                 disabled={completed || isVerifying}
                 className={cn(
                     "w-24",
@@ -114,4 +150,5 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
 export default TaskItem;
 
     
+
 
