@@ -195,6 +195,7 @@ export const getTotalActivePoints = async (): Promise<number> => {
 // --- Airdrop Stats Management ---
 const airdropStatsRef = doc(db, 'app-stats', 'airdrop-stats');
 const airdropStatusRef = doc(db, 'app-stats', 'airdrop-status');
+const allocationCheckStatusRef = doc(db, 'app-stats', 'allocation-check-status');
 
 export const getAirdropStatus = async (): Promise<{ isAirdropEnded: boolean }> => {
     const docSnap = await getDoc(airdropStatusRef);
@@ -206,6 +207,19 @@ export const getAirdropStatus = async (): Promise<{ isAirdropEnded: boolean }> =
 
 export const updateAirdropStatus = async (ended: boolean): Promise<{ success: boolean }> => {
     await setDoc(airdropStatusRef, { isAirdropEnded: ended, updatedAt: serverTimestamp() }, { merge: true });
+    return { success: true };
+}
+
+export const getAllocationCheckStatus = async (): Promise<{ isEnabled: boolean }> => {
+    const docSnap = await getDoc(allocationCheckStatusRef);
+    if (docSnap.exists()) {
+        return { isEnabled: docSnap.data().isEnabled || false };
+    }
+    return { isEnabled: false };
+}
+
+export const updateAllocationCheckStatus = async (enabled: boolean): Promise<{ success: boolean }> => {
+    await setDoc(allocationCheckStatusRef, { isEnabled: enabled, updatedAt: serverTimestamp() }, { merge: true });
     return { success: true };
 }
 
@@ -884,6 +898,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
 
 

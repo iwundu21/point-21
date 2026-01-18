@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -21,7 +22,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription as AlertBoxDescription, AlertTitle as AlertBoxTitle } from '@/components/ui/alert';
-import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData, getUserId } from '@/lib/database';
+import { getUserData, saveWalletAddress, findUserByWalletAddress, UserData, getUserId, getAllocationCheckStatus } from '@/lib/database';
+import { calculateAllocation } from '@/ai/flows/calculate-allocation-flow';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
@@ -60,6 +62,8 @@ export default function WalletPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAllocationCheckEnabled, setIsAllocationCheckEnabled] = useState(false);
+  const [isCheckingAllocation, setIsCheckingAllocation] = useState(false);
   
   const [alertDialog, setAlertDialog] = useState({ open: false, title: '', description: '' });
 
@@ -101,7 +105,10 @@ export default function WalletPage() {
     if (user) {
         setIsLoading(true);
         try {
-            const { userData: freshUserData } = await getUserData(user);
+            const [{ userData: freshUserData }, { isEnabled: allocationCheckIsEnabled }] = await Promise.all([
+                getUserData(user),
+                getAllocationCheckStatus()
+            ]);
 
             setUserData(freshUserData);
             if (freshUserData.walletAddress) {
@@ -109,6 +116,7 @@ export default function WalletPage() {
                 setManualAddress(freshUserData.walletAddress);
             }
             setBalance(freshUserData.balance);
+            setIsAllocationCheckEnabled(allocationCheckIsEnabled);
 
         } catch (error) {
             console.error("Failed to load user wallet data:", error);
@@ -175,6 +183,27 @@ export default function WalletPage() {
     } else {
         showDialog('Invalid Address', 'Please provide a wallet address.');
         setIsSaving(false);
+    }
+  };
+
+  const handleCheckAllocation = async () => {
+    if (!user) return;
+    setIsCheckingAllocation(true);
+    try {
+        const result = await calculateAllocation({ userId: getUserId(user) });
+        if (result.success && result.allocation !== undefined) {
+            showDialog(
+                'Your Estimated Allocation',
+                `Based on the current totals, your estimated airdrop allocation is approximately ${result.allocation.toFixed(2)} EXN. This is a dynamic estimate and will change.`,
+            );
+        } else {
+             showDialog('Error', result.reason || 'Could not calculate your allocation at this time.');
+        }
+    } catch (error) {
+        console.error("Allocation check failed:", error);
+        showDialog('Error', 'An unexpected error occurred.');
+    } finally {
+        setIsCheckingAllocation(false);
     }
   };
   
@@ -318,6 +347,27 @@ export default function WalletPage() {
                        <p className="text-xs text-muted-foreground mt-3 text-center">
                          Completing these tasks makes you eligible for the airdrop and unlocks daily tapping rewards.
                        </p>
+                    </CardContent>
+                </Card>
+                
+                <Separator />
+                
+                <Card className="w-full bg-primary/5 border-primary/10">
+                    <CardHeader className="p-4">
+                        <CardTitle>Allocation Check</CardTitle>
+                        <CardDescription>Check your estimated EXN token allocation based on your current points.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        {isAllocationCheckEnabled ? (
+                            <Button onClick={handleCheckAllocation} disabled={isCheckingAllocation} className="w-full">
+                                {isCheckingAllocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Coins className="mr-2 h-4 w-4" />}
+                                {isCheckingAllocation ? 'Calculating...' : 'Check Your Allocation'}
+                            </Button>
+                        ) : (
+                            <div className="text-center text-sm text-muted-foreground p-4 bg-muted/50 rounded-md">
+                                The allocation check is currently disabled. Please check back later.
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

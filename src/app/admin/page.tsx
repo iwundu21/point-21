@@ -4,8 +4,9 @@
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff, PlayCircle, Gift } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus, grantMassBonusToAllUsers } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus, grantMassBonusToAllUsers, getAllocationCheckStatus } from '@/lib/database';
 import { toggleAirdrop } from '@/ai/flows/toggle-airdrop-flow';
+import { toggleAllocationCheck } from '@/ai/flows/toggle-allocation-check-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -566,6 +567,8 @@ export default function AdminPage() {
     const [isAirdropEnded, setIsAirdropEnded] = useState(false);
     const [isTogglingAirdrop, setIsTogglingAirdrop] = useState(false);
     const [isApplyingMassBonus, setIsApplyingMassBonus] = useState(false);
+    const [isAllocationCheckEnabled, setIsAllocationCheckEnabled] = useState(false);
+    const [isTogglingAllocationCheck, setIsTogglingAllocationCheck] = useState(false);
     
     const { toast } = useToast();
 
@@ -573,7 +576,7 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStatus] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStatus, allocationCheckStatus] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
@@ -581,6 +584,7 @@ export default function AdminPage() {
                 getTotalBrowserUsersCount(),
                 getTotalActivePoints(),
                 getAirdropStatus(),
+                getAllocationCheckStatus(),
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -599,6 +603,7 @@ export default function AdminPage() {
             setLastVisible(usersResponse.lastVisible);
             setTotalPoints(totalActivePoints);
             setIsAirdropEnded(airdropStatus.isAirdropEnded);
+            setIsAllocationCheckEnabled(allocationCheckStatus.isEnabled);
 
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -990,6 +995,26 @@ export default function AdminPage() {
             setIsTogglingAirdrop(false);
         }
     };
+
+    const handleToggleAllocationCheck = async () => {
+        setIsTogglingAllocationCheck(true);
+        const newState = !isAllocationCheckEnabled;
+    
+        try {
+            const result = await toggleAllocationCheck({ enabled: newState });
+            if (result.success) {
+                toast({ title: `Allocation Check ${newState ? 'Enabled' : 'Disabled'}`, description: `Users can ${newState ? 'now' : 'no longer'} check their airdrop allocation.` });
+                setIsAllocationCheckEnabled(newState);
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not toggle the allocation check status.' });
+            }
+        } catch (error) {
+            console.error("Failed to toggle allocation check:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsTogglingAllocationCheck(false);
+        }
+    };
     
     const handleApplyMassBonus = async () => {
         setIsApplyingMassBonus(true);
@@ -1214,6 +1239,32 @@ export default function AdminPage() {
                                     </AlertDialog>
                                     <p className="text-sm text-muted-foreground">
                                         {isAirdropEnded ? "Reward earning is currently disabled." : "Reward earning is currently active."}
+                                    </p>
+                                    <Separator orientation="vertical" className="h-10 hidden sm:block bg-border" />
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant={isAllocationCheckEnabled ? 'destructive' : 'default'} disabled={isTogglingAllocationCheck}>
+                                                {isTogglingAllocationCheck ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : (isAllocationCheckEnabled ? <PowerOff className="mr-2 h-4 w-4"/> : <PlayCircle className="mr-2 h-4 w-4"/>)}
+                                                {isAllocationCheckEnabled ? 'Disable Allocation Check' : 'Enable Allocation Check'}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will {isAllocationCheckEnabled ? 'disable' : 'enable'} the allocation check feature for all users.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleToggleAllocationCheck} className={cn(buttonVariants({variant: isAllocationCheckEnabled ? 'destructive' : 'default'}))}>
+                                                    Confirm
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                    <p className="text-sm text-muted-foreground">
+                                        {isAllocationCheckEnabled ? "Allocation check is enabled." : "Allocation check is disabled."}
                                     </p>
                                     <Separator orientation="vertical" className="h-10 hidden sm:block bg-border" />
                                     <AlertDialog>
