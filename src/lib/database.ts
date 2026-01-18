@@ -693,30 +693,48 @@ export const unbanAllUsers = async (): Promise<number> => {
 
 export const grantMassBonusToAllUsers = async (): Promise<number> => {
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('hasReceivedMassBonus', '!=', true));
-    
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-        return 0;
-    }
-    
     let updatedCount = 0;
-    const chunks = [];
-    for (let i = 0; i < querySnapshot.docs.length; i += 500) {
-        chunks.push(querySnapshot.docs.slice(i, i + 500));
-    }
+    let lastDoc: QueryDocumentSnapshot | undefined = undefined;
+    const BATCH_SIZE = 500;
 
-    for (const chunk of chunks) {
+    while (true) {
+        let q;
+        if (lastDoc) {
+            q = query(usersRef, orderBy('__name__'), startAfter(lastDoc), limit(BATCH_SIZE));
+        } else {
+            q = query(usersRef, orderBy('__name__'), limit(BATCH_SIZE));
+        }
+
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            break; // No more users
+        }
+
         const batch = writeBatch(db);
-        chunk.forEach((docSnap) => {
-            const userRef = doc(db, 'users', docSnap.id);
-            const currentBalance = docSnap.data().balance || 0;
-            const newBalance = currentBalance + 40000;
-            batch.update(userRef, { balance: newBalance, hasReceivedMassBonus: true });
+        let docsInBatch = 0;
+
+        querySnapshot.forEach((docSnap) => {
+            const userData = docSnap.data() as UserData;
+            if (userData.hasReceivedMassBonus !== true) {
+                const userRef = doc(db, 'users', docSnap.id);
+                const currentBalance = userData.balance || 0;
+                const newBalance = currentBalance + 40000;
+                batch.update(userRef, { balance: newBalance, hasReceivedMassBonus: true });
+                docsInBatch++;
+            }
         });
-        await batch.commit();
-        updatedCount += chunk.length;
+
+        if (docsInBatch > 0) {
+            await batch.commit();
+            updatedCount += docsInBatch;
+        }
+
+        if (querySnapshot.docs.length < BATCH_SIZE) {
+            break; // Last page
+        }
+
+        lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
     }
 
     return updatedCount;
@@ -866,5 +884,6 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
 
