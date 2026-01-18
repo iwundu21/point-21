@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -132,10 +130,6 @@ export default function LeaderboardPage() {
         <main className="flex-grow flex flex-col p-4 mt-8 relative">
             <div className="w-full max-w-sm mx-auto space-y-6">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Trophy className="w-8 h-8 text-primary" />
-                        Leaderboard
-                    </h1>
                      <div className="text-xs text-muted-foreground flex items-center justify-center gap-4 mt-2">
                         {totalTelegramUsers > 0 && (
                             <span className="flex items-center gap-1.5"><Bot className="w-4 h-4" /> {totalTelegramUsers.toLocaleString()} Telegram Users</span>
@@ -245,6 +239,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-    
-
