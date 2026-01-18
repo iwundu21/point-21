@@ -3,8 +3,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff, PlayCircle } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff, PlayCircle, Gift } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus, grantBonusToLowBalanceUsers } from '@/lib/database';
 import { toggleAirdrop } from '@/ai/flows/toggle-airdrop-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -51,6 +51,7 @@ import Papa from 'papaparse';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { getInitials, getDisplayName } from '@/lib/user-utils';
 import LoadingDots from '@/components/loading-dots';
+import { Separator } from '@/components/ui/separator';
 
 
 // NOTE: Add your Telegram user ID here for admin access
@@ -564,6 +565,7 @@ export default function AdminPage() {
     const [isDeletingAllTasks, setIsDeletingAllTasks] = useState(false);
     const [isAirdropEnded, setIsAirdropEnded] = useState(false);
     const [isTogglingAirdrop, setIsTogglingAirdrop] = useState(false);
+    const [isApplyingMassBonus, setIsApplyingMassBonus] = useState(false);
     
     const { toast } = useToast();
 
@@ -988,6 +990,21 @@ export default function AdminPage() {
             setIsTogglingAirdrop(false);
         }
     };
+    
+    const handleApplyMassBonus = async () => {
+        setIsApplyingMassBonus(true);
+        try {
+            const count = await grantBonusToLowBalanceUsers();
+            toast({ title: 'Bonus Awarded', description: `${count} users with a balance under 30,000 have received 40,000 Points.` });
+            fetchInitialData(); // Refresh user list
+        } catch (error) {
+            console.error("Failed to grant mass bonus:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not grant the mass bonus.' });
+        } finally {
+            setIsApplyingMassBonus(false);
+        }
+    };
+
 
     if (!isAdmin && !codeAuthenticated) {
         return (
@@ -1172,7 +1189,7 @@ export default function AdminPage() {
                                 <CardTitle>System Controls</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                                <div className="flex flex-col sm:flex-row gap-4 items-center flex-wrap">
                                      <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant={isAirdropEnded ? 'default' : 'destructive'} disabled={isTogglingAirdrop}>
@@ -1197,6 +1214,32 @@ export default function AdminPage() {
                                     </AlertDialog>
                                     <p className="text-sm text-muted-foreground">
                                         {isAirdropEnded ? "Reward earning is currently disabled." : "Reward earning is currently active."}
+                                    </p>
+                                    <Separator orientation="vertical" className="h-10 hidden sm:block bg-border" />
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" disabled={isApplyingMassBonus}>
+                                                {isApplyingMassBonus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gift className="mr-2 h-4 w-4" />}
+                                                Award Low-Balance Bonus
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will grant 40,000 Points to all users with a current balance under 30,000. This is a one-time, irreversible action.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleApplyMassBonus} className={cn(buttonVariants({variant: 'destructive'}))}>
+                                                    Confirm & Award
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                     <p className="text-sm text-muted-foreground">
+                                        One-time bonus for users with &lt; 30k Points.
                                     </p>
                                 </div>
                             </CardContent>

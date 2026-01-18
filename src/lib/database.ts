@@ -48,6 +48,7 @@ export interface UserData {
     claimedLegacyBoosts?: boolean; // New flag for the legacy boost rewards
     hasConvertedToExn?: boolean;
     hasReceivedLowBalanceBonus?: boolean; // Flag for the one-time low balance bonus
+    hasReceivedMassBonus?: boolean;
 }
 
 const generateReferralCode = () => {
@@ -96,6 +97,7 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     claimedBoostReward: false,
     claimedLegacyBoosts: false,
     hasReceivedLowBalanceBonus: true, // Default to true for new users
+    hasReceivedMassBonus: false,
 });
 
 // --- User Count Management ---
@@ -689,6 +691,38 @@ export const unbanAllUsers = async (): Promise<number> => {
     return querySnapshot.size;
 }
 
+export const grantBonusToLowBalanceUsers = async (): Promise<number> => {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('balance', '<', 30000), where('hasReceivedMassBonus', '!=', true));
+    
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        return 0;
+    }
+    
+    let updatedCount = 0;
+    const chunks = [];
+    for (let i = 0; i < querySnapshot.docs.length; i += 500) {
+        chunks.push(querySnapshot.docs.slice(i, i + 500));
+    }
+
+    for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach((docSnap) => {
+            const userRef = doc(db, 'users', docSnap.id);
+            const currentBalance = docSnap.data().balance || 0;
+            const newBalance = currentBalance + 40000;
+            batch.update(userRef, { balance: newBalance, hasReceivedMassBonus: true });
+        });
+        await batch.commit();
+        updatedCount += chunk.length;
+    }
+
+    return updatedCount;
+};
+
+
 export const claimDailyMiningReward = async (userId: string): Promise<{ success: boolean, newBalance?: number }> => {
     const { isAirdropEnded } = await getAirdropStatus();
     if (isAirdropEnded) return { success: false }; // No rewards if airdrop is over
@@ -832,3 +866,4 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
