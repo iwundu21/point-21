@@ -80,7 +80,6 @@ const Footer = () => {
     { href: '/tasks', label: 'Social', icon: Users, badge: availableTaskCount },
     { href: '/welcome-tasks', label: 'Welcome', icon: Gift },
     { href: '/referral', label: 'Ref', icon: Handshake },
-    { href: '/achievements', label: 'Achieve', icon: Award },
     { href: '/leaderboard', label: 'Leader', icon: Trophy },
     { href: '/wallet', label: 'Airdrop', icon: Coins },
     { href: '/profile', label: 'Profile', icon: User },
