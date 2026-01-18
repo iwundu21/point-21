@@ -3,7 +3,7 @@
 import { db } from './firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, runTransaction, startAfter, QueryDocumentSnapshot, DocumentData, deleteDoc, addDoc, serverTimestamp, increment,getCountFromServer, writeBatch, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { TelegramUser } from './user-utils';
-import { format, isToday, isYesterday, differenceInCalendarDays } from 'date-fns';
+import { format, isToday, isYesterday, differenceInCalendarDays, formatDistanceToNow } from 'date-fns';
 
 
 export type AchievementKey = 'firstMining' | 'referredFriend' | 'welcomeTasks' | 'socialTasks' | 'ref10' | 'ref30' | 'ref50' | 'ref100' | 'ref250' | 'ref500';
@@ -49,6 +49,8 @@ export interface UserData {
     hasConvertedToExn?: boolean;
     hasReceivedLowBalanceBonus?: boolean; // Flag for the one-time low balance bonus
     hasReceivedMassBonus?: boolean;
+    airdropCommitted?: boolean;
+    airdropCommitTimestamp?: string;
 }
 
 const generateReferralCode = () => {
@@ -98,6 +100,8 @@ const defaultUserData = (user: TelegramUser | null): Omit<UserData, 'id'> => ({
     claimedLegacyBoosts: false,
     hasReceivedLowBalanceBonus: true, // Default to true for new users
     hasReceivedMassBonus: false,
+    airdropCommitted: false,
+    airdropCommitTimestamp: '',
 });
 
 // --- User Count Management ---
@@ -235,6 +239,23 @@ export const getAirdropStats = async (): Promise<{ totalAirdrop: number }> => {
 
 export const updateAirdropStats = async (newTotal: number) => {
     await setDoc(airdropStatsRef, { totalAirdrop: newTotal });
+};
+
+// --- Airdrop Commit Deadline Management ---
+const airdropDeadlineRef = doc(db, 'app-stats', 'airdrop-deadline');
+
+export const getAirdropCommitDeadline = async (): Promise<{ deadline: string | null }> => {
+    const docSnap = await getDoc(airdropDeadlineRef);
+    if (docSnap.exists() && docSnap.data().deadline) {
+        return { deadline: docSnap.data().deadline };
+    }
+    return { deadline: null };
+};
+
+export const updateAirdropCommitDeadline = async (deadline: Date | null): Promise<{ success: boolean }> => {
+    const deadlineString = deadline ? deadline.toISOString() : null;
+    await setDoc(airdropDeadlineRef, { deadline: deadlineString, updatedAt: serverTimestamp() }, { merge: true });
+    return { success: true };
 };
 
 
@@ -898,3 +919,4 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+

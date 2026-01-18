@@ -3,8 +3,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
-import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff, PlayCircle, Gift } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus, grantMassBonusToAllUsers, getAllocationCheckStatus } from '@/lib/database';
+import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff, PlayCircle, Gift, Calendar, Clock } from 'lucide-react';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus, grantMassBonusToAllUsers, getAllocationCheckStatus, getAirdropCommitDeadline, updateAirdropCommitDeadline } from '@/lib/database';
 import { toggleAirdrop } from '@/ai/flows/toggle-airdrop-flow';
 import { toggleAllocationCheck } from '@/ai/flows/toggle-allocation-check-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -53,6 +53,9 @@ import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { getInitials, getDisplayName } from '@/lib/user-utils';
 import LoadingDots from '@/components/loading-dots';
 import { Separator } from '@/components/ui/separator';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { format, formatDistanceToNow } from 'date-fns';
 
 
 // NOTE: Add your Telegram user ID here for admin access
@@ -544,6 +547,99 @@ const EditAirdropDialog = ({ currentTotal, onAirdropUpdated }: { currentTotal: n
     )
 }
 
+const EditAirdropDeadlineDialog = ({ currentDeadline, onDeadlineUpdated }: { currentDeadline: Date | null, onDeadlineUpdated: (newDeadline: Date | null) => void }) => {
+    const [date, setDate] = useState<Date | undefined>(currentDeadline || undefined);
+    const [time, setTime] = useState(currentDeadline ? format(currentDeadline, 'HH:mm') : '23:59');
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        if (!date) {
+            toast({ variant: 'destructive', title: 'Invalid Date', description: 'Please select a date.' });
+            return;
+        }
+
+        const [hours, minutes] = time.split(':').map(Number);
+        const newDeadline = new Date(date);
+        newDeadline.setHours(hours, minutes, 0, 0);
+
+        setIsSaving(true);
+        try {
+            await updateAirdropCommitDeadline(newDeadline);
+            onDeadlineUpdated(newDeadline);
+            toast({ title: 'Deadline Updated', description: `Airdrop commit deadline set to ${format(newDeadline, "PPPp")}` });
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Failed to update deadline:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update the deadline.' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    const handleClear = async () => {
+        setIsSaving(true);
+        try {
+            await updateAirdropCommitDeadline(null);
+            onDeadlineUpdated(null);
+            toast({ title: 'Deadline Cleared', description: 'The airdrop commit deadline has been removed.' });
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Failed to clear deadline:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not clear the deadline.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                    <Pencil className="mr-2 h-3 w-3" /> Edit Deadline
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Set Commitment Deadline</DialogTitle>
+                    <DialogDescription>
+                        Set the date and time when users can no longer commit their airdrop.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4 justify-center">
+                    <DayPicker
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        className="rounded-md border"
+                    />
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="time" className="text-right">Time (UTC)</Label>
+                        <Input
+                            id="time"
+                            type="time"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                            className="col-span-3"
+                        />
+                    </div>
+                </div>
+                <DialogFooter className="sm:justify-between">
+                    <Button type="button" variant="destructive" onClick={handleClear} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Clear Deadline
+                    </Button>
+                    <Button type="submit" onClick={handleSubmit} disabled={isSaving || !date}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Deadline
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 
 export default function AdminPage() {
     const [allUsers, setAllUsers] = useState<UserData[]>([]);
@@ -574,6 +670,8 @@ export default function AdminPage() {
     const [isAllocationCheckEnabled, setIsAllocationCheckEnabled] = useState(false);
     const [isTogglingAllocationCheck, setIsTogglingAllocationCheck] = useState(false);
     const [airdropTotal, setAirdropTotal] = useState(0);
+    const [airdropCommitDeadline, setAirdropCommitDeadline] = useState<Date | null>(null);
+    const [deadlineCountdown, setDeadlineCountdown] = useState('');
     
     const { toast } = useToast();
 
@@ -581,7 +679,7 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStatus, allocationCheckStatus, airdropStats] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStatus, allocationCheckStatus, airdropStats, deadlineData] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
@@ -591,6 +689,7 @@ export default function AdminPage() {
                 getAirdropStatus(),
                 getAllocationCheckStatus(),
                 getAirdropStats(),
+                getAirdropCommitDeadline(),
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -611,6 +710,7 @@ export default function AdminPage() {
             setIsAirdropEnded(airdropStatus.isAirdropEnded);
             setIsAllocationCheckEnabled(allocationCheckStatus.isEnabled);
             setAirdropTotal(airdropStats.totalAirdrop);
+            setAirdropCommitDeadline(deadlineData.deadline ? new Date(deadlineData.deadline) : null);
 
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -665,6 +765,26 @@ export default function AdminPage() {
         setIsLoading(false);
       }
     }, [isAdmin, codeAuthenticated]);
+
+    useEffect(() => {
+        if (!airdropCommitDeadline) {
+            setDeadlineCountdown('Not set');
+            return;
+        }
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            if (now > airdropCommitDeadline) {
+                setDeadlineCountdown('Deadline Passed');
+                clearInterval(interval);
+                return;
+            }
+            const distance = formatDistanceToNow(airdropCommitDeadline, { addSuffix: true });
+            setDeadlineCountdown(distance);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [airdropCommitDeadline]);
 
     const handleSearch = async (term: string) => {
         setSearchTerm(term);
@@ -890,7 +1010,8 @@ export default function AdminPage() {
                 .filter(user => 
                     user.walletAddress && 
                     isValidSolanaAddress(user.walletAddress) &&
-                    user.status === 'active'
+                    user.status === 'active' &&
+                    user.airdropCommitted === true
                 )
                 .map(user => {
                     const allocation = (user.balance / totalPoints) * totalAirdropPool;
@@ -901,7 +1022,7 @@ export default function AdminPage() {
                 });
             
             if (airdropData.length === 0) {
-                 toast({ variant: 'destructive', title: 'No Eligible Users', description: 'No active users with a valid wallet were found.' });
+                 toast({ variant: 'destructive', title: 'No Eligible Users', description: 'No committed users with a valid wallet were found.' });
                  setIsExportingAirdrop(false);
                  return;
             }
@@ -918,7 +1039,7 @@ export default function AdminPage() {
             link.click();
             document.body.removeChild(link);
 
-            toast({ title: 'Export Complete!', description: `${airdropData.length} eligible users have been exported in a single file.` });
+            toast({ title: 'Export Complete!', description: `${airdropData.length} committed users have been exported in a single file.` });
 
         } catch (error) {
             console.error("Failed to export airdrop data:", error);
@@ -955,6 +1076,8 @@ export default function AdminPage() {
                 status: user.status,
                 banReason: user.banReason || '',
                 referralCode: user.referralCode,
+                airdropCommitted: user.airdropCommitted || false,
+                airdropCommitTimestamp: user.airdropCommitTimestamp || '',
             }));
 
             const csv = Papa.unparse(userData);
@@ -1080,7 +1203,7 @@ export default function AdminPage() {
       <main className="flex-grow flex flex-col p-4 mt-8 relative">
         {isLoading ? (
              <div className="flex justify-center items-center h-64">
-                <LoadingDots />
+                <LoadingDots text="Loading Admin Data"/>
             </div>
         ) : (
         <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -1312,29 +1435,48 @@ export default function AdminPage() {
                         </Card>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <CardTitle>Airdrop Management</CardTitle>
-                            <EditAirdropDialog currentTotal={airdropTotal} onAirdropUpdated={setAirdropTotal} />
-                        </div>
-                        <CardDescription>
-                            Configure the total airdrop pool for participants.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Total Airdrop Pool</p>
-                                <p className="font-bold text-2xl text-gold">{airdropTotal.toLocaleString()} EXN</p>
+                 <div className="grid gap-6 lg:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <CardTitle>Airdrop Management</CardTitle>
+                                <EditAirdropDialog currentTotal={airdropTotal} onAirdropUpdated={setAirdropTotal} />
                             </div>
-                            <Gift className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            This is the total amount of EXN that will be proportionally distributed among all eligible participants at the time of the airdrop, based on their Points balance.
-                        </p>
-                    </CardContent>
-                </Card>
+                            <CardDescription>
+                                Configure the total airdrop pool for participants.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Total Airdrop Pool</p>
+                                    <p className="font-bold text-2xl text-gold">{airdropTotal.toLocaleString()} EXN</p>
+                                </div>
+                                <Gift className="w-8 h-8 text-primary" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <CardTitle>Airdrop Commitment Deadline</CardTitle>
+                                <EditAirdropDeadlineDialog currentDeadline={airdropCommitDeadline} onDeadlineUpdated={setAirdropCommitDeadline} />
+                            </div>
+                            <CardDescription>
+                                Set the final date for users to commit their airdrop.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Time Remaining</p>
+                                    <p className="font-bold text-2xl text-primary">{deadlineCountdown}</p>
+                                </div>
+                                <Clock className="w-8 h-8 text-primary" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
 
@@ -1344,7 +1486,7 @@ export default function AdminPage() {
                 <CardDescription>
                     {searchTerm.trim() 
                         ? `Displaying ${usersToDisplay.length} search results.` 
-                        : `Search, manage, and export user data. The airdrop export includes all active users with a valid wallet. Displaying ${allUsers.length} of ${totalUserCount} users.`}
+                        : `Search, manage, and export user data. The airdrop export includes all active, committed users with a valid wallet. Displaying ${allUsers.length} of ${totalUserCount} users.`}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1460,3 +1602,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

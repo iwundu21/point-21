@@ -7,3 +7,5 @@ import './flows/onboarding-flow';
 import './flows/toggle-airdrop-flow';
 import './flows/calculate-allocation-flow';
 import './flows/toggle-allocation-check-flow';
+import './flows/commit-airdrop-flow';
+
