@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -377,7 +376,6 @@ export default function WalletPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAllocationDialogOpen(false)}>Cancel</Button>
               <Button onClick={handleCommit} disabled={!commitWalletInput.trim()}>
-                <Send className="mr-2 h-4 w-4" />
                 Commit
               </Button>
             </DialogFooter>
