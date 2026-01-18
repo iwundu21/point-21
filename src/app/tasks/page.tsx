@@ -113,7 +113,10 @@ export default function TasksPage() {
         if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id) || isAirdropEnded) return;
 
         setVerifyingTaskId(task.id);
-        window.open(task.link, '_blank');
+        
+        if (task.icon !== 'MessageCircle') {
+            window.open(task.link, '_blank');
+        }
 
         const completeTask = async () => {
              try {
@@ -160,7 +163,7 @@ export default function TasksPage() {
                         showDialog("Verification Failed", result.error || "You must join the channel first.");
                         setVerifyingTaskId(null);
                     }
-                }, 8000); // 8-second delay
+                }, 6000); // 6-second delay
             } catch (e) {
                  console.error(e);
                  showDialog("Error", "Could not verify task completion.");
@@ -168,7 +171,7 @@ export default function TasksPage() {
             }
         } else {
              // For non-Telegram tasks or for browser users, use a simple timeout
-            setTimeout(completeTask, 8000);
+            setTimeout(completeTask, 6000);
         }
     };
     
@@ -232,6 +235,7 @@ export default function TasksPage() {
                             <TaskItem
                                 key={task.id}
                                 icon={renderIcon(task.icon, "w-6 h-6")}
+                                iconName={task.icon}
                                 title={task.title}
                                 description={task.description}
                                 points={task.points}
@@ -276,6 +280,7 @@ export default function TasksPage() {
                           <TaskItem
                               key={task.id}
                               icon={renderIcon(task.icon, "w-6 h-6")}
+                              iconName={task.icon}
                               title={task.title}
                               description={task.description}
                               points={task.points}
@@ -338,3 +343,4 @@ export default function TasksPage() {
     
 
     
+

@@ -1,14 +1,17 @@
 
+
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Button } from './ui/button';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LoadingDots from './loading-dots';
+import { Input } from './ui/input';
 
 interface TaskItemProps {
     icon: ReactNode;
+    iconName: string;
     title: string;
     description: string;
     points: number;
@@ -18,7 +21,53 @@ interface TaskItemProps {
     onComplete: () => void;
 }
 
-const TaskItem = ({ icon, title, description, points, link, completed, isVerifying, onComplete }: TaskItemProps) => {
+const TaskItem = ({ icon, iconName, title, description, points, link, completed, isVerifying, onComplete }: TaskItemProps) => {
+    const [commentLink, setCommentLink] = useState('');
+
+    const isCommentTask = iconName === 'MessageCircle';
+
+    const handleVerify = () => {
+        if (!commentLink) return;
+        onComplete();
+    };
+
+    if (isCommentTask && !completed) {
+        return (
+            <div className={cn("p-4 rounded-lg flex flex-col sm:flex-row items-center sm:space-x-4 gap-4 transition-all", "bg-primary/5 border-primary/10")}>
+                <div className={cn("w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center", "bg-primary/10 text-primary")}>
+                    <div className="w-6 h-6 flex items-center justify-center">{icon}</div>
+                </div>
+                <div className="flex-grow space-y-2 w-full">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3 className="font-semibold">{title}</h3>
+                            <p className="text-xs text-muted-foreground">
+                                {description} Visit the post <a href={link} target="_blank" rel="noopener noreferrer" className="text-primary underline font-semibold">here</a>.
+                            </p>
+                        </div>
+                         <p className="text-xs font-bold text-gold whitespace-nowrap pl-2">+{points} Points</p>
+                    </div>
+                    <div className="flex w-full items-center space-x-2">
+                        <Input
+                            placeholder="Paste your comment link here..."
+                            value={commentLink}
+                            onChange={(e) => setCommentLink(e.target.value)}
+                            disabled={isVerifying}
+                        />
+                        <Button
+                            size="sm"
+                            onClick={handleVerify}
+                            disabled={isVerifying || !commentLink}
+                            className="w-24 shrink-0"
+                        >
+                            {isVerifying ? <LoadingDots /> : 'Verify'}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={cn(
             "p-4 rounded-lg flex items-center space-x-4 transition-all",
@@ -65,3 +114,4 @@ const TaskItem = ({ icon, title, description, points, link, completed, isVerifyi
 export default TaskItem;
 
     
+
