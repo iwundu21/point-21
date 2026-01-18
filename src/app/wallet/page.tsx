@@ -344,14 +344,32 @@ export default function WalletPage() {
   const renderAllocationDialogContent = () => {
     switch (allocationDialogContent) {
       case 'show_allocation':
+        const tgeAmount = allocationAmount * 0.5;
+        const vestingAmount = allocationAmount * 0.5;
         return (
           <>
             <DialogHeader>
               <DialogTitle>Your Airdrop Allocation</DialogTitle>
               <DialogDescription>
-                Your calculated airdrop allocation is <span className="font-bold text-green-700">{allocationAmount.toFixed(8)} EXN</span>.
+                Based on your current points, your total estimated airdrop allocation is <span className="font-bold text-primary">{allocationAmount.toFixed(8)} EXN</span>.
               </DialogDescription>
             </DialogHeader>
+            <div className="my-4 space-y-4 text-sm">
+                <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex justify-between items-center">
+                        <span className="font-semibold text-foreground">Initial Claim at TGE (50%)</span>
+                        <span className="font-bold text-green-500">{tgeAmount.toFixed(8)} EXN</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">This amount will be available to claim immediately at the Token Generation Event.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex justify-between items-center">
+                        <span className="font-semibold text-foreground">Vesting Amount (50%)</span>
+                        <span className="font-bold text-muted-foreground">{vestingAmount.toFixed(8)} EXN</span>
+                    </div>
+                     <p className="text-xs text-muted-foreground mt-1">This amount will be released linearly over a period of 8 months after TGE.</p>
+                </div>
+            </div>
             <DialogFooter>
               <Button onClick={() => setAllocationDialogContent('enter_wallet')}>Commit Your Airdrop</Button>
             </DialogFooter>
