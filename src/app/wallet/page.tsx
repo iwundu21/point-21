@@ -373,7 +373,7 @@ export default function WalletPage() {
                         <CardDescription>
                             {isAllocationCheckEnabled
                                 ? "Checker is live! Please check your allocation."
-                                : "Check your estimated EXN token allocation based on your current points."}
+                                : "Check your EXN token allocation based on your current points."}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
