@@ -350,7 +350,7 @@ export default function WalletPage() {
             <DialogHeader>
               <DialogTitle>Your Airdrop Allocation</DialogTitle>
               <DialogDescription>
-                Your calculated airdrop allocation is <span className="font-bold text-gold">{allocationAmount.toFixed(8)} EXN</span>.
+                Your calculated airdrop allocation is <span className="font-bold text-green-700">{allocationAmount.toFixed(8)} EXN</span>.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -486,7 +486,6 @@ export default function WalletPage() {
                     <CardContent className="p-4 pt-0">
                         {isAllocationCheckEnabled ? (
                             <Button onClick={handleCheckAllocation} disabled={isAllocationDialogOpen} className="w-full">
-                                <Coins className="mr-2 h-4 w-4" />
                                  {userData?.airdropCommitted ? 'View Commitment' : 'Check Allocation & Commit'}
                             </Button>
                         ) : (
@@ -517,4 +516,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
