@@ -906,28 +906,19 @@ export default function AdminPage() {
                  return;
             }
             
-            // Export in chunks
-            const CHUNK_SIZE = 60;
-            for (let i = 0; i < airdropData.length; i += CHUNK_SIZE) {
-                const chunk = airdropData.slice(i, i + CHUNK_SIZE);
-                let csv = Papa.unparse(chunk);
-                const pageTotal = chunk.reduce((sum, user) => sum + parseFloat(user.exn_allocation), 0);
+            // Export as a single file
+            const csv = Papa.unparse(airdropData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `exn_airdrop_export.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-                // Append total in a new line
-                csv += `\n\nTotal EXN for this page: ${pageTotal.toFixed(8)}`;
-
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', `exn_airdrop_export_${Math.floor(i / CHUNK_SIZE) + 1}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-
-            toast({ title: 'Export Complete!', description: `${airdropData.length} eligible users have been exported in chunks of ${CHUNK_SIZE}.` });
+            toast({ title: 'Export Complete!', description: `${airdropData.length} eligible users have been exported in a single file.` });
 
         } catch (error) {
             console.error("Failed to export airdrop data:", error);
