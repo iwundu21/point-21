@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Trophy, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Users, Monitor, Bot } from 'lucide-react';
 import Footer from '@/components/footer';
-import { getLeaderboardUsers, getTotalTelegramUsersCount, UserData } from '@/lib/database';
+import { getLeaderboardUsers, getTotalTelegramUsersCount, UserData, getUserRank, getUserData } from '@/lib/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -59,56 +59,58 @@ export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<UserData[]>([]);
     const [totalTelegramUsers, setTotalTelegramUsers] = useState(0);
     const [currentUser, setCurrentUser] = useState<TelegramUser | null>(null);
+    const [currentUserData, setCurrentUserData] = useState<UserData | null>(null);
+    const [currentUserRank, setCurrentUserRank] = useState<{ rank: number; league: string } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     
-     useEffect(() => {
-        const fetchLeaderboardData = async () => {
+    useEffect(() => {
+        const initAndFetch = async () => {
             setIsLoading(true);
-            try {
-                // Fetch all data concurrently for efficiency
-                const [leaderboardData, telegramCount] = await Promise.all([
-                    getLeaderboardUsers(),
-                    getTotalTelegramUsersCount(),
-                ]);
+            let user: TelegramUser | null = null;
+            if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
+                const tg = window.Telegram.WebApp;
+                user = tg.initDataUnsafe.user;
+                tg.ready();
+            } else if (typeof window !== 'undefined') {
+                let browserId = localStorage.getItem('browser_user_id');
+                if (!browserId) {
+                    browserId = uuidv4();
+                    localStorage.setItem('browser_user_id', browserId);
+                }
+                user = { id: browserId, first_name: 'Browser User' };
+            }
+            
+            setCurrentUser(user);
 
-                setLeaderboard(leaderboardData.users);
-                setTotalTelegramUsers(telegramCount);
+            if (user) {
+                try {
+                    const [leaderboardData, telegramCount, rankInfo, userDataResponse] = await Promise.all([
+                        getLeaderboardUsers(),
+                        getTotalTelegramUsersCount(),
+                        getUserRank(user),
+                        getUserData(user)
+                    ]);
 
-            } catch (error) {
-                console.error("Failed to fetch leaderboard data:", error);
-            } finally {
+                    setLeaderboard(leaderboardData.users);
+                    setTotalTelegramUsers(telegramCount);
+                    setCurrentUserRank(rankInfo);
+                    setCurrentUserData(userDataResponse.userData);
+
+                } catch (error) {
+                    console.error("Failed to fetch leaderboard data:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
                 setIsLoading(false);
             }
         };
-        fetchLeaderboardData();
+        initAndFetch();
     }, []);
 
-    useEffect(() => {
-        const init = () => {
-          let user: TelegramUser | null = null;
-          if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
-              const tg = window.Telegram.WebApp;
-              user = tg.initDataUnsafe.user;
-              tg.ready();
-          } else if (typeof window !== 'undefined') {
-              let browserId = localStorage.getItem('browser_user_id');
-              if (!browserId) {
-                  browserId = uuidv4();
-                  localStorage.setItem('browser_user_id', browserId);
-              }
-              user = { id: browserId, first_name: 'Browser User' };
-          }
-          
-          if (user) {
-              setCurrentUser(user);
-          }
-        };
-        init();
-    }, []);
     
     const totalUsers = totalTelegramUsers;
-    // The total number of pages is based on the limited leaderboard size (100), not all users.
     const totalPages = Math.ceil(leaderboard.length / USERS_PER_PAGE);
     
     const paginatedUsers = leaderboard.slice(
@@ -116,20 +118,6 @@ export default function LeaderboardPage() {
         currentPage * USERS_PER_PAGE
     );
     
-    const currentUserRank = currentUser ? leaderboard.findIndex(u => {
-        if (!u.telegramUser && typeof currentUser.id !== 'number') {
-            // It's a browser user
-            return u.id === `browser_${currentUser.id}`;
-        }
-        if (u.telegramUser && typeof currentUser.id === 'number') {
-            // It's a telegram user
-            return u.telegramUser.id === currentUser.id;
-        }
-        return false;
-    }) : -1;
-
-    const currentUserData = currentUserRank !== -1 ? leaderboard[currentUserRank] : null;
-
     const getMedal = (rank: number) => {
         if (rank === 0) return <Trophy className="w-5 h-5 text-gold" />;
         if (rank === 1) return <Trophy className="w-5 h-5 text-slate-400" />;
@@ -221,7 +209,7 @@ export default function LeaderboardPage() {
                 )}
 
 
-                {currentUserData && (currentPage * USERS_PER_PAGE) > currentUserRank && (
+                {currentUserData && currentUserRank && (
                     <>
                         <Separator />
                         <Card className="border-primary ring-2 ring-primary">
@@ -230,7 +218,7 @@ export default function LeaderboardPage() {
                             </CardHeader>
                              <CardContent className="p-3 pt-0 flex items-center space-x-4">
                                     <div className="flex-shrink-0 flex items-center justify-center w-6">
-                                       <span className="text-sm font-semibold w-5 text-center">{currentUserRank + 1}</span>
+                                       <span className="text-sm font-semibold w-5 text-center">{currentUserRank.rank > 0 ? currentUserRank.rank : 'Unranked'}</span>
                                     </div>
                                     <Avatar className="w-10 h-10 flex-shrink-0">
                                         <AvatarImage src={currentUserData.customPhotoUrl || currentUserData.telegramUser?.photo_url} />
@@ -242,7 +230,7 @@ export default function LeaderboardPage() {
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
                                         <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()} Points</p>
-                                        <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1, totalUsers).name}</p>
+                                        <p className="text-xs text-muted-foreground">{currentUserRank.league}</p>
                                     </div>
                                 </CardContent>
                         </Card>
@@ -259,3 +247,4 @@ export default function LeaderboardPage() {
 }
 
     
+
