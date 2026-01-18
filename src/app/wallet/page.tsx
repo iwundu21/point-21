@@ -8,7 +8,7 @@ import Footer from '@/components/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info, CheckCircle, XCircle, UserCheck, Star, Zap, Gift, Handshake, Send } from 'lucide-react';
+import { Wallet as WalletIcon, Save, AlertTriangle, Coins, Loader2, Bot, Info, CheckCircle, XCircle, UserCheck, Star, Zap, Gift, Handshake, Send, Users } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -204,16 +204,34 @@ export default function WalletPage() {
   };
 
   const handleCheckAllocation = async () => {
-    if (!user) return;
+    if (!user || !userData) return;
 
     if (!savedAddress) {
-        setCommitMessage('Sorry, you are not eligible for the EXN airdrop allocation because a wallet address has not been submitted.');
+        setCommitMessage('You must submit a wallet address to be eligible.');
+        setAllocationDialogContent('error');
+        setIsAllocationDialogOpen(true);
+        return;
+    }
+    if (!Object.values(userData.welcomeTasks || {}).every(Boolean)) {
+        setCommitMessage('You must complete all Welcome Tasks to be eligible.');
+        setAllocationDialogContent('error');
+        setIsAllocationDialogOpen(true);
+        return;
+    }
+    if (!userData.referralBonusApplied) {
+        setCommitMessage('You must apply a referral code to be eligible.');
+        setAllocationDialogContent('error');
+        setIsAllocationDialogOpen(true);
+        return;
+    }
+    if ((userData.referrals || 0) < 2) {
+        setCommitMessage('You must refer at least 2 friends to be eligible.');
         setAllocationDialogContent('error');
         setIsAllocationDialogOpen(true);
         return;
     }
     
-    if (userData?.airdropCommitted) {
+    if (userData.airdropCommitted) {
          setCommitMessage('You have already committed your airdrop allocation.');
          setAllocationDialogContent('committed');
          setIsAllocationDialogOpen(true);
@@ -482,13 +500,14 @@ export default function WalletPage() {
                         <CardDescription className="text-xs">Complete the following to secure your airdrop.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                       <div className="grid grid-cols-3 gap-3">
+                       <div className="grid grid-cols-2 gap-3">
                             <EligibilitySquare title="Wallet Submitted" isMet={!!savedAddress} icon={<WalletIcon className="w-8 h-8" />} />
                             <EligibilitySquare title="Welcome Tasks" isMet={Object.values(userData?.welcomeTasks || {}).every(Boolean)} icon={<Gift className="w-8 h-8" />} />
                             <EligibilitySquare title="Referral Applied" isMet={userData?.referralBonusApplied || false} icon={<Handshake className="w-8 h-8" />} />
+                            <EligibilitySquare title="Refer 2 Friends" isMet={(userData?.referrals || 0) >= 2} icon={<Users className="w-8 h-8" />} />
                        </div>
                        <p className="text-xs text-muted-foreground mt-3 text-center">
-                         Completing Welcome Tasks and applying a referral code unlocks daily mining. Ensure all eligibility criteria are met for the airdrop.
+                         Ensure all eligibility criteria, including referring at least 2 friends, are met to check your allocation.
                        </p>
                     </CardContent>
                 </Card>
