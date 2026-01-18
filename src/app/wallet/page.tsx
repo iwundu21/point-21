@@ -212,18 +212,6 @@ export default function WalletPage() {
         setIsAllocationDialogOpen(true);
         return;
     }
-    if (!Object.values(userData.welcomeTasks || {}).every(Boolean)) {
-        setCommitMessage('You must complete all Welcome Tasks to be eligible.');
-        setAllocationDialogContent('error');
-        setIsAllocationDialogOpen(true);
-        return;
-    }
-    if (!userData.referralBonusApplied) {
-        setCommitMessage('You must apply a referral code to be eligible.');
-        setAllocationDialogContent('error');
-        setIsAllocationDialogOpen(true);
-        return;
-    }
     if ((userData.referrals || 0) < 2) {
         setCommitMessage('You must refer at least 2 friends to be eligible.');
         setAllocationDialogContent('error');
@@ -502,12 +490,10 @@ export default function WalletPage() {
                     <CardContent>
                        <div className="grid grid-cols-2 gap-3">
                             <EligibilitySquare title="Wallet Submitted" isMet={!!savedAddress} icon={<WalletIcon className="w-8 h-8" />} />
-                            <EligibilitySquare title="Welcome Tasks" isMet={Object.values(userData?.welcomeTasks || {}).every(Boolean)} icon={<Gift className="w-8 h-8" />} />
-                            <EligibilitySquare title="Referral Applied" isMet={userData?.referralBonusApplied || false} icon={<Handshake className="w-8 h-8" />} />
                             <EligibilitySquare title="Refer 2 Friends" isMet={(userData?.referrals || 0) >= 2} icon={<Users className="w-8 h-8" />} />
                        </div>
                        <p className="text-xs text-muted-foreground mt-3 text-center">
-                         Ensure all eligibility criteria, including referring at least 2 friends, are met to check your allocation.
+                         Submit your wallet and refer at least 2 friends to check your allocation.
                        </p>
                     </CardContent>
                 </Card>
@@ -556,5 +542,7 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
 
     
