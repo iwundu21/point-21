@@ -411,12 +411,12 @@ initializeUser(user);
                             </p>
                         </>
                     ) : (
-                         <div className="text-center p-4 rounded-full space-y-4">
+                         <div className="w-56 h-56 rounded-full border-4 border-dashed border-primary/50 flex flex-col items-center justify-center p-4 text-center space-y-3 animate-pulse">
                             <h2 className="text-xl font-bold">Unlock Daily Mining</h2>
-                            <p className="text-muted-foreground text-sm">
-                                To unlock your daily mining rewards, you must complete all Welcome Tasks and redeem a referral code.
+                            <p className="text-muted-foreground text-xs px-4">
+                                Complete Welcome Tasks and redeem a referral code to start mining.
                             </p>
-                            <div className='flex flex-wrap gap-2 justify-center'>
+                            <div className='flex flex-col gap-2 w-full pt-2'>
                                 <Button onClick={() => router.push('/welcome-tasks')} variant='outline' size="sm">
                                     <Gift className="w-4 h-4 mr-2" />
                                     Welcome Tasks
