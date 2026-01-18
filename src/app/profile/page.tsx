@@ -222,7 +222,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                         <span>|</span>
                         <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
                     </div>
-                    <p className="mt-2">© 2025 Exnus Points. All rights reserved.</p>
+                    <p className="mt-2">© 2026 Exnus Points. All rights reserved.</p>
                 </div>
             </div>
             <Footer />
