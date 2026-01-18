@@ -122,7 +122,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
                 <div className="w-24 flex justify-center">
                     {isVerifying ? (
                         <Button size="sm" variant="default" disabled className="w-full">
-                            <LoadingDots />
+                            <LoadingDots text="Verifying" />
                         </Button>
                     ) : isStarted ? (
                         <Button size="sm" variant="default" onClick={handleSimpleVerifyClick} className="w-full">
@@ -151,7 +151,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
                    )}
                    {(step === 'first_verifying' || step === 'second_verifying' || isVerifying) && (
                        <Button size="sm" variant="default" disabled className="w-full">
-                           <LoadingDots />
+                           <LoadingDots text="Verifying" />
                        </Button>
                    )}
                    {step === 'ready_to_verify' && !isVerifying && (
