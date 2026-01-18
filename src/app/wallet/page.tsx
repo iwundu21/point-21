@@ -188,13 +188,22 @@ export default function WalletPage() {
 
   const handleCheckAllocation = async () => {
     if (!user) return;
+
+    if (!savedAddress) {
+        showDialog(
+            'Not Eligible',
+            'Sorry, you are not eligible for the EXN airdrop allocation because a wallet address has not been submitted. Please save your wallet address to become eligible.'
+        );
+        return;
+    }
+
     setIsCheckingAllocation(true);
     try {
         const result = await calculateAllocation({ userId: getUserId(user) });
         if (result.success && result.allocation !== undefined) {
             showDialog(
                 'Your Estimated Allocation',
-                `Based on the current totals, your estimated airdrop allocation is approximately ${result.allocation.toFixed(2)} EXN. This is a dynamic estimate and will change.`,
+                `Based on the current totals, your estimated airdrop allocation is approximately ${result.allocation.toFixed(2)} Points. This is a dynamic estimate and will change.`,
             );
         } else {
              showDialog('Error', result.reason || 'Could not calculate your allocation at this time.');
