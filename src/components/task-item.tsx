@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { ReactNode, useState } from 'react';
@@ -22,52 +20,62 @@ interface TaskItemProps {
 }
 
 const TaskItem = ({ icon, iconName, title, description, points, link, completed, isVerifying, onComplete }: TaskItemProps) => {
+    // Defines the steps for the complex verification flow
     type VerificationStep = 'initial' | 'first_verifying' | 'first_failed' | 'second_verifying' | 'ready_to_verify';
     
     const [step, setStep] = useState<VerificationStep>('initial');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [commentLink, setCommentLink] = useState('');
 
-    const isTelegramTask = iconName === 'TelegramIcon';
-    const isCommentTask = iconName === 'MessageCircle';
-    
-    // State for the simple flow (Telegram tasks)
+    // Simple flow for Telegram tasks which use bot verification
     const [isStarted, setIsStarted] = useState(false); 
 
+    const isTelegramTask = iconName === 'TelegramIcon';
+    const isCommentTask = iconName === 'MessageCircle';
 
+    // --- Handlers for the complex flow (X, Discord, Comment tasks) ---
     const handleComplexGoClick = () => {
         if (isVerifying) return;
 
+        // Redirect on every "Go" click
+        window.open(link, '_blank');
+
+        // First click of "Go"
         if (step === 'initial') {
             setStep('first_verifying');
             setTimeout(() => {
                 setErrorMessage('Please complete the task to grant the reward.');
-                setStep('first_failed');
+                setStep('first_failed'); // Go back to a "Go" state, but with an error
             }, 7000);
-        } else if (step === 'first_failed') {
+        } 
+        // Second click of "Go"
+        else if (step === 'first_failed') {
             setErrorMessage(null);
-            window.open(link, '_blank');
             setStep('second_verifying');
             setTimeout(() => {
-                setStep('ready_to_verify');
+                setStep('ready_to_verify'); // Advance to the "Verify" button state
             }, 9000);
         }
     };
 
     const handleComplexVerifyClick = () => {
         if (isVerifying) return;
-        if (isCommentTask && !commentLink) return;
+        if (isCommentTask && !commentLink.trim()) {
+            setErrorMessage("Please paste your comment link to verify.");
+            return;
+        }
         
-        onComplete(commentLink); // Parent will show "Verifying..." for 10s
+        onComplete(commentLink); // Trigger parent's 10-second final verification
     };
     
+    // --- Handlers for the simple flow (Telegram tasks) ---
     const handleSimpleGoClick = () => {
         window.open(link, '_blank');
-        setIsStarted(true);
+        setIsStarted(true); // Move to the "Verify" state
     };
 
     const handleSimpleVerifyClick = () => {
-        onComplete();
+        onComplete(); // Trigger parent's 10-second final verification
     };
 
 
@@ -93,6 +101,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
         </>
     );
 
+    // Render for already completed tasks
     if (completed) {
         return (
             <div className={cn("p-4 rounded-lg flex items-center space-x-4 transition-all", "bg-green-500/10 border-green-500/20")}>
@@ -105,7 +114,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
         );
     }
 
-    // Simple flow for Telegram tasks
+    // Render for simple Telegram tasks
     if (isTelegramTask) {
         return (
              <div className={cn("p-4 rounded-lg flex items-center space-x-4 transition-all", "bg-primary/5 border-primary/10")}>
@@ -129,7 +138,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
         );
     }
     
-    // Complex flow for other tasks (X, Discord, Comment)
+    // Render for complex verification flow (X, Discord, Comment)
     return (
         <div className={cn("p-4 rounded-lg flex flex-col gap-4 transition-all", "bg-primary/5 border-primary/10")}>
             <div className="flex items-center space-x-4 w-full">
@@ -146,7 +155,7 @@ const TaskItem = ({ icon, iconName, title, description, points, link, completed,
                        </Button>
                    )}
                    {step === 'ready_to_verify' && !isVerifying && (
-                       <Button size="sm" variant="default" onClick={handleComplexVerifyClick} className="w-full" disabled={isCommentTask && !commentLink}>
+                       <Button size="sm" variant="default" onClick={handleComplexVerifyClick} className="w-full" disabled={isCommentTask && !commentLink.trim()}>
                            Verify
                        </Button>
                    )}
