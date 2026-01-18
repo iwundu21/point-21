@@ -125,7 +125,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                             <AnimatedLogo />
                         </div>
                         <h1 className="text-3xl font-bold text-foreground">System Upgrade Complete</h1>
-                        <p className="text-lg text-muted-foreground">Thank you for being an early supporter. Your legacy points have been converted to the new EXN currency.</p>
+                        <p className="text-lg text-muted-foreground">Thank you for being an early supporter. Your legacy points have been converted to the new Points currency.</p>
                          
                         <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg bg-card/80">
                             <div className="flex justify-between items-center text-md">
@@ -135,8 +135,8 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                 </span>
                             </div>
                             <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-xl font-bold">
-                                <span>New EXN Balance:</span>
-                                <span className="text-gold">{newExnBalance.toLocaleString()} EXN</span>
+                                <span>New Points Balance:</span>
+                                <span className="text-gold">{newExnBalance.toLocaleString()} Points</span>
                             </div>
                         </div>
                         <p className="text-sm text-muted-foreground">This is a one-time conversion based on an account snapshot.</p>
@@ -149,7 +149,7 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                             <AnimatedLogo />
                         </div>
                         <h1 className="text-3xl font-bold text-foreground">A Gift For Your Support</h1>
-                        <p className="text-lg text-muted-foreground">As a thank you for your early booster pack purchases, we're giving you a special EXN reward.</p>
+                        <p className="text-lg text-muted-foreground">As a thank you for your early booster pack purchases, we're giving you a special Points reward.</p>
                         
                         <div className="w-full space-y-2 my-4 p-4 border border-primary/20 rounded-lg bg-card/80">
                             {Object.keys(LEGACY_BOOST_REWARDS).map((boostId) => {
@@ -160,14 +160,14 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
                                     <div key={boostId} className={cn("flex justify-between items-center text-sm", hasBoost ? "text-foreground" : "text-muted-foreground/50")}>
                                         <span>Booster Pack {packNumber}</span>
                                         <span className={cn(hasBoost ? "font-bold text-gold" : "line-through")}>
-                                            {reward.toLocaleString()} EXN
+                                            {reward.toLocaleString()} Points
                                         </span>
                                     </div>
                                 )
                             })}
                             <div className="!mt-4 pt-2 border-t border-primary/20 flex justify-between items-center text-lg font-bold">
                                 <span>Total Bonus:</span>
-                                <span className="text-gold">{totalLegacyReward.toLocaleString()} EXN</span>
+                                <span className="text-gold">{totalLegacyReward.toLocaleString()} Points</span>
                             </div>
                         </div>
                     </div>
@@ -188,21 +188,21 @@ const Onboarding = ({ user, isNewUser, onComplete, initialData }: OnboardingProp
             case OnboardingStage.HowItWorks:
                  return (
                     <div className="text-center animate-fade-in space-y-8">
-                        <h1 className="text-3xl font-bold text-foreground">How to Earn EXN</h1>
+                        <h1 className="text-3xl font-bold text-foreground">How to Earn Points</h1>
                         <p className="text-lg text-muted-foreground">Earning rewards is simple and engaging.</p>
                         <div className="text-left max-w-md mx-auto space-y-6">
                             <div className="flex items-start gap-4 p-4 rounded-lg bg-card/80">
                                 <Zap className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-bold text-foreground">Daily Mining</h3>
-                                    <p className="text-muted-foreground text-base">Log in daily to mine EXN tokens automatically.</p>
+                                    <p className="text-muted-foreground text-base">Log in daily to mine Points automatically.</p>
                                 </div>
                             </div>
                              <div className="flex items-start gap-4 p-4 rounded-lg bg-card/80">
                                 <Users className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-bold text-foreground">Social Tasks</h3>
-                                    <p className="text-muted-foreground text-base">Complete simple tasks on our social platforms for bonus EXN.</p>
+                                    <p className="text-muted-foreground text-base">Complete simple tasks on our social platforms for bonus Points.</p>
                                 </div>
                             </div>
                              <div className="flex items-start gap-4 p-4 rounded-lg bg-card/80">

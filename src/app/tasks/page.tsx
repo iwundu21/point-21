@@ -134,7 +134,7 @@ export default function TasksPage() {
                 
                 const updatedData = { ...freshUserData, completedSocialTasks: updatedCompletedTasks, balance: updatedBalance };
                 setUserData(updatedData);
-                showDialog("Success!", `You've earned ${task.points} EXN.`);
+                showDialog("Success!", `You've earned ${task.points} Points.`);
             } catch (error) {
                  console.error("Error completing task:", error);
                  showDialog("Error", "Could not complete the task.");
@@ -201,7 +201,7 @@ export default function TasksPage() {
                         Social Engagement
                     </h1>
                      <p className="text-sm text-muted-foreground pt-2">
-                        Engage with us on social media to earn more EXN!
+                        Engage with us on social media to earn more Points!
                     </p>
                 </div>
                  {isBrowserUser && (

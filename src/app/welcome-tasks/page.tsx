@@ -115,7 +115,7 @@ export default function WelcomeTasksPage() {
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 20 EXN.");
+                    showDialog("Success!", "You've earned 20 Points.");
                 }
                 setVerifyingTaskId(null);
             }, 10000); // 10 second delay to simulate action
@@ -136,7 +136,7 @@ export default function WelcomeTasksPage() {
                     const updatedBalance = userData.balance + 20;
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 20 EXN.");
+                    showDialog("Success!", "You've earned 20 Points.");
                 } else {
                     showDialog("Verification Failed", result.error || "You must join the channel first.");
                 }
@@ -157,7 +157,7 @@ export default function WelcomeTasksPage() {
                     await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
 
                     setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 20 EXN.");
+                    showDialog("Success!", "You've earned 20 Points.");
                 }
                 setVerifyingTaskId(null);
             }, 9000); // 9 second delay for user to perform action
@@ -261,4 +261,3 @@ export default function WelcomeTasksPage() {
         </div>
     );
 }
-

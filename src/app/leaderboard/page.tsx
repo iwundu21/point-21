@@ -189,7 +189,7 @@ export default function LeaderboardPage() {
                                         <p className="text-xs text-muted-foreground truncate">@{user.telegramUser?.username || 'N/A'}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
-                                        <p className="font-bold text-gold">{user.balance.toLocaleString()} EXN</p>
+                                        <p className="font-bold text-gold">{user.balance.toLocaleString()} Points</p>
                                         <p className="text-xs text-muted-foreground">{leagueInfo.name}</p>
                                     </div>
                                 </CardContent>
@@ -241,7 +241,7 @@ export default function LeaderboardPage() {
                                         <p className="text-xs text-muted-foreground truncate">@{currentUserData.telegramUser?.username || 'N/A'}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-auto pl-2">
-                                        <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()} EXN</p>
+                                        <p className="font-bold text-gold">{currentUserData.balance.toLocaleString()} Points</p>
                                         <p className="text-xs text-muted-foreground">{getLeagueInfo(currentUserRank + 1, totalUsers).name}</p>
                                     </div>
                                 </CardContent>

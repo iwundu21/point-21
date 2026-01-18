@@ -211,7 +211,7 @@ export default function WalletPage() {
     return (
         <>
             <p className="text-sm text-muted-foreground mb-4">
-                Enter your Solana wallet address to be eligible for future Exnus EXN airdrop snapshots.
+                Enter your Solana wallet address to be eligible for future airdrop snapshots.
             </p>
 
             <div className="flex flex-col space-y-4 items-center">
@@ -273,7 +273,7 @@ export default function WalletPage() {
                     <Info className="h-4 w-4" />
                     <AlertBoxTitle className="text-primary text-base">Airdrop Coming Soon!</AlertBoxTitle>
                     <AlertBoxDescription>
-                        The official Exnus EXN airdrop is scheduled for Q4 2025.
+                        The official airdrop is scheduled for Q4 2025.
                     </AlertBoxDescription>
                 </Alert>
                 
@@ -283,7 +283,7 @@ export default function WalletPage() {
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                         <div className="flex items-center space-x-2">
-                            <span className="text-2xl font-bold text-gold">{balance.toLocaleString()} EXN</span>
+                            <span className="text-2xl font-bold text-gold">{balance.toLocaleString()} Points</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -292,12 +292,12 @@ export default function WalletPage() {
 
                  <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Exnus EXN Airdrop</h3>
+                      <h3 className="text-lg font-semibold mb-2">Airdrop</h3>
                         <Alert className="border-blue-500/20 bg-blue-500/10 text-center mb-4">
                             <Info className="h-4 w-4 text-blue-400" />
                             <AlertBoxTitle className="text-blue-400 text-base">Eligibility Clarification</AlertBoxTitle>
                             <AlertBoxDescription className="text-blue-400/80">
-                                All users with earned EXN and a submitted wallet address are eligible for the airdrop, regardless of ecosystem contribution.
+                                All users with earned Points and a submitted wallet address are eligible for the airdrop, regardless of ecosystem contribution.
                             </AlertBoxDescription>
                         </Alert>
                         {renderWalletUI()}

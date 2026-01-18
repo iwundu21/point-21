@@ -199,7 +199,7 @@ const EditBalanceDialog = ({ user, onBalanceUpdated }: { user: UserData, onBalan
                 <DialogHeader>
                     <DialogTitle>Edit Balance for {getDisplayName(user)}</DialogTitle>
                     <DialogDescription>
-                        Current balance: {user.balance.toLocaleString()} EXN. Add to or set a new balance.
+                        Current balance: {user.balance.toLocaleString()} Points. Add to or set a new balance.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -399,7 +399,7 @@ const UserTable = ({
                                     
                                         <div>
                                             <span className="text-gold font-bold">{user.balance.toLocaleString()}</span>
-                                            <span className="text-xs text-gold ml-1">EXN</span>
+                                            <span className="text-xs text-gold ml-1">Points</span>
                                         </div>
                                     
                                     <EditBalanceDialog user={user} onBalanceUpdated={onBalanceUpdated} />
@@ -433,7 +433,7 @@ const UserTable = ({
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Grant Airdrop Slot?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This will grant the user an airdrop slot and credit them with 5,000 EXN. This action cannot be undone.
+                                                        This will grant the user an airdrop slot and credit them with 5,000 Points. This action cannot be undone.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
@@ -512,12 +512,12 @@ const EditAirdropDialog = ({ currentTotal, onAirdropUpdated }: { currentTotal: n
                 <DialogHeader>
                     <DialogTitle>Edit Total Airdrop Amount</DialogTitle>
                     <DialogDescription>
-                        Set the total number of EXN tokens to be distributed in the airdrop.
+                        Set the total number of Points to be distributed in the airdrop.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="airdrop-total" className="text-right">Total EXN</Label>
+                        <Label htmlFor="airdrop-total" className="text-right">Total Points</Label>
                         <Input
                             id="airdrop-total"
                             type="number"
@@ -760,7 +760,7 @@ export default function AdminPage() {
                     u.id === user.id ? { ...u, purchasedBoosts: [...(u.purchasedBoosts || []), 'boost_1'], balance: newBalance } : u
                 )
             );
-            toast({ title: 'Airdrop Slot Granted', description: `${getDisplayName(user)} has been granted an airdrop slot and 5,000 EXN.` });
+            toast({ title: 'Airdrop Slot Granted', description: `${getDisplayName(user)} has been granted an airdrop slot and 5,000 Points.` });
             const newTotalPoints = await getTotalActivePoints();
             setTotalPoints(newTotalPoints);
         } catch (error) {
@@ -883,7 +883,7 @@ export default function AdminPage() {
                 const pageTotal = chunk.reduce((sum, user) => sum + user.balance, 0);
 
                 // Append total in a new line
-                csv += `\n\nTotal EXN for this page: ${pageTotal}`;
+                csv += `\n\nTotal Points for this page: ${pageTotal}`;
 
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
@@ -1160,7 +1160,7 @@ export default function AdminPage() {
                         </Card>
                         <Card className="bg-primary/5 col-span-1 md:col-span-2 lg:col-span-3">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total EXN (Active)</CardTitle>
+                                <CardTitle className="text-sm font-medium">Total Points (Active)</CardTitle>
                                 <Star className="h-4 w-4 text-primary" />
                             </CardHeader>
                             <CardContent>

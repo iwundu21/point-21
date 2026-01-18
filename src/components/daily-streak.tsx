@@ -30,7 +30,7 @@ const DailyStreak = ({ streak }: DailyStreakProps) => {
                 "text-xs font-bold",
                 active ? "text-background" : "text-primary/50"
               )}>100</span>
-               <span className={cn("text-[8px]", active ? "text-background/80" : "text-primary/40")}>EXN</span>
+               <span className={cn("text-[8px]", active ? "text-background/80" : "text-primary/40")}>Points</span>
             </div>
             <p className="text-xs text-muted-foreground truncate">Day {index + 1}</p>
           </div>

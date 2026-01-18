@@ -187,7 +187,7 @@ setIsClaimingTap(true);
 setCanTap(false);
             const now = Date.now();
             setUserData(prev => prev ? {...prev, lastTapTimestamp: now, balance: result.newBalance as number} : null);
-showDialog("Reward Claimed!", `You've earned ${DAILY_REWARD} EXN. The next mining cycle has started!`);
+showDialog("Reward Claimed!", `You've earned ${DAILY_REWARD} Points. The next mining cycle has started!`);
         } else {
 showDialog("Already Claimed", "You have already claimed your daily reward for today.");
 setCanTap(false);
@@ -273,7 +273,7 @@ initializeUser(user);
                         </div>
                         <CardTitle className="text-2xl">The Airdrop Has Concluded</CardTitle>
                         <CardDescription>
-                           Thank you for your participation! The EXN earning period has now ended.
+                           Thank you for your participation! The Points earning period has now ended.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -372,7 +372,7 @@ initializeUser(user);
         </header>
 
         <main className="flex flex-col items-center justify-center flex-grow pb-24 pt-4 relative">
-            <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
+            <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm mx-auto">
                 <Card className="w-full p-6 text-center space-y-4 glass-card">
                     {prerequisitesMet ? (
                         <>
@@ -394,20 +394,20 @@ initializeUser(user);
                                     ) : !canTap ? (
                                         <>
                                             <p className="text-4xl font-bold text-white tabular-nums">{minedAmount}</p>
-                                            <p className="text-sm font-semibold text-white/80">EXN</p>
+                                            <p className="text-sm font-semibold text-white/80">Points</p>
                                             <p className="text-xs text-white/80 mt-1">{countdown}</p>
                                         </>
                                     ) : (
                                         <>
                                             <p className="text-3xl font-bold text-white">CLAIM</p>
-                                            <p className="text-lg font-semibold text-white">{DAILY_REWARD} EXN</p>
+                                            <p className="text-lg font-semibold text-white">{DAILY_REWARD} Points</p>
                                         </>
                                     )}
                                 </div>
                             </div>
                             <h2 className="text-xl font-bold">Daily Mining</h2>
                             <p className="text-muted-foreground text-sm">
-                                {canTap ? `Your ${DAILY_REWARD} EXN reward is ready to be claimed!` : `Your EXN is mining. You will earn ${DAILY_REWARD} EXN when the countdown ends.`}
+                                {canTap ? `Your ${DAILY_REWARD} Points reward is ready to be claimed!` : `Your Points are mining. You will earn ${DAILY_REWARD} Points when the countdown ends.`}
                             </p>
                         </>
                     ) : (

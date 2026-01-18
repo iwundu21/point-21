@@ -26,7 +26,7 @@ const BalanceCard: FC<BalanceCardProps> = ({ balance, user }) => {
           <p className="text-sm font-semibold text-foreground">{displayName}</p>
           <div className="relative">
             <span className="text-2xl sm:text-3xl font-normal tracking-tight text-gold">
-              {balance.toLocaleString()} EXN
+              {balance.toLocaleString()} Points
             </span>
           </div>
         </div>
