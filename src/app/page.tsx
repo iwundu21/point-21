@@ -1,5 +1,3 @@
-
-
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -324,7 +322,9 @@ initializeUser(user);
       );
   }
 
-  const prerequisitesMet = Object.values(userData.welcomeTasks || {}).every(Boolean) && userData.referralBonusApplied;
+  const welcomeTasksDone = Object.values(userData.welcomeTasks || {}).every(Boolean);
+  const referralBonusApplied = userData.referralBonusApplied;
+  const prerequisitesMet = welcomeTasksDone && referralBonusApplied;
 
   const WaterWaveProgress = ({ progress }: { progress: number }) => {
     const waveHeight = `${100 - progress}%`;
@@ -411,21 +411,33 @@ initializeUser(user);
                             </p>
                         </>
                     ) : (
-                         <div className="w-56 h-56 rounded-full border-4 border-dashed border-primary/50 flex flex-col items-center justify-center p-4 text-center space-y-3 animate-pulse">
-                            <h2 className="text-xl font-bold">Unlock Daily Mining</h2>
-                            <p className="text-muted-foreground text-xs px-4">
-                                Complete Welcome Tasks and redeem a referral code to start mining.
-                            </p>
-                            <div className='flex flex-col gap-2 w-full pt-2'>
-                                <Button onClick={() => router.push('/welcome-tasks')} variant='outline' size="sm">
-                                    <Gift className="w-4 h-4 mr-2" />
-                                    Welcome Tasks
-                                </Button>
-                                <Button onClick={() => router.push('/referral')} variant='outline' size="sm">
-                                    <Handshake className="w-4 h-4 mr-2" />
-                                    Referral Code
-                                </Button>
-                            </div>
+                        <div
+                            className="w-56 h-56 rounded-full border-4 border-dashed border-primary/50 flex flex-col items-center justify-center p-4 text-center space-y-3 animate-pulse cursor-pointer hover:bg-primary/10 transition-colors"
+                            onClick={() => {
+                                if (!welcomeTasksDone) {
+                                    router.push('/welcome-tasks');
+                                } else if (!referralBonusApplied) {
+                                    router.push('/referral');
+                                }
+                            }}
+                        >
+                            {!welcomeTasksDone ? (
+                                <>
+                                    <Gift className="w-12 h-12 text-primary" />
+                                    <h2 className="text-xl font-bold">Complete Welcome Tasks</h2>
+                                    <p className="text-muted-foreground text-xs px-4">
+                                        Finish your first set of tasks to unlock the next step.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <Handshake className="w-12 h-12 text-primary" />
+                                    <h2 className="text-xl font-bold">Redeem a Referral Code</h2>
+                                    <p className="text-muted-foreground text-xs px-4">
+                                        Apply a referral code to start your daily mining.
+                                    </p>
+                                </>
+                            )}
                         </div>
                     )}
                 </Card>
