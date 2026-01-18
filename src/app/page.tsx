@@ -371,7 +371,7 @@ initializeUser(user);
             <BalanceCard balance={balance} user={user} />
         </header>
 
-        <main className="flex flex-col items-center justify-start flex-grow pb-24 pt-4 relative">
+        <main className="flex flex-col items-center justify-center flex-grow pb-24 pt-4 relative">
             <div className="flex flex-col items-center justify-center space-y-4 my-8 px-4 w-full max-w-sm">
                 <Card className="w-full p-6 text-center space-y-4 glass-card">
                     {prerequisitesMet ? (
