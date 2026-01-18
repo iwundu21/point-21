@@ -325,7 +325,7 @@ initializeUser(user);
 
   const welcomeTasksDone = Object.values(userData.welcomeTasks || {}).every(Boolean);
   const referralBonusApplied = userData.referralBonusApplied;
-  const prerequisitesMet = welcomeTasksDone;
+  const prerequisitesMet = welcomeTasksDone && referralBonusApplied;
 
   const WaterWaveProgress = ({ progress }: { progress: number }) => {
     const waveHeight = `${100 - progress}%`;
@@ -474,5 +474,3 @@ initializeUser(user);
     </div>
   );
 }
-
-    

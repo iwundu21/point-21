@@ -353,7 +353,7 @@ export default function WalletPage() {
                             <EligibilitySquare title="Referral Applied" isMet={userData?.referralBonusApplied || false} icon={<Handshake className="w-8 h-8" />} />
                        </div>
                        <p className="text-xs text-muted-foreground mt-3 text-center">
-                         Completing Welcome Tasks unlocks daily mining. Ensure all tasks are completed for airdrop eligibility.
+                         Completing Welcome Tasks and applying a referral code unlocks daily mining. Ensure all eligibility criteria are met for the airdrop.
                        </p>
                     </CardContent>
                 </Card>
@@ -366,7 +366,7 @@ export default function WalletPage() {
                         <CardDescription>
                             {isAllocationCheckEnabled
                                 ? "Checker is live! Please check your allocation."
-                                : "Check your EXN token allocation based on your current points."}
+                                : "Coming soon"}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
@@ -411,5 +411,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
-    
