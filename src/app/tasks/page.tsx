@@ -148,10 +148,10 @@ export default function TasksPage() {
                 setVerifyingTaskId(null);
                 return;
             }
-            try {
-                const chatId = task.link.substring(task.link.lastIndexOf('/') + 1);
-                // Verification delay to allow user to join
-                setTimeout(async () => {
+            // Start verification after a delay to give user time to join
+            setTimeout(async () => {
+                try {
+                    const chatId = task.link.startsWith('@') ? task.link : `@${task.link.substring(task.link.lastIndexOf('/') + 1)}`;
                     const result = await verifyTelegramTask({ userId: user.id as number, chatId });
                     if (result.isMember) {
                         await completeTask();
@@ -159,14 +159,14 @@ export default function TasksPage() {
                         showDialog("Verification Failed", result.error || "You must join the channel first.");
                         setVerifyingTaskId(null);
                     }
-                }, 6000); // 6-second delay
-            } catch (e) {
-                 console.error(e);
-                 showDialog("Error", "Could not verify task completion.");
-                 setVerifyingTaskId(null);
-            }
+                } catch (e) {
+                     console.error(e);
+                     showDialog("Error", "Could not verify task completion.");
+                     setVerifyingTaskId(null);
+                }
+            }, 6000); // 6-second delay
         } else {
-             // For non-Telegram tasks, comment tasks, or for browser users, use a simple timeout
+             // For non-Telegram tasks, comment tasks, or for browser users, use a simple timeout to simulate verification
             setTimeout(completeTask, 6000);
         }
     };
@@ -335,9 +335,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
-    
-
-    
-
-

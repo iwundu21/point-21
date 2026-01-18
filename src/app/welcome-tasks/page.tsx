@@ -97,70 +97,57 @@ export default function WelcomeTasksPage() {
     
     const isBrowserUser = user?.first_name === 'Browser User';
 
-    const handleTaskComplete = async (taskName: keyof WelcomeTasks, link: string, chatId?: string) => {
+    const handleTaskComplete = async (taskName: keyof WelcomeTasks, chatId?: string) => {
         if (!user || tasks[taskName] || verifyingTaskId || isAirdropEnded) return;
 
-        window.open(link, '_blank');
-        
         setVerifyingTaskId(taskName);
 
-        // Browser user: complete immediately without verification
-        if (isBrowserUser) {
-             setTimeout(async () => {
-                 if (user) { 
-                    const { userData } = await getUserData(user);
-                    const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
-                    const updatedBalance = userData.balance + 20;
-                    
-                    await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
-
-                    setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 20 Points.");
-                }
-                setVerifyingTaskId(null);
-            }, 10000); // 10 second delay to simulate action
-            return;
-        }
-
-        // Telegram user verification logic
-        if (chatId) { // This is a Telegram task that needs verification
-            if (typeof user.id !== 'number') { // Should not happen if not browser user, but good check
+        const completeAndReward = async () => {
+            if (!user) {
                  setVerifyingTaskId(null);
                  return;
             }
-             try {
-                const result = await verifyTelegramTask({ userId: user.id, chatId: chatId });
-                if (result.isMember) {
-                    const { userData } = await getUserData(user);
-                    const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
-                    const updatedBalance = userData.balance + 20;
-                    await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
-                    setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 20 Points.");
-                } else {
-                    showDialog("Verification Failed", result.error || "You must join the channel first.");
+            try {
+                const { userData } = await getUserData(user);
+                if (userData.welcomeTasks && userData.welcomeTasks[taskName]) {
+                    setVerifyingTaskId(null);
+                    return; // Already completed
                 }
-            } catch (e) {
-                console.error(e);
-                showDialog("Error", "Could not verify task completion.");
+                const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
+                const updatedBalance = userData.balance + 20;
+
+                await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+
+                setTasks(updatedTasks);
+                showDialog("Success!", "You've earned 20 Points.");
+            } catch (error) {
+                console.error("Error completing welcome task:", error);
+                showDialog("Error", "Could not save your progress.");
             } finally {
                 setVerifyingTaskId(null);
             }
-        } else {
-            // Non-verifiable tasks for Telegram users (e.g., X, Discord)
-            setTimeout(async () => {
-                 if (user) { 
-                    const { userData } = await getUserData(user);
-                    const updatedTasks = { ...userData.welcomeTasks, [taskName]: true };
-                    const updatedBalance = userData.balance + 20;
-                    
-                    await saveUserData(user, { welcomeTasks: updatedTasks, balance: updatedBalance });
+        };
 
-                    setTasks(updatedTasks);
-                    showDialog("Success!", "You've earned 20 Points.");
+        // For Telegram tasks, use the bot to verify. For others, just use a delay.
+        if (chatId && !isBrowserUser && typeof user.id === 'number') {
+            setTimeout(async () => {
+                try {
+                    const result = await verifyTelegramTask({ userId: user.id as number, chatId });
+                    if (result.isMember) {
+                        await completeAndReward();
+                    } else {
+                        showDialog("Verification Failed", result.error || "You must join the channel first.");
+                        setVerifyingTaskId(null);
+                    }
+                } catch (e) {
+                    console.error("Error verifying welcome task:", e);
+                    showDialog("Error", "Could not verify task completion.");
+                    setVerifyingTaskId(null);
                 }
-                setVerifyingTaskId(null);
-            }, 9000); // 9 second delay for user to perform action
+            }, 6000); // 6-second delay
+        } else {
+            // For non-Telegram tasks or browser users, simulate verification with a delay.
+            setTimeout(completeAndReward, 6000);
         }
     };
 
@@ -195,43 +182,47 @@ export default function WelcomeTasksPage() {
                         <div className="space-y-4">
                            <TaskItem
                                 icon={<Image src="/x.jpg" alt="X/Twitter" width={24} height={24} />}
+                                iconName="XIcon"
                                 title="Follow on X"
                                 description="Stay up-to-date with our latest news."
                                 points={20}
                                 link="https://x.com/exnusprotocol"
                                 completed={tasks.followedOnX}
                                 isVerifying={verifyingTaskId === 'followedOnX'}
-                                onComplete={() => handleTaskComplete('followedOnX', 'https://x.com/exnusprotocol')}
+                                onComplete={() => handleTaskComplete('followedOnX')}
                            />
                            <TaskItem
                                 icon={<Image src="/tg.jpg" alt="Telegram" width={24} height={24} />}
+                                iconName="TelegramIcon"
                                 title="Subscribe on Telegram"
                                 description="Get announcements directly from the source."
                                 points={20}
                                 link="https://t.me/Exnusprotocol"
                                 completed={tasks.subscribedOnTelegram}
                                 isVerifying={verifyingTaskId === 'subscribedOnTelegram'}
-                                onComplete={() => handleTaskComplete('subscribedOnTelegram', 'https://t.me/Exnusprotocol', '@Exnusprotocol')}
+                                onComplete={() => handleTaskComplete('subscribedOnTelegram', '@Exnusprotocol')}
                            />
                             <TaskItem
                                 icon={<Image src="/tg.jpg" alt="Telegram" width={24} height={24} />}
+                                iconName="TelegramIcon"
                                 title="Join Telegram Community"
                                 description="Chat with other members."
                                 points={20}
                                 link="https://t.me/exnusprotocolchat"
                                 completed={tasks.joinedTelegramCommunity}
                                 isVerifying={verifyingTaskId === 'joinedTelegramCommunity'}
-                                onComplete={() => handleTaskComplete('joinedTelegramCommunity', 'https://t.me/exnusprotocolchat', '@exnusprotocolchat')}
+                                onComplete={() => handleTaskComplete('joinedTelegramCommunity', '@exnusprotocolchat')}
                            />
                            <TaskItem
                                 icon={<Image src="/discord.jpg" alt="Discord" width={24} height={24} />}
+                                iconName="DiscordIcon"
                                 title="Join our Discord"
                                 description="Become a part of our community."
                                 points={20}
                                 link="https://discord.gg/v8MpYYFdP8"
                                 completed={tasks.joinedDiscord}
                                 isVerifying={verifyingTaskId === 'joinedDiscord'}
-                                onComplete={() => handleTaskComplete('joinedDiscord', 'https://discord.gg/v8MpYYFdP8')}
+                                onComplete={() => handleTaskComplete('joinedDiscord')}
                            />
                         </div>
 
