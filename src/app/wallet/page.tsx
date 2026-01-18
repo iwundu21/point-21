@@ -1,4 +1,3 @@
-
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -314,13 +313,7 @@ export default function WalletPage() {
             </div>
           ) : (
              <div className="w-full max-w-sm mx-auto space-y-6">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Coins className="w-8 h-8 text-primary" />
-                        Airdrop
-                    </h1>
-                </div>
-
+                
                 <Card className="w-full bg-primary/5 border-primary/10">
                     <CardHeader className="p-4">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Balance</CardTitle>
