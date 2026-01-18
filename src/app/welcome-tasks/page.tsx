@@ -144,10 +144,10 @@ export default function WelcomeTasksPage() {
                     showDialog("Error", "Could not verify task completion.");
                     setVerifyingTaskId(null);
                 }
-            }, 7000); // 7-second delay
+            }, 10000); // 10-second delay
         } else {
             // For non-Telegram tasks or browser users, simulate verification with a delay.
-            setTimeout(completeAndReward, 7000);
+            setTimeout(completeAndReward, 10000);
         }
     };
 

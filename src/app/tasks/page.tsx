@@ -109,7 +109,7 @@ export default function TasksPage() {
 
     const isBrowserUser = user?.first_name === 'Browser User';
 
-    const handleTaskComplete = async (task: SocialTask) => {
+    const handleTaskComplete = async (task: SocialTask, commentLink?: string) => {
         if (!user || !userData || verifyingTaskId || userData.completedSocialTasks?.includes(task.id) || isAirdropEnded) return;
 
         setVerifyingTaskId(task.id);
@@ -164,10 +164,10 @@ export default function TasksPage() {
                      showDialog("Error", "Could not verify task completion.");
                      setVerifyingTaskId(null);
                 }
-            }, 7000); // 7-second delay
+            }, 10000); // 10-second delay
         } else {
              // For non-Telegram tasks, comment tasks, or for browser users, use a simple timeout to simulate verification
-            setTimeout(completeTask, 7000);
+            setTimeout(completeTask, 10000);
         }
     };
     
@@ -238,7 +238,7 @@ export default function TasksPage() {
                                 link={task.link}
                                 completed={false}
                                 isVerifying={verifyingTaskId === task.id}
-                                onComplete={() => handleTaskComplete(task)}
+                                onComplete={(commentLink) => handleTaskComplete(task, commentLink)}
                             />
                         )) : (
                            <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground font-semibold p-8 bg-primary/5 rounded-lg mt-4">
