@@ -352,7 +352,7 @@ export default function WalletPage() {
             <DialogHeader>
               <DialogTitle>Your Airdrop Allocation</DialogTitle>
               <DialogDescription>
-                Based on your current points, your total estimated airdrop allocation is <span className="font-bold text-green-500">{allocationAmount.toFixed(8)} EXN</span>.
+                Based on your current points, your total airdrop allocation is <span className="font-bold text-green-500">{allocationAmount.toFixed(8)} EXN</span>.
               </DialogDescription>
             </DialogHeader>
             <div className="my-4 space-y-4 text-sm">
@@ -537,3 +537,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
