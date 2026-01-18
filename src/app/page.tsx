@@ -412,7 +412,7 @@ initializeUser(user);
                         </>
                     ) : (
                         <div
-                            className="w-56 h-56 rounded-full border-4 border-dashed border-primary/50 flex flex-col items-center justify-center p-4 text-center space-y-3 animate-pulse cursor-pointer hover:bg-primary/10 transition-colors"
+                            className="w-56 h-56 rounded-full border-4 border-dashed border-primary/50 flex flex-col items-center justify-center p-4 text-center space-y-3 animate-pulse cursor-pointer hover:bg-primary/10 transition-colors mx-auto"
                             onClick={() => {
                                 if (!welcomeTasksDone) {
                                     router.push('/welcome-tasks');
