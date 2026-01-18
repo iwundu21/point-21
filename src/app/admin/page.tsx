@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Shield, Loader2, Trash2, UserX, UserCheck, Lock, CameraOff, Copy, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, PlusCircle, MessageCircle, ThumbsUp, Repeat, Coins, Users, Star, Download, Pencil, Wallet, Server, Bot, Monitor, Zap, LogOut, Settings, PowerOff, PlayCircle, Gift } from 'lucide-react';
-import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus, grantBonusToLowBalanceUsers } from '@/lib/database';
+import { getAllUsers, updateUserStatus, deleteUser, UserData, addSocialTask, getSocialTasks, deleteSocialTask, deleteAllSocialTasks, SocialTask, updateUserBalance, saveWalletAddress, findUserByWalletAddress, getTotalUsersCount, getTotalActivePoints, getTotalTelegramUsersCount, getTotalBrowserUsersCount, unbanAllUsers, forceAddBoosterPack1, getAirdropStats, updateAirdropStats as saveAirdropTotal, getAirdropStatus, updateAirdropStatus, grantMassBonusToAllUsers } from '@/lib/database';
 import { toggleAirdrop } from '@/ai/flows/toggle-airdrop-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -994,8 +994,8 @@ export default function AdminPage() {
     const handleApplyMassBonus = async () => {
         setIsApplyingMassBonus(true);
         try {
-            const count = await grantBonusToLowBalanceUsers();
-            toast({ title: 'Bonus Awarded', description: `${count} users with a balance under 30,000 have received 40,000 Points.` });
+            const count = await grantMassBonusToAllUsers();
+            toast({ title: 'Bonus Awarded', description: `${count} users have received 40,000 Points.` });
             fetchInitialData(); // Refresh user list
         } catch (error) {
             console.error("Failed to grant mass bonus:", error);
@@ -1220,14 +1220,14 @@ export default function AdminPage() {
                                         <AlertDialogTrigger asChild>
                                             <Button variant="destructive" disabled={isApplyingMassBonus}>
                                                 {isApplyingMassBonus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gift className="mr-2 h-4 w-4" />}
-                                                Award Low-Balance Bonus
+                                                Award Bonus to All Users
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This will grant 40,000 Points to all users with a current balance under 30,000. This is a one-time, irreversible action.
+                                                    This will grant 40,000 Points to ALL users in the system who have not received this bonus before. This is a one-time, irreversible action.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -1239,7 +1239,7 @@ export default function AdminPage() {
                                         </AlertDialogContent>
                                     </AlertDialog>
                                      <p className="text-sm text-muted-foreground">
-                                        One-time bonus for users with &lt; 30k Points.
+                                        One-time bonus for all users.
                                     </p>
                                 </div>
                             </CardContent>
@@ -1371,3 +1371,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

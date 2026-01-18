@@ -691,9 +691,9 @@ export const unbanAllUsers = async (): Promise<number> => {
     return querySnapshot.size;
 }
 
-export const grantBonusToLowBalanceUsers = async (): Promise<number> => {
+export const grantMassBonusToAllUsers = async (): Promise<number> => {
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('balance', '<', 30000), where('hasReceivedMassBonus', '!=', true));
+    const q = query(usersRef, where('hasReceivedMassBonus', '!=', true));
     
     const querySnapshot = await getDocs(q);
 
@@ -866,4 +866,5 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
