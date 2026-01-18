@@ -1,3 +1,4 @@
+
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -329,7 +330,6 @@ export default function WalletPage() {
 
                  <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Airdrop</h3>
                         <Alert className="border-blue-500/20 bg-blue-500/10 text-center mb-4">
                             <Info className="h-4 w-4 text-blue-400" />
                             <AlertBoxTitle className="text-blue-400 text-base">Eligibility Clarification</AlertBoxTitle>
@@ -353,7 +353,7 @@ export default function WalletPage() {
                             <EligibilitySquare title="Referral Applied" isMet={userData?.referralBonusApplied || false} icon={<Handshake className="w-8 h-8" />} />
                        </div>
                        <p className="text-xs text-muted-foreground mt-3 text-center">
-                         Completing these tasks makes you eligible for the airdrop and unlocks daily tapping rewards.
+                         Completing Welcome Tasks unlocks daily mining. Ensure all tasks are completed for airdrop eligibility.
                        </p>
                     </CardContent>
                 </Card>
@@ -411,3 +411,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    

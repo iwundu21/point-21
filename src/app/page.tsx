@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -324,7 +325,7 @@ initializeUser(user);
 
   const welcomeTasksDone = Object.values(userData.welcomeTasks || {}).every(Boolean);
   const referralBonusApplied = userData.referralBonusApplied;
-  const prerequisitesMet = welcomeTasksDone && referralBonusApplied;
+  const prerequisitesMet = welcomeTasksDone;
 
   const WaterWaveProgress = ({ progress }: { progress: number }) => {
     const waveHeight = `${100 - progress}%`;
@@ -473,3 +474,5 @@ initializeUser(user);
     </div>
   );
 }
+
+    
