@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -294,8 +293,7 @@ export default function WalletPage() {
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
-                        {isSaving && <LoadingDots />}
-                        {isSaving ? '' : 'Confirm & Save'}
+                        {isSaving ? <LoadingDots /> : 'Confirm &amp; Save'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                     </AlertDialogContent>
@@ -397,7 +395,7 @@ export default function WalletPage() {
                     <AlertBoxTitle className="text-destructive text-base">Important Notice</AlertBoxTitle>
                     <AlertBoxDescription>
                     Your wallet address is permanently saved and cannot be changed. Please ensure it is correct.
-                    </AirdropDescription>
+                    </AlertBoxDescription>
                 </Alert>
             </div>
           )}
@@ -420,5 +418,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
-    
