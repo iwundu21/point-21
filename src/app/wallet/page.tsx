@@ -209,7 +209,7 @@ export default function WalletPage() {
         if (result.success && result.allocation !== undefined) {
             showDialog(
                 'Your Estimated Allocation',
-                `Based on the current totals, your estimated airdrop allocation is approximately ${result.allocation.toFixed(2)} Points. This is a dynamic estimate and will change.`,
+                `Based on the current totals, your estimated airdrop allocation is approximately ${result.allocation.toFixed(2)} EXN. This is a dynamic estimate and will change.`,
             );
         } else {
              showDialog('Error', result.reason || 'Could not calculate your allocation at this time.');
@@ -293,7 +293,7 @@ export default function WalletPage() {
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleSaveAddress} disabled={isSaving}>
-                        {isSaving ? <LoadingDots /> : 'Confirm &amp; Save'}
+                            {isSaving ? <LoadingDots /> : 'Confirm & Save'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                     </AlertDialogContent>

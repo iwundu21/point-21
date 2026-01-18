@@ -226,11 +226,11 @@ export const updateAllocationCheckStatus = async (enabled: boolean): Promise<{ s
 
 export const getAirdropStats = async (): Promise<{ totalAirdrop: number }> => {
     const docSnap = await getDoc(airdropStatsRef);
-    if (docSnap.exists()) {
-        return { totalAirdrop: docSnap.data().totalAirdrop || 200_000_000 };
+    if (docSnap.exists() && docSnap.data().totalAirdrop) {
+        return { totalAirdrop: docSnap.data().totalAirdrop };
     }
     // Default value if the document doesn't exist
-    return { totalAirdrop: 200_000_000 };
+    return { totalAirdrop: 30_000_000 };
 };
 
 export const updateAirdropStats = async (newTotal: number) => {
@@ -898,8 +898,3 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
-
-
-
-
-

@@ -482,6 +482,10 @@ const EditAirdropDialog = ({ currentTotal, onAirdropUpdated }: { currentTotal: n
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
 
+    useEffect(() => {
+        setNewTotal(currentTotal.toString());
+    }, [currentTotal]);
+
     const handleSubmit = async () => {
         const totalValue = parseInt(newTotal, 10);
         if (isNaN(totalValue) || totalValue < 0) {
@@ -514,12 +518,12 @@ const EditAirdropDialog = ({ currentTotal, onAirdropUpdated }: { currentTotal: n
                 <DialogHeader>
                     <DialogTitle>Edit Total Airdrop Amount</DialogTitle>
                     <DialogDescription>
-                        Set the total number of Points to be distributed in the airdrop.
+                        Set the total number of EXN to be distributed in the airdrop.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="airdrop-total" className="text-right">Total Points</Label>
+                        <Label htmlFor="airdrop-total" className="text-right">Total EXN</Label>
                         <Input
                             id="airdrop-total"
                             type="number"
@@ -569,6 +573,7 @@ export default function AdminPage() {
     const [isApplyingMassBonus, setIsApplyingMassBonus] = useState(false);
     const [isAllocationCheckEnabled, setIsAllocationCheckEnabled] = useState(false);
     const [isTogglingAllocationCheck, setIsTogglingAllocationCheck] = useState(false);
+    const [airdropTotal, setAirdropTotal] = useState(0);
     
     const { toast } = useToast();
 
@@ -576,7 +581,7 @@ export default function AdminPage() {
         setIsLoading(true);
         setIsLoadingTasks(true);
         try {
-            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStatus, allocationCheckStatus] = await Promise.all([
+            const [usersResponse, tasks, totalCount, totalTgCount, totalBrowser, totalActivePoints, airdropStatus, allocationCheckStatus, airdropStats] = await Promise.all([
                 getAllUsers(undefined, USERS_PER_PAGE),
                 getSocialTasks(),
                 getTotalUsersCount(),
@@ -585,6 +590,7 @@ export default function AdminPage() {
                 getTotalActivePoints(),
                 getAirdropStatus(),
                 getAllocationCheckStatus(),
+                getAirdropStats(),
             ]);
             
             const fetchedUsers = usersResponse.users;
@@ -604,6 +610,7 @@ export default function AdminPage() {
             setTotalPoints(totalActivePoints);
             setIsAirdropEnded(airdropStatus.isAirdropEnded);
             setIsAllocationCheckEnabled(allocationCheckStatus.isEnabled);
+            setAirdropTotal(airdropStats.totalAirdrop);
 
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
@@ -1081,7 +1088,7 @@ export default function AdminPage() {
                 )}
             </div>
             
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
@@ -1297,6 +1304,29 @@ export default function AdminPage() {
                         </Card>
                     </CardContent>
                 </Card>
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <CardTitle>Airdrop Management</CardTitle>
+                            <EditAirdropDialog currentTotal={airdropTotal} onAirdropUpdated={setAirdropTotal} />
+                        </div>
+                        <CardDescription>
+                            Configure the total airdrop pool for participants.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Total Airdrop Pool</p>
+                                <p className="font-bold text-2xl text-gold">{airdropTotal.toLocaleString()} EXN</p>
+                            </div>
+                            <Gift className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            This is the total amount of EXN that will be proportionally distributed among all eligible participants at the time of the airdrop, based on their Points balance.
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
 
 
@@ -1422,4 +1452,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

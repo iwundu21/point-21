@@ -21,7 +21,7 @@ export type CalculateAllocationInput = z.infer<typeof CalculateAllocationInputSc
 
 const CalculateAllocationOutputSchema = z.object({
   success: z.boolean(),
-  allocation: z.number().optional(),
+  allocation: z.number().optional().describe('The estimated allocation in EXN tokens.'),
   reason: z.string().optional(),
 });
 export type CalculateAllocationOutput = z.infer<typeof CalculateAllocationOutputSchema>;
