@@ -368,11 +368,11 @@ export const applyReferralBonus = async (newUser: { id: number | string }, refer
                     throw "Documents do not exist!";
                 }
                 
-                const newReferrerBalance = (referrerDoc.data().balance || 0) + 200;
+                const newReferrerBalance = (referrerDoc.data().balance || 0) + 300;
                 const newReferralsCount = (referrerDoc.data().referrals || 0) + 1;
                 transaction.update(referrerRef, { balance: newReferrerBalance, referrals: newReferralsCount });
 
-                const newUserBalance = (newUserDoc.data().balance || 0) + 70;
+                const newUserBalance = (newUserDoc.data().balance || 0) + 100;
                 transaction.update(newUserRef, { 
                     balance: newUserBalance,
                     referralBonusApplied: true,
@@ -884,6 +884,7 @@ export const saveWalletAddress = async (user: { id: number | string } | null, ad
 export const getReferralCode = async (user: { id: number | string } | null) => (await getUserData(user as TelegramUser)).userData.referralCode;
 export const saveReferralCode = async (user: { id: number | string } | null, code: string) => saveUserData(user, { referralCode: code });
 export const saveUserPhotoUrl = async (user: { id: number | string } | null, photoUrl: string) => saveUserData(user, { customPhotoUrl: photoUrl });
+
 
 
 
