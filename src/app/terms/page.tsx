@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -36,23 +35,16 @@ export default function TermsPage({}: TermsPageProps) {
         <h2 className="text-lg font-semibold text-foreground self-start pt-4">2. User Conduct</h2>
         <p>
           You agree not to use the application for any unlawful purpose or any purpose prohibited under this clause. You agree not to use the application in any way that could damage the app, services, or general business of Exnus Points.
-          This includes, but is not limited to, using automated systems or software to extract data from the application for commercial purposes ('screen scraping').
+          This includes, but is not limited to, using automated systems or software to extract data from the application for commercial purposes ('screen scraping'). Each individual is permitted to have only one account. Any attempt to create multiple accounts may result in a permanent ban and forfeiture of all accumulated points.
         </p>
         
-        <h2 className="text-lg font-semibold text-foreground self-start pt-4">3. Verification</h2>
-        <p>
-          To prevent abuse of the system, users are required to complete a one-time facial verification process.
-          Each individual is permitted to have only one account. Any attempt to create multiple accounts will result in a permanent ban and forfeiture of all accumulated points.
-          The facial data is used solely for the purpose of ensuring uniqueness and is not shared with third parties.
-        </p>
-
-        <h2 className="text-lg font-semibold text-foreground self-start pt-4">4. Limitation of Liability</h2>
+        <h2 className="text-lg font-semibold text-foreground self-start pt-4">3. Limitation of Liability</h2>
         <p>
           In no event shall Exnus Points, nor any of its officers, directors, and employees, be held liable for anything arising out of or in any way connected with your use of this application whether such liability is under contract.
           Exnus Points, including its officers, directors, and employees shall not be held liable for any indirect, consequential, or special liability arising out of or in any way related to your use of this application.
         </p>
         
-        <h2 className="text-lg font-semibold text-foreground self-start pt-4">5. Changes to Terms</h2>
+        <h2 className="text-lg font-semibold text-foreground self-start pt-4">4. Changes to Terms</h2>
         <p>
           We reserve the right, in our sole discretion, to change these Terms and Conditions at any time. We will provide notice of any changes by posting the new Terms and Conditions on this page.
         </p>
