@@ -59,22 +59,31 @@ const Footer = () => {
 
   useEffect(() => {
     const checkTasks = async () => {
-        if(currentUser) {
-            try {
-                const { userData } = await getUserData(currentUser);
-                const socialTasks = await getSocialTasks();
-                const completedCount = userData.completedSocialTasks?.length || 0;
-                const availableCount = socialTasks.length - completedCount;
-                setAvailableTaskCount(availableCount);
-            } catch (error) {
-                console.error("Failed to check tasks for footer badge:", error);
+        if (!currentUser) {
+            setAvailableTaskCount(0);
+            return;
+        }
+
+        try {
+            const [{ userData }, socialTasks] = await Promise.all([
+                getUserData(currentUser),
+                getSocialTasks(),
+            ]);
+            
+            if (userData && socialTasks) {
+                const available = socialTasks.filter(task => !userData.completedSocialTasks?.includes(task.id));
+                setAvailableTaskCount(available.length);
+            } else {
                 setAvailableTaskCount(0);
             }
+        } catch (error) {
+            console.error("Failed to check tasks for footer badge:", error);
+            setAvailableTaskCount(0);
         }
     }
-    if (currentUser) {
-        checkTasks();
-    }
+    
+    checkTasks();
+    
   }, [currentUser, pathname]);
 
   const navItems = [
