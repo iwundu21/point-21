@@ -60,20 +60,22 @@ const Footer = () => {
   useEffect(() => {
     const checkTasks = async () => {
         if(currentUser) {
-            const { userData } = await getUserData(currentUser);
-            const socialTasks = await getSocialTasks();
-            const completedCount = userData.completedSocialTasks?.length || 0;
-            const availableCount = socialTasks.length - completedCount;
-
-            if (availableCount > 0) {
+            try {
+                const { userData } = await getUserData(currentUser);
+                const socialTasks = await getSocialTasks();
+                const completedCount = userData.completedSocialTasks?.length || 0;
+                const availableCount = socialTasks.length - completedCount;
                 setAvailableTaskCount(availableCount);
-            } else {
+            } catch (error) {
+                console.error("Failed to check tasks for footer badge:", error);
                 setAvailableTaskCount(0);
             }
         }
     }
-    checkTasks();
-  }, [currentUser]);
+    if (currentUser) {
+        checkTasks();
+    }
+  }, [currentUser, pathname]);
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
